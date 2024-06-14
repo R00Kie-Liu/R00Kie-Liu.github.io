@@ -23,6 +23,7 @@ enable_last_update: false
 link_type: icon #text/icon
 google_scholar: https://scholar.google.com/citations?user=hicoLSQAAAAJ&hl
 github_link: https://github.com/R00Kie-Liu
+cv_link: ./CV_huabin.pdf
 # linkedin: https://www.linkedin.com/in/liuyaoyao/
 # twitter: https://twitter.com/YaoyaoLiu1/
 
