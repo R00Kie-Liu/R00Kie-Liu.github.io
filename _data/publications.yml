@@ -28,6 +28,14 @@ main:
   #  code: https://github.com/cc13qq/CAD
   #  image: https://img.yliu.me/arxiv_CAD.png
 
+  - title: Few-shot Action Recognition via Intra-and Inter-Video Information Maximization
+    authors: <strong>Huabin Liu</strong>, Weiyao Lin, Tieyuan Chen, Yuxi Li, Shuyuan Li, John See
+    conference_short: Preprint
+    conference: Under review.
+    pdf: https://arxiv.org/pdf/2305.06114
+    bibtex: ./pub_img/vim.txt
+    image: ./pub_img/vim.png
+
   - title: Collaborative Weakly Supervised Video Correlation Learning for Procedure-Aware Instructional Video Analysis
     authors: Tianyao He, <strong>Huabin Liu</strong>, Yuxi Li, Xiao Ma, Cheng Zhong, Yang Zhang, Weiyao Lin
     conference_short: AAAI
