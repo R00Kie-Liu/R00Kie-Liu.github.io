@@ -11,7 +11,7 @@ email2: h.liu3 (at) uva.nl
 # Search Engine Optimization (SEO)
 keywords: huabin liu, liu huabin, huabinliu, liuhuabin, huabin sjtu, huabinliu sjtu
 canonical: https://www.cs.jhu.edu/~yyliu/
-description: Huabin Liu is a fifth-year Ph.D student at Shanghai Jiao Tong University. His research lies in few-shot video learning, video understanding, video reasoning & captioning.
+description: Huabin Liu is a fifth-year Ph.D student at Shanghai Jiao Tong University (SJTU). His research lies in few-shot video learning, video understanding, video reasoning & captioning.
 
 # The option is used to enable the Johns Hopkins template.
 enable_hopkins_logo: true
@@ -36,10 +36,13 @@ favicon_dark: ./assets/img/favicon-sjtu-dark.png
 # footnote: Feel free to use my website's source code.
 # footnote_link: https://github.com/yaoyao-liu/minimal-light
 
+auto_dark_mode: true
 # Analytics
 # Please remove the following lines about analytics services if you fork my project. 
 # Otherwise, the analytics information of your website will be recorded to my ClustrMaps accounts.
 # clustrmaps_id: CJD8XwsJhSyQ6sbsU-Gw0cNcUlbah7KW3xvHN2QlwW0
+
+google_analytics: G-EPYNTGF9Y1
 
 # The following files will be removed from the generated website.
 exclude:
