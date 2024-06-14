@@ -1,0 +1,9 @@
+@inproceedings{he2024collaborative,
+  title={Collaborative Weakly Supervised Video Correlation Learning for Procedure-Aware Instructional Video Analysis},
+  author={He, Tianyao and Liu, Huabin and Li, Yuxi and Ma, Xiao and Zhong, Cheng and Zhang, Yang and Lin, Weiyao},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume={38},
+  number={3},
+  pages={2112--2120},
+  year={2024}
+}

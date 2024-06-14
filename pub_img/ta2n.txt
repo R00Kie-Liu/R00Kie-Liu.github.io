@@ -1,0 +1,9 @@
+@inproceedings{li2022ta2n,
+  title={TA2N: Two-Stage Action Alignment Network for Few-Shot Action Recognition},
+  author={Li, Shuyuan and Liu, Huabin and Qian, Rui and Li, Yuxi and See, John and Fei, Mengjuan and Yu, Xiaoyuan and Lin, Weiyao},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume={36},
+  number={2},
+  pages={1404--1411},
+  year={2022}
+}

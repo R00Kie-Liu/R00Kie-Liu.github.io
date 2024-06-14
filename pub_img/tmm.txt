@@ -1,0 +1,9 @@
+@article{liu2021learning,
+  title={Learning scale-consistent attention part network for fine-grained image recognition},
+  author={Liu, Huabin and Li, Jianguo and Li, Dian and See, John and Lin, Weiyao},
+  journal={IEEE Transactions on Multimedia},
+  volume={24},
+  pages={2902--2913},
+  year={2021},
+  publisher={IEEE}
+}

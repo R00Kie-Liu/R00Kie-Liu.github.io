@@ -1,0 +1,10 @@
+@article{lin2023hieve,
+  title={HiEve: A Large-Scale Benchmark for Human-Centric Video Analysis in Complex Events},
+  author={Lin, Weiyao and Liu, Huabin and Liu, Shizhan and Li, Yuxi and Xiong, Hongkai and Qi, Guojun and Sebe, Nicu},
+  journal={International Journal of Computer Vision},
+  volume={131},
+  number={11},
+  pages={2994--3018},
+  year={2023},
+  publisher={Springer}
+}

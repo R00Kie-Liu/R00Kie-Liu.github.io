@@ -1,0 +1,7 @@
+@inproceedings{liu2022task,
+  title={Task-adaptive spatial-temporal video sampler for few-shot action recognition},
+  author={Liu, Huabin and Lv, Weixian and See, John and Lin, Weiyao},
+  booktitle={Proceedings of the 30th ACM International Conference on Multimedia},
+  pages={6230--6240},
+  year={2022}
+}

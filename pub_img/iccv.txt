@@ -1,0 +1,7 @@
+@inproceedings{qian2021enhancing,
+  title={Enhancing self-supervised video representation learning via multi-level feature optimization},
+  author={Qian, Rui and Li, Yuxi and Liu, Huabin and See, John and Ding, Shuangrui and Liu, Xian and Li, Dian and Lin, Weiyao},
+  booktitle={Proceedings of the IEEE/CVF international conference on computer vision},
+  pages={7990--8001},
+  year={2021}
+}

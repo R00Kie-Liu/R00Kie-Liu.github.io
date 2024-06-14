@@ -1,0 +1,7 @@
+@inproceedings{fan2022speed,
+  title={Speed up object detection on gigapixel-level images with patch arrangement},
+  author={Fan, Jiahao and Liu, Huabin and Yang, Wenjie and See, John and Zhang, Aixin and Lin, Weiyao},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={4653--4661},
+  year={2022}
+}

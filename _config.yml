@@ -3,14 +3,15 @@ title: Huabin Liu
 position: Ph.D student
 affiliation: Shanghai Jiao Tong University
 affiliation_link: https://en.sjtu.edu.cn/
-affiliation_logo: ./assets/img/university-logo-small-horizontal-white-156eae9527.svg
+#affiliation_logo: ./assets/img/university-logo-small-horizontal-white-156eae9527.svg
+affiliation_logo: ./assets/img/sjtubannersilver.png
 email: huabinliu (at) sjtu.edu.cn
-email2: binliuhua (at) gmail.com
+email2: h.liu3 (at) uva.nl
 
 # Search Engine Optimization (SEO)
-keywords: yaoyao liu, liu yaoyao, yaoyaoliu, liuyaoyao
+keywords: huabin liu, liu huabin, huabinliu, liuhuabin, huabin sjtu, huabinliu sjtu
 canonical: https://www.cs.jhu.edu/~yyliu/
-description: Yaoyao Liu is a postdoctoral fellow at Johns Hopkins University. His research lies in meta-learning, incremental learning, and image generation.
+description: Huabin Liu is a fifth-year Ph.D student at Shanghai Jiao Tong University. His research lies in few-shot video learning, video understanding, video reasoning & captioning.
 
 # The option is used to enable the Johns Hopkins template.
 enable_hopkins_logo: true
@@ -20,15 +21,15 @@ enable_last_update: false
 
 # Links
 link_type: icon #text/icon
-google_scholar: https://scholar.google.com/citations?user=Uf9GqRsAAAAJ
-github_link: https://github.com/yaoyao-liu/
-linkedin: https://www.linkedin.com/in/liuyaoyao/
-twitter: https://twitter.com/YaoyaoLiu1/
+google_scholar: https://scholar.google.com/citations?user=hicoLSQAAAAJ&hl
+github_link: https://github.com/R00Kie-Liu
+# linkedin: https://www.linkedin.com/in/liuyaoyao/
+# twitter: https://twitter.com/YaoyaoLiu1/
 
 # Images 
-avatar: https://img.yliu.me/avatar.jpg
-favicon: ./assets/img/favicon.png
-favicon_dark: ./assets/img/favicon-dark.png
+avatar: ./assets/img/huabin_mini.jpg
+favicon: ./assets/img/favicon-sjtu.png
+favicon_dark: ./assets/img/favicon-sjtu-dark.png
 
 # Footnotes
 footnote: Feel free to use my website's source code.

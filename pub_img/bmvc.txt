@@ -1,0 +1,7 @@
+@inproceedings{li2021temporal,
+  title={Temporal Alignment via Event Boundary for Few-shot Action Recongnition.},
+  author={Li, Shuyuan and Liu, Huabin and Fei, Mengjuan and Yu, Xiaoyuan and Lin, Weiyao and Cloud, Huawei},
+  booktitle={BMVC},
+  pages={184},
+  year={2021}
+}
