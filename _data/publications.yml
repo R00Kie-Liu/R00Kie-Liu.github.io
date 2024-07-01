@@ -4,7 +4,7 @@ main:
   - title: TimeCraft-Navigate Weakly-Supervised Temporal Grounded Video Question Answering via Bi-directional Reasoning
     authors: <strong>Huabin Liu</strong>, Xiao Ma, Cheng Zhong, Yang Zhang, Weiyao Lin
     conference_short: ECCV
-    conference: European Conference on Computer Vision, 2024
+    conference: European Conference on Computer Vision <strong>(ECCV)</strong>, 2024
     image: ./pub_img/timecraft.png
     pdf: ./pub_img/timecraft.txt
 
