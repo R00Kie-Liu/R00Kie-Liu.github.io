@@ -3,6 +3,7 @@
 <h2 style="margin: 60px 0px 10px;">News</h2>
 
 <ul>
+  li><strong>[03/2024]</strong> 🥳 One paper about <a href="">video reasoning</a> is accepted to <strong>ECCV 2024</strong>.</li>
   <li><strong>[03/2024]</strong> 😃 One paper about <a href="https://openaccess.thecvf.com/content/CVPR2024/html/Wu_DIBS_Enhancing_Dense_Video_Captioning_with_Unlabeled_Videos_via_Pseudo_CVPR_2024_paper.html
 ">dense video captioning</a> is accepted to <strong>CVPR 2024</strong>.</li>
    <li><strong>[01/2024]</strong> 🛫 Start my visit to the <a href="https://ivi.fnwi.uva.nl/vislab/">VISLab</a> at University of Amsterdam as a <strong>visiting researcher</strong>.</li>
