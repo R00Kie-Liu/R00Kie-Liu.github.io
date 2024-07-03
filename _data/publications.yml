@@ -1,14 +1,14 @@
 main:
 
 
-  - title: TimeCraft-Navigate Weakly-Supervised Temporal Grounded Video Question Answering via Bi-directional Reasoning
+  - title: "TimeCraft: Navigate Weakly-Supervised Temporal Grounded Video Question Answering via Bi-directional Reasoning"
     authors: <strong>Huabin Liu</strong>, Xiao Ma, Cheng Zhong, Yang Zhang, Weiyao Lin
     conference_short: ECCV
     conference: European Conference on Computer Vision <strong>(ECCV)</strong>, 2024
     image: ./pub_img/timecraft.png
     pdf: ./pub_img/timecraft.txt
 
-  - title: DIBS-Enhancing Dense Video Captioning with Unlabeled Videos via Pseudo Boundary Enrichment and Online Refinement
+  - title: "DIBS: Enhancing Dense Video Captioning with Unlabeled Videos via Pseudo Boundary Enrichment and Online Refinement"
     authors: Hao Wu*, <strong>Huabin Liu*</strong>, Yu Qiao, Xiao Sun (* Equal Contribution)
     conference_short: CVPR
     conference: IEEE/CVF Conference on Computer Vision and Pattern Recognition <strong>(CVPR)</strong>, 2024.
@@ -18,24 +18,6 @@ main:
     code: https://github.com/haowuxc/DIBS
  # page: https://mp.weixin.qq.com/s/Bbo4ve7B8RsszBrhktHszQ?poc_token=HHasbGajGcjEKud9JqxsGD7HMpjmi3mI9xF4LzjW
  #   notes: Spotlight
-
-  #- title: Prompt-Based Exemplar Super-Compression and Regeneration for Class-Incremental Learning
-  #  authors: Ruxiao Duan, <strong>Yaoyao Liu<sup><i class="fa-regular fa-envelope fa-xs"></i></sup></strong>, Jieneng Chen, Adam Kortylewski, Alan Yuille <br>( <sup><i class="fa-regular fa-envelope fa-xs"></i></sup> Corresponding author)
-  #  conference_short: Preprint
-  #  conference: Under review.
-  #  pdf: https://arxiv.org/pdf/2311.18266.pdf
-  #  bibtex: https://dblp.uni-trier.de/rec/journals/corr/abs-2311-18266.html?view=bibtex
-  #  code: https://github.com/KerryDRX/ESCORT
-  #  image: https://img.yliu.me/arxiv_23_2.png
-
-  #- title: Continual Adversarial Defense
-  #  authors: Qian Wang, <strong>Yaoyao Liu</strong>, Hefei Ling, Yingwei Li, Qihao Liu, Ping Li, Jiazhong Chen, Alan Yuille, Ning Yu
-  #  conference_short: Preprint
-  #  conference: Under review.
-  #  pdf: https://arxiv.org/pdf/2312.09481.pdf
-  #  bibtex: https://bib.yliu.me/arXiv_2023_3.txt
-  #  code: https://github.com/cc13qq/CAD
-  #  image: https://img.yliu.me/arxiv_CAD.png
 
   - title: Few-shot Action Recognition via Intra-and Inter-Video Information Maximization
     authors: <strong>Huabin Liu</strong>, Weiyao Lin, Tieyuan Chen, Yuxi Li, Shuyuan Li, John See
@@ -53,7 +35,7 @@ main:
     bibtex: ./pub_img/cpa.txt
     image: ./pub_img/cpa.png
 
-  - title: HiEve-A Large-Scale Benchmark for Human-Centric Video Analysis in Complex Events
+  - title: "HiEve: A Large-Scale Benchmark for Human-Centric Video Analysis in Complex Events"
     authors: Weiyao Lin, <strong>Huabin Liu</strong>, Shizhan Liu, Yuxi Li, Guojun Qi, Nicu Sebe
     conference_short: IJCV
     conference: International Journal of Computer Vision <strong>(IJCV)</strong>
@@ -80,7 +62,7 @@ main:
     bibtex: ./pub_img/giga.txt
     image: ./pub_img/giga.png
 
-  - title: TA2N-Two-Stage Action Alignment Network for Few-shot Action Recognition
+  - title: "TA2N: Two-Stage Action Alignment Network for Few-shot Action Recognition"
     authors: Shuyuan Li, <strong>Huabin Liu*</strong>, Rui Qian, Yuxi Li, John See, Mengjuan Fei, Xiaoyuan Yu, Weiyao Lin (* Equal Contribution)
     conference_short: AAAI
     conference: AAAI Conference on Artificial Intelligence <strong>(AAAI)</strong>, 2023.
