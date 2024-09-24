@@ -1,1 +1,6 @@
-Full paper will be released soon in arxiv.
+@inproceedings{timecraft,
+  title={TimeCraft: Navigate Weakly-Supervised Temporal Grounded Video Question Answering via Bi-directional Reasoning},
+  author={Huabin Liu, Xiao Ma, Cheng Zhong, Yang Zhang, Weiyao Lin},
+  booktitle={ECCV},
+  year={2024}
+}

@@ -1,11 +1,11 @@
 main:
 
   - title: "MECD: Unlocking Multi-Event Causal Discovery in Video Reasoning"
-    authors: Tieyuan Chen*, <strong>Huabin Liu*</strong>, Tianyao He, Yihang Chen, Chaofan Gan, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Hui Lin, Weiyao Lin (* Equal Contribution)
+    authors: Tieyuan Chen*, <strong>Huabin Liu*</strong>, Tianyao He, Yihang Chen, Chaofan Gan, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Hui Lin, Weiyao Lin (<strong>* Co-first author</strong>)
     conference_short: Preprint
     conference: Under review, 2024
     image: ./pub_img/mecd.png
-    pdf: ./pub_img/timecraft.txt
+    pdf: ./pub_img/mecd.txt
 
   - title: "TimeCraft: Navigate Weakly-Supervised Temporal Grounded Video Question Answering via Bi-directional Reasoning"
     authors: <strong>Huabin Liu</strong>, Xiao Ma, Cheng Zhong, Yang Zhang, Weiyao Lin
@@ -13,9 +13,10 @@ main:
     conference: European Conference on Computer Vision <strong>(ECCV)</strong>, 2024
     image: ./pub_img/timecraft.png
     pdf: https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/00720.pdf
-
+    bibtex: ./pub_img/timecraft.txt
+  
   - title: "DIBS: Enhancing Dense Video Captioning with Unlabeled Videos via Pseudo Boundary Enrichment and Online Refinement"
-    authors: Hao Wu*, <strong>Huabin Liu*</strong>, Yu Qiao, Xiao Sun (* Equal Contribution)
+    authors: Hao Wu*, <strong>Huabin Liu*</strong>, Yu Qiao, Xiao Sun (<strong>* Co-first author</strong>)
     conference_short: CVPR
     conference: IEEE/CVF Conference on Computer Vision and Pattern Recognition <strong>(CVPR)</strong>, 2024.
     pdf: https://openaccess.thecvf.com/content/CVPR2024/html/Wu_DIBS_Enhancing_Dense_Video_Captioning_with_Unlabeled_Videos_via_Pseudo_CVPR_2024_paper.html
@@ -69,7 +70,7 @@ main:
     image: ./pub_img/giga.png
 
   - title: "TA2N: Two-Stage Action Alignment Network for Few-shot Action Recognition"
-    authors: Shuyuan Li, <strong>Huabin Liu*</strong>, Rui Qian, Yuxi Li, John See, Mengjuan Fei, Xiaoyuan Yu, Weiyao Lin (* Equal Contribution)
+    authors: Shuyuan Li, <strong>Huabin Liu*</strong>, Rui Qian, Yuxi Li, John See, Mengjuan Fei, Xiaoyuan Yu, Weiyao Lin (<strong>* Co-first author</strong>)
     conference_short: AAAI
     conference: AAAI Conference on Artificial Intelligence <strong>(AAAI)</strong>, 2023.
     pdf: https://ojs.aaai.org/index.php/AAAI/article/view/20029/19788
