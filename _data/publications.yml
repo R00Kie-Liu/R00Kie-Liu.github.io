@@ -29,7 +29,7 @@ main:
   - title: Few-shot Action Recognition via Intra-and Inter-Video Information Maximization
     authors: <strong>Huabin Liu</strong>, Weiyao Lin, Tieyuan Chen, Yuxi Li, Shuyuan Li, John See
     conference_short: Preprint
-    conference: Under review.
+    conference: Submit to TPAMI (under review).
     pdf: https://arxiv.org/pdf/2305.06114
     bibtex: ./pub_img/vim.txt
     image: ./pub_img/vim.png
