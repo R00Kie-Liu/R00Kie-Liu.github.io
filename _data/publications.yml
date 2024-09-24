@@ -1,12 +1,18 @@
 main:
 
+  - title: "MECD: Unlocking Multi-Event Causal Discovery in Video Reasoning"
+    authors: Tieyuan Chen*, <strong>Huabin Liu*</strong>, Tianyao He, Yihang Chen, Chaofan Gan, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Hui Lin, Weiyao Lin
+    conference_short: Preprint
+    conference: Under review, 2024
+    image: ./pub_img/mecd.png
+    pdf: ./pub_img/timecraft.txt
 
   - title: "TimeCraft: Navigate Weakly-Supervised Temporal Grounded Video Question Answering via Bi-directional Reasoning"
     authors: <strong>Huabin Liu</strong>, Xiao Ma, Cheng Zhong, Yang Zhang, Weiyao Lin
     conference_short: ECCV
     conference: European Conference on Computer Vision <strong>(ECCV)</strong>, 2024
     image: ./pub_img/timecraft.png
-    pdf: ./pub_img/timecraft.txt
+    pdf: https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/00720.pdf
 
   - title: "DIBS: Enhancing Dense Video Captioning with Unlabeled Videos via Pseudo Boundary Enrichment and Online Refinement"
     authors: Hao Wu*, <strong>Huabin Liu*</strong>, Yu Qiao, Xiao Sun (* Equal Contribution)
