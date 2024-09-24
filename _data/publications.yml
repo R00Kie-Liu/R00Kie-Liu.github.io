@@ -40,6 +40,7 @@ main:
     conference: AAAI Conference on Artificial Intelligence <strong>(AAAI)</strong>, 2024.
     pdf: https://ojs.aaai.org/index.php/AAAI/article/view/27983
     bibtex: ./pub_img/cpa.txt
+    code: https://github.com/hotelll/Collaborative_Procedure_Alignment
     image: ./pub_img/cpa.png
 
   - title: "HiEve: A Large-Scale Benchmark for Human-Centric Video Analysis in Complex Events"
