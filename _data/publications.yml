@@ -2,10 +2,11 @@ main:
 
   - title: "MECD: Unlocking Multi-Event Causal Discovery in Video Reasoning"
     authors: Tieyuan Chen*, <strong>Huabin Liu*</strong>, Tianyao He, Yihang Chen, Chaofan Gan, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Hui Lin, Weiyao Lin (<strong>* Co-first author</strong>)
-    conference_short: Preprint
-    conference: Under review, 2024
+    conference_short: Conference on Neural Information Processing Systems
+    conference: NeurIPS, 2024
     image: ./pub_img/mecd.png
     pdf: ./pub_img/mecd.txt
+    notes: Spotlight
 
   - title: "TimeCraft: Navigate Weakly-Supervised Temporal Grounded Video Question Answering via Bi-directional Reasoning"
     authors: <strong>Huabin Liu</strong>, Xiao Ma, Cheng Zhong, Yang Zhang, Weiyao Lin
