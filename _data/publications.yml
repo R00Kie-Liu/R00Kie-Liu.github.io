@@ -3,7 +3,7 @@ main:
   - title: "MECD: Unlocking Multi-Event Causal Discovery in Video Reasoning"
     authors: Tieyuan Chen*, <strong>Huabin Liu*</strong>, Tianyao He, Yihang Chen, Chaofan Gan, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Hui Lin, Weiyao Lin (<strong>* Co-first author</strong>)
     conference_short: NeurIPS
-    conference: Conference on Neural Information Processing Systems <strong>(NeurIPS)</strong>, 2024
+    conference: Neural Information Processing Systems <strong>(NeurIPS)</strong>, 2024
     image: ./pub_img/mecd.png
     pdf: ./pub_img/mecd.txt
     notes: Spotlight
@@ -24,8 +24,6 @@ main:
     bibtex: ./pub_img/dibs.txt
     image: ./pub_img/dibs.png
     code: https://github.com/haowuxc/DIBS
- # page: https://mp.weixin.qq.com/s/Bbo4ve7B8RsszBrhktHszQ?poc_token=HHasbGajGcjEKud9JqxsGD7HMpjmi3mI9xF4LzjW
- #   notes: Spotlight
 
   - title: Few-shot Action Recognition via Intra-and Inter-Video Information Maximization
     authors: <strong>Huabin Liu</strong>, Weiyao Lin, Tieyuan Chen, Yuxi Li, Shuyuan Li, John See
