@@ -5,7 +5,8 @@ main:
     conference_short: NeurIPS
     conference: Neural Information Processing Systems <strong>(NeurIPS)</strong>, 2024
     image: ./pub_img/mecd.png
-    pdf: ./pub_img/mecd.txt
+    pdf: https://arxiv.org/pdf/2409.17647
+    code: https://github.com/tychen-SJTU/MECD-Benchmark
     notes: Spotlight
 
   - title: "TimeCraft: Navigate Weakly-Supervised Temporal Grounded Video Question Answering via Bi-directional Reasoning"
