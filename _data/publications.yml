@@ -34,6 +34,14 @@ main:
     bibtex: ./pub_img/vim.txt
     image: ./pub_img/vim.png
 
+  - title: "Achieving Procedure-Aware Instructional Video Correlation Learning under Weak Supervision from a Collaborative Perspective"
+    authors: Tianyao He, <strong>Huabin Liu</strong>, Zeling Ni, Yuxi Li, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Weiyao Lin
+    conference_short: IJCV
+    conference: International Journal of Computer Vision <strong>(IJCV)</strong>, 2024
+    image: ./pub_img/cpa_ijcv.png
+    # pdf: https://arxiv.org/pdf/2409.17647
+    code: https://github.com/hotelll/Collaborative_Procedure_Alignment
+
   - title: Collaborative Weakly Supervised Video Correlation Learning for Procedure-Aware Instructional Video Analysis
     authors: Tianyao He, <strong>Huabin Liu</strong>, Yuxi Li, Xiao Ma, Cheng Zhong, Yang Zhang, Weiyao Lin
     conference_short: AAAI
