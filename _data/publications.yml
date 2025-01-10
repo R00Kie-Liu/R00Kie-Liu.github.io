@@ -1,11 +1,12 @@
 main:
 
   - title: "Commonsense Video Question Answering through Video-Grounded Entailment Tree Reasoning"
-    authors: Huabin Liu, Filip Ilievski, Cees G. M. Snoek
+    authors: <strong>Huabin Liu</strong>, Filip Ilievski, Cees G. M. Snoek
     conference_short: Preprint
     conference: Under review
     pdf: https://arxiv.org/abs/2501.05069
     image: ./pub_img/entailment.png
+    bibtex: ./pub_img/entailment.txt
 
   - title: "MECD: Unlocking Multi-Event Causal Discovery in Video Reasoning"
     authors: Tieyuan Chen*, <strong>Huabin Liu*</strong>, Tianyao He, Yihang Chen, Chaofan Gan, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Hui Lin, Weiyao Lin (<strong>* Co-first author</strong>)

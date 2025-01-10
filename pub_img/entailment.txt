@@ -1,0 +1,6 @@
+@article{liu2025common,
+  title={Commonsense Video Question Answering through Video-Grounded Entailment Tree Reasoning},
+  author={Liu, Huabin and Filip Ilievski, and Cees G. M. Snoek},
+  journal={arXiv preprint arXiv:2501.05069},
+  year={2025}
+}
