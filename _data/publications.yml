@@ -47,7 +47,7 @@ main:
     conference_short: IJCV
     conference: International Journal of Computer Vision <strong>(IJCV)</strong>, 2024
     image: ./pub_img/cpa_ijcv.png
-    # pdf: https://arxiv.org/pdf/2409.17647
+    pdf: https://link.springer.com/article/10.1007/s11263-024-02272-8
     code: https://github.com/hotelll/Collaborative_Procedure_Alignment
 
   - title: Collaborative Weakly Supervised Video Correlation Learning for Procedure-Aware Instructional Video Analysis
