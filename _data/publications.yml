@@ -2,8 +2,8 @@ main:
 
   - title: "Commonsense Video Question Answering through Video-Grounded Entailment Tree Reasoning"
     authors: <strong>Huabin Liu</strong>, Filip Ilievski, Cees G. M. Snoek
-    conference_short: Preprint
-    conference: Under review
+    conference_short: CVPR
+    conference: IEEE/CVF Conference on Computer Vision and Pattern Recognition <strong>(CVPR)</strong>, 2025.
     pdf: https://arxiv.org/abs/2501.05069
     image: ./pub_img/entailment.png
     bibtex: ./pub_img/entailment.txt
