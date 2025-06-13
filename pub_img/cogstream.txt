@@ -1,0 +1,6 @@
+@article{zhao2025cogstream,
+  title={CogStream: Context-guided Streaming Video Question Answering},
+  author={Zhao, Zicheng and Wang, Kangyu and Li, Shijie and Qian, Rui and Lin, Weiyao and Liu, Huabin},
+  journal={arXiv preprint arXiv:2506.10516},
+  year={2025}
+}

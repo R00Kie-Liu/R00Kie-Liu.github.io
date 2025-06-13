@@ -1,5 +1,21 @@
 main:
 
+  - title: "CogStream: Context-guided Streaming Video Question Answering"
+    authors: Zicheng Zhao, Kangyu Wang, Shijie Li, Rui Qian, Weiyao Lin, <strong>Huabin Liu</strong><sup>&dagger;</sup> (<strong><sup>&dagger;</sup> Corresponding author author</strong>)
+    conference_short: Preprint
+    conference: Under review
+    pdf: https://arxiv.org/abs/2506.10516
+    image: ./pub_img/cogstream.png
+    bibtex: ./pub_img/cogstream.txt
+
+  - title: "CSTA: Spatial-Temporal Causal Adaptive Learning for Exemplar-Free Video Class-Incremental Learning"
+    authors: Tieyuan Chen, <strong>Huabin Liu<sup>&dagger;</sup></strong>, Chern Hong Lim, John See, Xing Gao, Junhui Hou, Weiyao Lin (<strong><sup>&dagger;</sup> Corresponding author author</strong>)
+    conference_short: TCSVT
+    conference: IEEE Transactions on Circuits and Systems for Video Technology <strong>(TSCVT)</strong>, 2025.
+    pdf: https://arxiv.org/abs/2501.07236
+    image: ./pub_img/CSTA.png
+    bibtex: ./pub_img/CSTA.txt
+
   - title: "Commonsense Video Question Answering through Video-Grounded Entailment Tree Reasoning"
     authors: <strong>Huabin Liu</strong>, Filip Ilievski, Cees G. M. Snoek
     conference_short: CVPR
