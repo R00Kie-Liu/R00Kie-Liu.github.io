@@ -3,7 +3,7 @@ main:
   - title: "CogStream: Context-guided Streaming Video Question Answering"
     authors: Zicheng Zhao*, Kangyu Wang*, Shijie Li*, Rui Qian, Weiyao Lin, <strong>Huabin Liu<sup>&dagger;</sup></strong> (<strong><sup>&dagger;</sup> Corresponding author</strong>)
     conference_short: Preprint
-    conference: Under review
+    conference: Under review, 2025
     pdf: https://arxiv.org/abs/2506.10516
     image: ./pub_img/cogstream.png
     bibtex: ./pub_img/cogstream.txt
