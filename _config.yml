@@ -1,6 +1,6 @@
 # Basic Information 
 title: Huabin Liu
-position: Ph.D student
+position: Ph.D.
 affiliation: Shanghai Jiao Tong University (SJTU)
 affiliation_link: https://en.sjtu.edu.cn/
 #affiliation_logo: ./assets/img/university-logo-small-horizontal-white-156eae9527.svg
@@ -11,7 +11,7 @@ email: huabinliu (at) sjtu.edu.cn
 # Search Engine Optimization (SEO)
 keywords: huabin liu, liu huabin, huabinliu sjtu, huabinliu, liuhuabin, huabin liu sjtu
 canonical: https://r00kie-liu.github.io/
-description: Huabin Liu is a fifth-year Ph.D student at Shanghai Jiao Tong University (SJTU). His research lies in few-shot video learning, video understanding, video reasoning & captioning.
+description: Huabin Liu received his Ph.D. from Shanghai Jiao Tong University (SJTU). His research lies in few-shot video learning, video understanding, video reasoning & captioning.
 
 # The option is used to enable the Johns Hopkins template.
 enable_hopkins_logo: true
