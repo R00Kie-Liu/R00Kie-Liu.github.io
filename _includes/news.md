@@ -3,7 +3,7 @@
 <h2 style="margin: 60px 0px 10px;">News</h2>
 
 <ul>
-<li><strong>[06/2025]</strong> 👨‍🎓 I successfully defended my Ph.D. dissertation at SJTU！</li>
+<li><strong>[06/2025]</strong> 👨‍🎓 I successfully defended my <strong>Ph.D.</strong>.</li> dissertation at SJTU！</li>
 <li><strong>[06/2025]</strong> 😊 One paper about <a href="./pub_img/entailment.txt">video recognition</a> is accepted to <strong>TCSVT</strong>.</li>
 <li><strong>[02/2025]</strong> 😭 One paper about <a href="./pub_img/entailment.txt">video QA & reasoning</a> is accepted to <strong>CVPR 2025</strong>, many thanks to Filip and Cees!</li>
 <li><strong>[09/2024]</strong> 😊 One paper about <a href="./pub_img/mecd.txt">video causal discovery & reasoning</a> is accepted to <strong>NeurIPS 2024</strong>.</li>
