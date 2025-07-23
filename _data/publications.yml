@@ -7,6 +7,7 @@ main:
     pdf: https://arxiv.org/abs/2506.10516
     image: ./pub_img/cogstream.png
     bibtex: ./pub_img/cogstream.txt
+    page: https://arxiv.org/abs/2506.10516
 
   - title: "CSTA: Spatial-Temporal Causal Adaptive Learning for Exemplar-Free Video Class-Incremental Learning"
     authors: Tieyuan Chen, <strong>Huabin Liu<sup>&dagger;</sup></strong>, Chern Hong Lim, John See, Xing Gao, Junhui Hou, Weiyao Lin<sup>&dagger;</sup> (<strong><sup>&dagger;</sup> Corresponding author</strong>)
