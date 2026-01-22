@@ -16,9 +16,9 @@ My research focus on computer vision, especially on **video analysis**. My previ
 
 {% include_relative _includes/news.md %}
 
-{% include_relative _includes/publications.md %}
-
 {% include_relative _includes/tech.md %}
+
+{% include_relative _includes/publications.md %}
 
 {% include_relative _includes/awards.md %}
 
