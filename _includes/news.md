@@ -20,6 +20,5 @@
   <li><strong>[07/2022]</strong> 😁 Our paper about <a href="https://arxiv.org/pdf/2207.09759">few-shot action recognition</a> is accepted to <strong>ACM MM 2022</strong>.</li>
   <li><strong>[11/2021]</strong> 😊 Our paper about <a href="https://ojs.aaai.org/index.php/AAAI/article/view/20029/19788">few-shot action recognition</a> is accepted to <strong>AAAI 2022</strong>.</li>
    <li><strong>[05/2021]</strong> 🥳 Our paper about <a href="https://ieeexplore.ieee.org/abstract/document/9459475/">fine-grained image recognition</a> is accepted to <strong>TMM</strong> journal.</li>
-  <li><strong>[12/2020]</strong> 🏆 Our hosted challenge won the <strong>best Challenge organization award</strong> in ACM MM 2020.</li>
-  <li><strong>[10/2020]</strong> We will host the <a href="http://humaninevents.org/">HiEve Challenge</a> on ACM MM 2020.</li>
+  <li><strong>[12/2020]</strong> 🏆 Our hosted <a href="http://humaninevents.org/">HiEve Challenge</a> won the <strong>best Challenge organization award</strong> in ACM MM 2020.</li>
 </ul>
