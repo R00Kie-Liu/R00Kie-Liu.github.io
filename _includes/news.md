@@ -3,7 +3,7 @@
 <h2 style="margin: 60px 0px 10px;">News</h2>
 
 <ul>
-<li><strong>[12/2025]</strong> 🤖 Our team release the largest diffusion large language model (dLLM) <strong>LLaDA2.0</strong> <a href="https://huggingface.co/collections/inclusionAI/llada-20">!</li>
+<li><strong>[12/2025]</strong> 🤖 Our team release the largest diffusion large language model (dLLM) <strong>LLaDA2.0<a href="https://huggingface.co/collections/inclusionAI/llada-20"></strong>!</li>
 <li><strong>[11/2025]</strong> 🥳 One paper about <a href="./pub_img/cogstream.txt">Streaming Video Reasoning</a> is accepted to <strong>AAAI</strong>.</li>
 <li><strong>[06/2025]</strong> 👨‍🎓 I successfully defended my <strong>Ph.D.</strong> dissertation at SJTU！</li>
 <li><strong>[06/2025]</strong> 😊 One paper about <a href="./pub_img/CSTA.txt">video recognition</a> is accepted to <strong>TCSVT</strong>.</li>
