@@ -3,7 +3,7 @@ main:
   - title: "LLaDA2.0: Scaling Up Diffusion Language Models to 100B"
     authors: Inclusion AI Team, Ant Group
     conference_short: Report
-    conference: Technical Report
+    conference: Technical Report, 2025
     pdf: https://arxiv.org/abs/2512.15745
     image: ./pub_img/llada2.png
     bibtex: ./pub_img/llada2.txt
