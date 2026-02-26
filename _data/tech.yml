@@ -1,5 +1,14 @@
 main:
 
+  - title: "LLaDA2.1: Speeding Up Text Diffusion via Token Editing"
+    authors: Inclusion AI Team, Ant Group
+    conference_short: Report
+    conference: Technical Report, 2026
+    pdf: https://arxiv.org/abs/2602.08676
+    image: ./pub_img/llada21.png
+    bibtex: ./pub_img/llada21.txt
+    page: https://huggingface.co/collections/inclusionAI/llada21
+
   - title: "LLaDA2.0: Scaling Up Diffusion Language Models to 100B"
     authors: Inclusion AI Team, Ant Group
     conference_short: Report

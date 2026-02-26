@@ -1,4 +1,11 @@
 main:
+  - title: Few-shot Action Recognition via Intra-and Inter-Video Information Maximization
+    authors: <strong>Huabin Liu</strong>, Weiyao Lin, Tieyuan Chen, Yuxi Li, Shuyuan Li, John See
+    conference_short: TPAMI
+    conference: IEEE Transactions on Pattern Analysis and Machine Intelligence
+    pdf: https://arxiv.org/pdf/2305.06114
+    bibtex: ./pub_img/vim.txt
+    image: ./pub_img/vim.png
 
   - title: "CogStream: Context-guided Streaming Video Question Answering"
     authors: Zicheng Zhao*, Kangyu Wang*, Shijie Li*, Rui Qian, Weiyao Lin, <strong>Huabin Liu<sup>&dagger;</sup></strong> (<strong><sup>&dagger;</sup> Corresponding author</strong>，<strong>* Equal Contribution</strong>)
@@ -50,14 +57,6 @@ main:
     bibtex: ./pub_img/dibs.txt
     image: ./pub_img/dibs.png
     code: https://github.com/haowuxc/DIBS
-
-  - title: Few-shot Action Recognition via Intra-and Inter-Video Information Maximization
-    authors: <strong>Huabin Liu</strong>, Weiyao Lin, Tieyuan Chen, Yuxi Li, Shuyuan Li, John See
-    conference_short: Preprint
-    conference: Submit to TPAMI (under review).
-    pdf: https://arxiv.org/pdf/2305.06114
-    bibtex: ./pub_img/vim.txt
-    image: ./pub_img/vim.png
 
   - title: "Achieving Procedure-Aware Instructional Video Correlation Learning under Weak Supervision from a Collaborative Perspective"
     authors: Tianyao He, <strong>Huabin Liu</strong>, Zeling Ni, Yuxi Li, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Weiyao Lin

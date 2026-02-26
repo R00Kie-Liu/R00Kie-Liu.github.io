@@ -1,0 +1,6 @@
+@article{bie2026llada2,
+  title={LLaDA2. 1: Speeding Up Text Diffusion via Token Editing},
+  author={Bie, Tiwei and Cao, Maosong and Cao, Xiang and Chen, Bingsen and Chen, Fuyuan and Chen, Kun and Du, Lun and Feng, Daozhuo and Feng, Haibo and Gong, Mingliang and others},
+  journal={arXiv preprint arXiv:2602.08676},
+  year={2026}
+}
