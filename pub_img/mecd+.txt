@@ -1,0 +1,7 @@
+@article{chen2025mecd+,
+  title={MECD+: Unlocking Event-Level Causal Graph Discovery for Video Reasoning},
+  author={Chen, Tieyuan and Liu, Huabin and Wang, Yi and Chen, Yihang and He, Tianyao and Gan, Chaofan and He, Huanyu and Lin, Weiyao},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year={2025},
+  publisher={IEEE}
+}

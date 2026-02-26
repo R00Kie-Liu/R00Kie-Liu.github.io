@@ -2,10 +2,18 @@ main:
   - title: Few-shot Action Recognition via Intra-and Inter-Video Information Maximization
     authors: <strong>Huabin Liu</strong>, Weiyao Lin, Tieyuan Chen, Yuxi Li, Shuyuan Li, John See
     conference_short: TPAMI
-    conference: IEEE Transactions on Pattern Analysis and Machine Intelligence
+    conference: IEEE Transactions on Pattern Analysis and Machine Intelligence <strong>(TPAMI)</strong>, 2026.
     pdf: https://arxiv.org/pdf/2305.06114
     bibtex: ./pub_img/vim.txt
     image: ./pub_img/vim.png
+
+  - title: "MECD+: Unlocking Event-Level Causal Graph Discovery for Video Reasoning"
+    authors: Tieyuan Chen, <strong>Huabin Liu</strong>, Yi Wang, Yihang Chen, Tianyao He, Chaofan Gan, Huanyu He, Weiyao Lin
+    conference_short: TPAMI
+    conference: IEEE Transactions on Pattern Analysis and Machine Intelligence <strong>(TPAMI)</strong>, 2025.
+    pdf: https://ieeexplore.ieee.org/abstract/document/11219357/
+    bibtex: ./pub_img/mecd+.txt
+    image: ./pub_img/mecd+.png
 
   - title: "CogStream: Context-guided Streaming Video Question Answering"
     authors: Zicheng Zhao*, Kangyu Wang*, Shijie Li*, Rui Qian, Weiyao Lin, <strong>Huabin Liu<sup>&dagger;</sup></strong> (<strong><sup>&dagger;</sup> Corresponding author</strong>，<strong>* Equal Contribution</strong>)
