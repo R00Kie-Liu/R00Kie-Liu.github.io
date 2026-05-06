@@ -33,16 +33,19 @@
     <link rel="canonical" href="{{site.canonical}}"/>
     <link rel="icon" media="(prefers-color-scheme:dark)" href="{{ site.favicon_dark }}" type="image/png" />
     <link rel="icon" media="(prefers-color-scheme:light)" href="{{ site.favicon }}" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,500;1,600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
     <link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin=anonymous>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="./assets/css/style.css">
     <link rel="stylesheet" href="./assets/css/pub.css">
     <link rel="stylesheet" href="./assets/css/nav.css">
-    
+
     <script src="./assets/js/github-stars.js"></script>
     <script type="text/javascript" src="./assets/js/jquery.js"></script>
     <script src="./assets/js/favicon-switcher.js" type="application/javascript"></script>
-    
+
     <script type="text/javascript">
       function toggle_vis(id) {
           var e = document.getElementById(id);
@@ -53,58 +56,102 @@
       }
    </script>
 
-   <script>
-      function myFunction() {
-      var x = document.getElementById("myLinks");
-      if (x.style.display === "block") {
-        x.style.display = "none";
-      } else {
-        x.style.display = "block";
-      }
-      }
-   </script>
-   
-
   </head>
   <body>
-    
+
+    <!-- Top Navigation Bar -->
     <div class="topnav">
-
       <a href="{{ site.affiliation_link }}"><img width="140" src="{{ site.affiliation_logo }}"></a>
-
       <div id="myLinks">
       {% include navigation.md %}
       </div>
-
-      <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+      <a href="javascript:void(0);" class="icon" id="navMenuBtn" aria-label="Menu">
         <i class="fa fa-bars"></i>
       </a>
-      
     </div>
-    
+
+    <!-- Mobile Slide-out Drawer -->
+    <div class="nav-overlay" id="navOverlay"></div>
+    <nav class="nav-drawer" id="navDrawer">
+      <div class="nav-drawer-header">
+        <span>Menu</span>
+        <button class="nav-drawer-close" id="navDrawerClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="nav-drawer-links">
+        <a href="#about-me"><i class="fas fa-user" style="width:20px;text-align:center;color:#2563EB"></i> Bio</a>
+        <a href="#news"><i class="fas fa-newspaper" style="width:20px;text-align:center;color:#2563EB"></i> News</a>
+        <a href="#Tech report"><i class="fas fa-file-alt" style="width:20px;text-align:center;color:#2563EB"></i> Tech Report</a>
+        <a href="#publications"><i class="fas fa-book" style="width:20px;text-align:center;color:#2563EB"></i> Publications</a>
+        <a href="#awards"><i class="fas fa-trophy" style="width:20px;text-align:center;color:#2563EB"></i> Awards</a>
+        <a href="#contact"><i class="fas fa-envelope" style="width:20px;text-align:center;color:#2563EB"></i> Contact</a>
+      </div>
+    </nav>
+
+    <script>
+    (function() {
+      var btn = document.getElementById('navMenuBtn');
+      var drawer = document.getElementById('navDrawer');
+      var overlay = document.getElementById('navOverlay');
+      var closeBtn = document.getElementById('navDrawerClose');
+
+      function openDrawer() {
+        drawer.classList.add('active');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeDrawer() {
+        drawer.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      if (btn) btn.addEventListener('click', openDrawer);
+      if (overlay) overlay.addEventListener('click', closeDrawer);
+      if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+
+      // Close drawer when a link is clicked
+      var links = drawer ? drawer.querySelectorAll('a') : [];
+      links.forEach(function(link) {
+        link.addEventListener('click', closeDrawer);
+      });
+
+      // Close on Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDrawer();
+      });
+    })();
+    </script>
 
     <script src="./assets/js/vanilla-back-to-top.min.js"></script>
     <script>addBackToTop({
-        backgroundColor: '#fff',
-        innerHTML: 'Back to Top',
-        textColor: '#333'
+        backgroundColor: 'var(--bg-card)',
+        innerHTML: '<i class="fas fa-arrow-up" style="font-size:12px"></i>',
+        textColor: 'var(--text-primary)',
       })
     </script>
     <style>
         #back-to-top {
-          border: 1px solid #ccc;
-          border-radius: 0;
-          font-size: 15px;
-          width: 100px;
+          border: 1px solid var(--border-color);
+          border-radius: 24px !important;
+          font-size: 13px;
+          width: auto !important;
+          padding: 0 16px;
           text-align: center;
-          line-height: 30px;
-          height: 30px;
+          line-height: 36px;
+          height: 36px !important;
+          box-shadow: var(--shadow-md);
+          transition: all 0.3s ease;
+        }
+        #back-to-top:hover {
+          background: var(--accent-gradient) !important;
+          color: #fff !important;
+          border-color: transparent !important;
         }
     </style>
-    
+
     <div class="wrapper">
       <header>
-        
+
         {% if site.avatar %}
         <a class="image avatar"><img src="{{ site.avatar }}" alt="avatar" /></a>
         {% endif %}
@@ -112,7 +159,7 @@
         <h1>{{ site.title }}</h1>
 
         {% if site.position %}
-        <position style="font-size:1.10rem;">{{ site.position }}</position>
+        <position style="font-size:1.05rem;">{{ site.position }}</position>
         <br>
         {% endif %}
         {% if site.affiliation %}
@@ -126,7 +173,7 @@
         <br>
         <email>{{ site.email2 }}</email>
         {% endif %}
-        
+
         <br>
         <br>
 
@@ -140,31 +187,31 @@
         {% if site.link_type == 'icon' %}
         <div class="social-icons">
         {% if site.google_scholar %}
-        <a style="margin: 0 5px 0 0" href="{{ site.google_scholar }}">
+        <a style="margin: 0 5px 0 0" href="{{ site.google_scholar }}" title="Google Scholar">
           <i class="ai ai-google-scholar" style="font-size:1.2rem"></i>
-        </a>  
+        </a>
         {% endif %}
 
         {% if site.cv_link %}
-        <a style="margin: 0 5px 0 0" href="{{ site.cv_link }}">
+        <a style="margin: 0 5px 0 0" href="{{ site.cv_link }}" title="CV">
           <i class="ai ai-cv" style="font-size:1.3rem;"></i>
         </a>
         {% endif %}
 
         {% if site.github_link %}
-        <a style="margin: 0 5px 0 0" href="{{ site.github_link }}">
+        <a style="margin: 0 5px 0 0" href="{{ site.github_link }}" title="GitHub">
           <i class="fab fa-github"></i>
         </a>
         {% endif %}
 
         {% if site.linkedin %}
-        <a style="margin: 0 5px 0 0" href="{{ site.linkedin }}">
+        <a style="margin: 0 5px 0 0" href="{{ site.linkedin }}" title="LinkedIn">
           <i class="fab fa-linkedin"></i>
         </a>
         {% endif %}
 
         {% if site.twitter %}
-        <a style="margin: 0 0 0 0" href="{{ site.twitter }}">
+        <a style="margin: 0 0 0 0" href="{{ site.twitter }}" title="X (Twitter)">
           <i class="fab fa-x-twitter"></i>
         </a>
         {% endif %}
@@ -188,7 +235,7 @@
               var showAs = modiDate.getDate() + ". " + monthNames[modiDate.getMonth()] + " " + modiDate.getFullYear();
               document.write(showAs);
             </script>
-      </small> 
+      </small>
       {% endif %}
 
       {% if site.footnote %}
@@ -202,10 +249,10 @@
       <div style="width:300px;">
         <script type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?cl=ffffff&w=250&t=n&d=FA_jk6V4nIV-wz5WF4BjL4dxmuUtXphDxpKGz-E3Lfo&co=92c6eb"></script>
     </div>
-      
+
       </section>
       <footer>
-        <div style="font: 12px/1.2 Crimson Pro, serif">
+        <div style="font: 12px/1.2 Inter, sans-serif">
         <p>
         <small>
         {% if site.imprint %}
@@ -222,6 +269,7 @@
       </footer>
     </div>
     <script src="{{ "/assets/js/scale.fix.js" | relative_url }}"></script>
+    <script src="./assets/js/scroll-effects.js"></script>
 
   </body>
 </html>

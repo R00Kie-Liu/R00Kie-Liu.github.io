@@ -27,7 +27,7 @@ main:
   - title: "CSTA: Spatial-Temporal Causal Adaptive Learning for Exemplar-Free Video Class-Incremental Learning"
     authors: Tieyuan Chen, <strong>Huabin Liu<sup>&dagger;</sup></strong>, Chern Hong Lim, John See, Xing Gao, Junhui Hou, Weiyao Lin<sup>&dagger;</sup> (<strong><sup>&dagger;</sup> Corresponding author</strong>)
     conference_short: TCSVT
-    conference: IEEE Transactions on Circuits and Systems for Video Technology <strong>(TSCVT)</strong>, 2025.
+    conference: IEEE Transactions on Circuits and Systems for Video Technology <strong>(TCSVT)</strong>, 2025.
     pdf: https://arxiv.org/abs/2501.07236
     image: ./pub_img/CSTA.png
     bibtex: ./pub_img/CSTA.txt
