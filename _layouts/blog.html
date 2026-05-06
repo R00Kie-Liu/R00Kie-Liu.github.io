@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: 'en-US' }}">
+  <head>
+    <script>
+      (function() {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark') document.documentElement.classList.add('dark-mode');
+        else if (theme === 'light') document.documentElement.classList.add('light-mode');
+      })();
+    </script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>Blog | {{ site.title }}</title>
+    <meta name="description" content="{{ site.title }}'s learning notes and blog">
+
+    <link rel="canonical" href="{{ page.url | absolute_url }}"/>
+    <link rel="icon" media="(prefers-color-scheme:dark)" href="{{ site.favicon_dark }}" type="image/png" />
+    <link rel="icon" media="(prefers-color-scheme:light)" href="{{ site.favicon }}" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,500;1,600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/nav.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/blog.css' | relative_url }}">
+  </head>
+  <body>
+
+    <!-- Top Navigation Bar -->
+    <div class="topnav">
+      <a href="{{ '/' | relative_url }}"><img width="120" src="{{ '/assets/img/inclusionai_logo.png' | relative_url }}"></a>
+      <div id="myLinks">
+        <a class="normal" href="{{ '/' | relative_url }}">Home</a>
+        <a class="normal" href="{{ '/blog' | relative_url }}">Blog</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
+    </div>
+
+    <div class="blog-container">
+      <div class="blog-header">
+        <h1><i class="fas fa-book-open"></i> Learning Notes</h1>
+        <p>Notes and thoughts on research, engineering, and everything in between.</p>
+      </div>
+
+      {% assign posts_by_year = site.posts | group_by_exp: "post", "post.date | date: '%Y'" %}
+      {% for year in posts_by_year %}
+      <div class="blog-year">
+        <h2 class="year-title">{{ year.name }}</h2>
+        <div class="post-list">
+          {% for post in year.items %}
+          <a href="{{ post.url | relative_url }}" class="post-card">
+            <div class="post-card-body">
+              <h3 class="post-card-title">{{ post.title }}</h3>
+              {% if post.description %}
+              <p class="post-card-desc">{{ post.description }}</p>
+              {% else %}
+              <p class="post-card-desc">{{ post.excerpt | strip_html | truncate: 120 }}</p>
+              {% endif %}
+              <div class="post-card-meta">
+                <span class="post-card-date">{{ post.date | date: "%b %d" }}</span>
+                {% if post.tags.size > 0 %}
+                <div class="post-card-tags">
+                  {% for tag in post.tags limit:3 %}
+                  <span class="tag">{{ tag }}</span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            <i class="fas fa-chevron-right post-card-arrow"></i>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if site.posts.size == 0 %}
+      <div class="blog-empty">
+        <i class="fas fa-pen-fancy"></i>
+        <p>No notes yet. Coming soon!</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <script>
+    (function() {
+      var toggle = document.getElementById('themeToggle');
+      var icon = document.getElementById('themeIcon');
+      var html = document.documentElement;
+      function isDark() {
+        return html.classList.contains('dark-mode') ||
+          (!html.classList.contains('light-mode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
+      function updateIcon() { icon.className = isDark() ? 'fas fa-sun' : 'fas fa-moon'; }
+      updateIcon();
+      toggle.addEventListener('click', function() {
+        if (isDark()) {
+          html.classList.remove('dark-mode');
+          html.classList.add('light-mode');
+          localStorage.setItem('theme', 'light');
+        } else {
+          html.classList.remove('light-mode');
+          html.classList.add('dark-mode');
+          localStorage.setItem('theme', 'dark');
+        }
+        updateIcon();
+      });
+    })();
+    </script>
+
+  </body>
+</html>
