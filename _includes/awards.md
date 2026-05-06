@@ -1,6 +1,4 @@
-<h1 id="awards"></h1>
-
-<h2 style="margin: 60px 0px 10px;">Awards</h2>
+<h2 id="awards" style="margin: 60px 0px 10px;">Awards</h2>
 
 <ul class="awards-list">
   <li><strong>[06/2025]</strong> Outstanding Ph.D. Graduate of SJTU.</li>

@@ -1,6 +1,4 @@
-<h1 id="Tech report"></h1>
-
-<h2 style="margin: 60px 0px -15px;">Tech Report <span style="font-size:15px;">[</span><a href="https://scholar.google.com/citations?user=hicoLSQAAAAJ&hl" target="_blank" style="font-size:15px;">Google Scholar</a><span style="font-size:15px;">]</span><span style="font-size:15px;">[</span><a href="https://dblp.org/pid/241/2160-1.html" target="_blank" style="font-size:15px;">DBLP</a><span style="font-size:15px;">]</span></h2>
+<h2 id="Tech report" style="margin: 60px 0px -15px;">Tech Report <span style="font-size:15px;">[</span><a href="https://scholar.google.com/citations?user=hicoLSQAAAAJ&hl" target="_blank" style="font-size:15px;">Google Scholar</a><span style="font-size:15px;">]</span><span style="font-size:15px;">[</span><a href="https://dblp.org/pid/241/2160-1.html" target="_blank" style="font-size:15px;">DBLP</a><span style="font-size:15px;">]</span></h2>
 
 
 <div class="publications">

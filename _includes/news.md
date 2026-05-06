@@ -1,6 +1,4 @@
-<h1 id="news"></h1>
-
-<h2 style="margin: 60px 0px 10px;">News</h2>
+<h2 id="news" style="margin: 60px 0px 10px;">News</h2>
 
 <ul class="news-list">
 <li><strong>[02/2026]</strong> 😁 Paper about <a href="./pub_img/vim.txt">Few-shot action recogition</a> is accepted to <strong>TPAMI</strong>.</li>

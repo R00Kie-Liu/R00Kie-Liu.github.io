@@ -67,7 +67,7 @@ main:
     code: https://github.com/haowuxc/DIBS
 
   - title: "Achieving Procedure-Aware Instructional Video Correlation Learning under Weak Supervision from a Collaborative Perspective"
-    authors: Tianyao He, <strong>Huabin Liu</strong>, Zeling Ni, Yuxi Li, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Weiyao Lin
+    authors: Tianyao He*, <strong>Huabin Liu*</strong>, Zeling Ni, Yuxi Li, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Weiyao Lin (<strong>* Co-first author</strong>)
     conference_short: IJCV
     conference: International Journal of Computer Vision <strong>(IJCV)</strong>, 2024
     image: ./pub_img/cpa_ijcv.png

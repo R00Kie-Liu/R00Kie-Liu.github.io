@@ -61,7 +61,7 @@
 
     <!-- Top Navigation Bar -->
     <div class="topnav">
-      <a href="{{ site.affiliation_link }}"><img width="140" src="{{ site.affiliation_logo }}"></a>
+      <a href="https://github.com/inclusionAI"><img width="120" src="./assets/img/inclusionai_logo.png"></a>
       <div id="myLinks">
       {% include navigation.md %}
       </div>
@@ -158,14 +158,27 @@
 
         <h1>{{ site.title }}</h1>
 
-        {% if site.position %}
-        <position style="font-size:1.05rem;">{{ site.position }}</position>
-        <br>
-        {% endif %}
-        {% if site.affiliation %}
-        <a href="{{ site.affiliation_link }}" rel="noopener"><autocolor>{{ site.affiliation }}</autocolor></a>
-        <br>
-        {% endif %}
+        <div class="affiliation-cards">
+          {% if site.position %}
+          <a href="{{ site.affiliation_link }}" class="affiliation-card" rel="noopener">
+            <i class="fas fa-briefcase"></i>
+            <div>
+              <span class="aff-role">{{ site.position }}</span>
+              <span class="aff-inst">{{ site.affiliation }}</span>
+            </div>
+          </a>
+          {% endif %}
+          {% if site.position2 %}
+          <a href="{{ site.affiliation2_link }}" class="affiliation-card" rel="noopener">
+            <i class="fas fa-graduation-cap"></i>
+            <div>
+              <span class="aff-role">{{ site.position2 }}</span>
+              <span class="aff-inst">{{ site.affiliation2 }}</span>
+            </div>
+          </a>
+          {% endif %}
+        </div>
+
         {% if site.email %}
         <email>{{ site.email }}</email>
         {% endif %}
@@ -218,6 +231,181 @@
         </div>
         {% endif %}
         <br>
+
+        <!-- Diffusion LM Unmasking Demo -->
+        <div class="diffusion-demo">
+          <div class="diffusion-header">
+            <span class="diffusion-label">What I Work On</span>
+          </div>
+          <div class="diffusion-progress"><div class="diffusion-progress-bar" id="diffProgress"></div></div>
+          <div class="diffusion-tokens" id="diffTokens"></div>
+          <div class="diffusion-footer">
+            <div class="diffusion-controls">
+              <button class="diff-btn" id="diffPrev" title="Previous"><i class="fas fa-backward"></i></button>
+              <button class="diff-btn" id="diffPause" title="Pause / Play"><i class="fas fa-pause" id="diffPauseIcon"></i></button>
+              <button class="diff-btn" id="diffNext" title="Next"><i class="fas fa-forward"></i></button>
+            </div>
+            <span class="diffusion-step" id="diffStep">step 0/10</span>
+          </div>
+        </div>
+
+        <script>
+        (function() {
+          var phrases = [
+            'Diffusion Large Language Models',
+            'dLLM Pre-training',
+            'Video Reasoning',
+            'Few-shot Action Recognition',
+            'MoE Architecture',
+            'Causal Discovery',
+            'Dense Video Captioning',
+            'Video QA',
+            'Efficient Training',
+            'Streaming Video',
+            'Token Unmasking'
+          ];
+          var totalSteps = 10;
+          var MASK_CHAR = '█';
+          var container = document.getElementById('diffTokens');
+          var stepEl = document.getElementById('diffStep');
+          var progressBar = document.getElementById('diffProgress');
+          var prevBtn = document.getElementById('diffPrev');
+          var pauseBtn = document.getElementById('diffPause');
+          var nextBtn = document.getElementById('diffNext');
+          var pauseIcon = document.getElementById('diffPauseIcon');
+
+          var phraseIdx = 0;
+          var paused = false;
+          var autoTimer = null;
+          var delayTimer = null;
+          var currentSpans = [];
+          var currentOrder = [];
+          var currentStep = 0;
+          var perStep = 1;
+
+          function shuffle(arr) {
+            for (var i = arr.length - 1; i > 0; i--) {
+              var j = Math.floor(Math.random() * (i + 1));
+              var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+            }
+            return arr;
+          }
+
+          function clearTimers() {
+            if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+            if (delayTimer) { clearTimeout(delayTimer); delayTimer = null; }
+          }
+
+          function renderStep(s) {
+            var revealed = Math.min(s * perStep, currentSpans.length);
+            for (var j = 0; j < currentSpans.length; j++) {
+              var sp = currentSpans[currentOrder[j]];
+              if (j < revealed) {
+                sp.textContent = sp.getAttribute('data-char');
+                sp.classList.remove('masked');
+                sp.classList.add('revealed');
+              } else {
+                sp.textContent = MASK_CHAR;
+                sp.classList.remove('revealed');
+                sp.classList.add('masked');
+              }
+            }
+            var display = Math.min(s, totalSteps);
+            stepEl.innerHTML = 'step <span class="step-current">' + display + '</span>/' + totalSteps;
+            progressBar.style.width = (display / totalSteps * 100) + '%';
+          }
+
+          function initPhrase(idx) {
+            clearTimers();
+            container.classList.remove('decode-complete');
+            var text = phrases[idx % phrases.length];
+            container.innerHTML = '';
+            currentSpans = [];
+            for (var i = 0; i < text.length; i++) {
+              var s = document.createElement('span');
+              s.className = 'diff-token masked';
+              s.setAttribute('data-char', text[i]);
+              s.textContent = text[i] === ' ' ? ' ' : MASK_CHAR;
+              container.appendChild(s);
+              if (text[i] !== ' ') currentSpans.push(s);
+            }
+            currentOrder = shuffle(Array.from({length: currentSpans.length}, function(_, i) { return i; }));
+            perStep = Math.max(1, Math.ceil(currentSpans.length / totalSteps));
+            currentStep = 0;
+            renderStep(0);
+          }
+
+          function startAutoPlay() {
+            clearTimers();
+            autoTimer = setInterval(function() {
+              if (paused) return;
+              currentStep++;
+              renderStep(currentStep);
+              if (currentStep * perStep >= currentSpans.length) {
+                clearInterval(autoTimer); autoTimer = null;
+                container.classList.add('decode-complete');
+                delayTimer = setTimeout(function() {
+                  container.classList.remove('decode-complete');
+                  delayTimer = setTimeout(function() {
+                    phraseIdx++;
+                    initPhrase(phraseIdx);
+                    startAutoPlay();
+                  }, 800);
+                }, 1500);
+              }
+            }, 350);
+          }
+
+          pauseBtn.addEventListener('click', function() {
+            paused = !paused;
+            pauseIcon.className = paused ? 'fas fa-play' : 'fas fa-pause';
+            if (!paused && !autoTimer) {
+              if (currentStep * perStep >= currentSpans.length) {
+                phraseIdx++;
+                initPhrase(phraseIdx);
+              }
+              startAutoPlay();
+            }
+          });
+
+          prevBtn.addEventListener('click', function() {
+            if (currentStep > 0) {
+              clearTimers();
+              paused = true;
+              pauseIcon.className = 'fas fa-play';
+              currentStep--;
+              container.classList.remove('decode-complete');
+              renderStep(currentStep);
+            }
+          });
+
+          nextBtn.addEventListener('click', function() {
+            var maxStep = Math.ceil(currentSpans.length / perStep);
+            if (currentStep < maxStep) {
+              clearTimers();
+              paused = true;
+              pauseIcon.className = 'fas fa-play';
+              currentStep++;
+              renderStep(currentStep);
+              if (currentStep * perStep >= currentSpans.length) {
+                container.classList.add('decode-complete');
+              }
+            }
+          });
+
+
+          function boot() {
+            initPhrase(phraseIdx);
+            startAutoPlay();
+          }
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+          } else {
+            boot();
+          }
+        })();
+        </script>
 
       </header>
       <section>
