@@ -55,8 +55,38 @@
   --btn-text: #2563EB;
 }
 
+html.dark-mode {
+  --bg-primary: #0c1425;
+  --bg-secondary: #131d30;
+  --bg-card: #162033;
+  --bg-sidebar: #0f1829;
+  --text-primary: #e8ecf2;
+  --text-secondary: #9ca8bc;
+  --text-muted: #5a6a80;
+  --accent: #5b8def;
+  --accent-dark: #c9d5e8;
+  --accent-light: #8ab4ff;
+  --accent-gradient: linear-gradient(135deg, #1a3a5c 0%, #0f2440 100%);
+  --accent-blue-gradient: linear-gradient(135deg, #5b8def 0%, #2563EB 100%);
+  --accent-hover: #8ab4ff;
+  --border-color: #1e2d44;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.25);
+  --nav-bg: rgba(12, 20, 37, 0.85);
+  --nav-blur: blur(20px);
+  --pub-badge-bg: #5b8def;
+  --link-color: #5b8def;
+  --link-hover: #8ab4ff;
+  --news-dot: #5b8def;
+  --news-line: #1e2d44;
+  --code-bg: #131d30;
+  --btn-border: #5b8def;
+  --btn-text: #5b8def;
+}
 @media (prefers-color-scheme: dark) {
-  :root {
+  html:not(.light-mode) {
     --bg-primary: #0c1425;
     --bg-secondary: #131d30;
     --bg-card: #162033;
@@ -345,8 +375,11 @@ header h1 { font-size: var(--text-xl); margin-bottom: 8px; }
 .diff-btn:active {
   transform: scale(0.92);
 }
+html.dark-mode .diff-btn:hover {
+  background: rgba(91, 141, 239, 0.12);
+}
 @media (prefers-color-scheme: dark) {
-  .diff-btn:hover {
+  html:not(.light-mode) .diff-btn:hover {
     background: rgba(91, 141, 239, 0.12);
   }
 }

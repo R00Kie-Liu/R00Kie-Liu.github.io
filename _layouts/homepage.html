@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="{{ site.lang | default: "en-US" }}">
   <head>
+    <script>
+      (function() {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark') document.documentElement.classList.add('dark-mode');
+        else if (theme === 'light') document.documentElement.classList.add('light-mode');
+      })();
+    </script>
     <meta name="google-site-verification" content="fgPBrU0Mamwb7e_kouimz6G647ni98frkq-lyftkjyY" />
     <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EPYNTGF9Y1"></script>
@@ -65,6 +72,9 @@
       <div id="myLinks">
       {% include navigation.md %}
       </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
       <a href="javascript:void(0);" class="icon" id="navMenuBtn" aria-label="Menu">
         <i class="fa fa-bars"></i>
       </a>
@@ -458,6 +468,42 @@
     </div>
     <script src="{{ "/assets/js/scale.fix.js" | relative_url }}"></script>
     <script src="./assets/js/scroll-effects.js"></script>
+
+    <script>
+    (function() {
+      var toggle = document.getElementById('themeToggle');
+      var icon = document.getElementById('themeIcon');
+      var html = document.documentElement;
+
+      function isDark() {
+        return html.classList.contains('dark-mode') ||
+          (!html.classList.contains('light-mode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
+
+      function updateIcon() {
+        icon.className = isDark() ? 'fas fa-sun' : 'fas fa-moon';
+      }
+
+      updateIcon();
+
+      toggle.addEventListener('click', function() {
+        if (isDark()) {
+          html.classList.remove('dark-mode');
+          html.classList.add('light-mode');
+          localStorage.setItem('theme', 'light');
+        } else {
+          html.classList.remove('light-mode');
+          html.classList.add('dark-mode');
+          localStorage.setItem('theme', 'dark');
+        }
+        updateIcon();
+      });
+
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+        if (!localStorage.getItem('theme')) updateIcon();
+      });
+    })();
+    </script>
 
   </body>
 </html>
