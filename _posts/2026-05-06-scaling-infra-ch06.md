@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scaling Book 入门第 6 章：分片矩阵乘法 — 分布式计算的核心"
-date: 2026-05-07
+date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 ---
 

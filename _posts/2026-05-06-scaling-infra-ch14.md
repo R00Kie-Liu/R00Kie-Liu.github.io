@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scaling Book 入门第 14 章：JAX 并行编程入门（选读）"
-date: 2026-05-07
+date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '工具']
 ---
 

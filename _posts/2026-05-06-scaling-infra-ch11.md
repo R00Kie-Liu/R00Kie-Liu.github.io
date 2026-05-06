@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scaling Book 入门第 11 章：推理优化 — KV Cache / Continuous Batching / 量化"
-date: 2026-05-07
+date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '推理', 'SGLang']
 ---
 

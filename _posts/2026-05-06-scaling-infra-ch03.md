@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scaling Book 入门第 3 章：内存层级与带宽 — 数据如何流动"
-date: 2026-05-07
+date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 ---
 

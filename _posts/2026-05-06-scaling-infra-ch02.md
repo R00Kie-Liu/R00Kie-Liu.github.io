@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scaling Book 入门第 2 章：性能分析基石 — Roofline 模型"
-date: 2026-05-07
+date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 ---
 

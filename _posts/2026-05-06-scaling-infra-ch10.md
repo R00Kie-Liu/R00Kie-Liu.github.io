@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scaling Book 入门第 10 章：推理基础 — Prefill vs Generation"
-date: 2026-05-07
+date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '推理', 'SGLang']
 ---
 
