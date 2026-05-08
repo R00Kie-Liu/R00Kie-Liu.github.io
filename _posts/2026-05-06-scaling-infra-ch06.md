@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 
 > **本章目标**：理解当矩阵被分片到多个设备上时，如何高效地完成矩阵乘法，以及不同分片方式对通信开销的影响。
 >
-> **对应原书**：Chapter 3 (Sharded Matrices and How to Multiply Them)  
+> **对应原书**：[Chapter 3 (Sharded Matrices and How to Multiply Them)](https://jax-ml.github.io/scaling-book/sharding)  
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 5, 约 3 小时
 
 ---
@@ -883,7 +883,7 @@ def all_to_all_fn(x):
 
 ## 进一步阅读
 
-- 原书 Chapter 3: Sharded Matrices and How to Multiply Them
+- [原书 Chapter 3: Sharded Matrices and How to Multiply Them](https://jax-ml.github.io/scaling-book/sharding)
 - [Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism](https://arxiv.org/abs/1909.08053)
 - [Megatron-LM v2: Reducing Activation Recomputation](https://arxiv.org/abs/2205.05198)
 - [Wang et al., Overlap Communication with Dependent Computation via Decomposition in Large Deep Learning Models](https://dl.acm.org/doi/pdf/10.1145/3567955.3567959) — Collective Matmul 论文

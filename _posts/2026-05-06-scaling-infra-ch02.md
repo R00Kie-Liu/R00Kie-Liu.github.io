@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 
 > **本章目标**：掌握 Roofline 模型——用一个简单框架判断任何算法在硬件上是"算力瓶颈"还是"带宽瓶颈"，并通过大量习题建立定量分析直觉。
 >
-> **对应原书**：Chapter 1 (All About Rooflines)  
+> **对应原书**：[Chapter 1 (All About Rooflines)](https://jax-ml.github.io/scaling-book/roofline)  
 > **建议时间**：Day 2, 约 3-4 小时（含习题）
 
 ---
@@ -824,7 +824,7 @@ $$\text{MFU} = \frac{\text{实际模型 FLOPs/s}}{\text{硬件峰值 FLOPs/s}}$$
 
 ## 进一步阅读
 
-- 原书 Chapter 1: All About Rooflines
+- [原书 Chapter 1: All About Rooflines](https://jax-ml.github.io/scaling-book/roofline)
 - [Original Roofline Paper (Williams et al., 2009)](https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyworook.pdf)
 - [Roofline: An Insightful Visual Performance Model](https://crd.lbl.gov/assets/pubs_presos/parlab08-roofline-talk.pdf)
 - [Flash Attention 论文 (Dao et al., 2022)](https://arxiv.org/abs/2205.14135) — IO-Complexity 分析

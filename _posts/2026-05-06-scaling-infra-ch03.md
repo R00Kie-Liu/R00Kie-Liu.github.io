@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 
 > **本章目标**：理解加速器内部的内存层级（HBM → Cache → 计算单元），以及数据搬运如何成为性能瓶颈。
 >
-> **对应原书**：Chapter 2 (TPU internals) + Chapter 12 (GPU memory)  
+> **对应原书**：[Chapter 2 (TPU internals)](https://jax-ml.github.io/scaling-book/tpus) + [Chapter 12 (GPU memory)](https://jax-ml.github.io/scaling-book/gpus)  
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 3, 约 2 小时
 
 ---
@@ -803,9 +803,9 @@ ICI gather 是瓶颈。实际时间大约在 170-250 ms 之间。
 
 ## 进一步阅读
 
-- 原书 Chapter 2: What Is a TPU → Memory & MXU 部分
-- 原书 Chapter 12: What Is a GPU → Memory 部分
-- 原书 Appendix B: How does a systolic array work
+- [原书 Chapter 2: What Is a TPU → Memory & MXU 部分](https://jax-ml.github.io/scaling-book/tpus)
+- [原书 Chapter 12: What Is a GPU → Memory 部分](https://jax-ml.github.io/scaling-book/gpus)
+- [原书 Appendix B: How does a systolic array work](https://jax-ml.github.io/scaling-book/tpus)
 - [Flash Attention 论文 (Dao et al., 2022)](https://arxiv.org/abs/2205.14135) — HBM 访问量分析
 - [Flash Attention 2 (Dao, 2023)](https://arxiv.org/abs/2307.08691) — 利用 warp 级并行进一步优化
 - [NVIDIA H100 Whitepaper](https://resources.nvidia.com/en-us-tensor-core) — SM 架构详解

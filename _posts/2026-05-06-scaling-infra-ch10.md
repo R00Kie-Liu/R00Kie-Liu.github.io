@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '推理', 'SGLang']
 
 > **本章目标**：理解 LLM 推理的两个阶段（Prefill 和 Generation）为何性能特性完全不同，掌握推理中的核心瓶颈和关键指标。
 >
-> **对应原书**：Chapter 7 (All About Transformer Inference) 上半部分  
+> **对应原书**：[Chapter 7 (All About Transformer Inference)](https://jax-ml.github.io/scaling-book/inference) 上半部分  
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 9-10, 约 3 小时
 
 ---
@@ -1151,7 +1151,7 @@ $$Y_{\max} = \frac{F}{B \cdot \beta} = \frac{16384}{32 \times (8.2e11 / 4.5e10)}
 
 ## 进一步阅读
 
-- 原书 Chapter 7: All About Transformer Inference（前半部分）
+- [原书 Chapter 7: All About Transformer Inference](https://jax-ml.github.io/scaling-book/inference)（前半部分）
 - [SGLang 论文 (Zheng et al., 2024)](https://arxiv.org/abs/2312.07104)
 - [GQA 论文 (Ainslie et al., 2023)](https://arxiv.org/abs/2305.13245)
 - [Flash Attention 论文 (Dao et al., 2022)](https://arxiv.org/abs/2205.14135)

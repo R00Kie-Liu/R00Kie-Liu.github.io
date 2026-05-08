@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '推理', 'SGLang']
 
 > **本章目标**：将推理理论应用到 LLaMA 3-70B 的实际 serving 中，分析延迟/吞吐量权衡，给出 SGLang 的实际部署配置。
 >
-> **对应原书**：Chapter 8 (Serving LLaMA 3-70B on TPUs)  
+> **对应原书**：[Chapter 8 (Serving LLaMA 3-70B on TPUs)](https://jax-ml.github.io/scaling-book/applied-inference)  
 > **优先级**：⭐⭐ 中 | **建议时间**：Day 11-12, 约 2 小时
 
 ---
@@ -876,7 +876,7 @@ QPS/拓扑 = 43 / 9.73 = **4.4 QPS**。
 
 ## 进一步阅读
 
-- 原书 Chapter 8: Serving LLaMA 3-70B on TPUs
+- [原书 Chapter 8: Serving LLaMA 3-70B on TPUs](https://jax-ml.github.io/scaling-book/applied-inference)
 - [SGLang 官方文档](https://sglang.readthedocs.io/)
 - [SGLang 论文 (Zheng et al., 2024)](https://arxiv.org/abs/2312.07104)
 - [vLLM: PagedAttention](https://arxiv.org/abs/2309.06180)

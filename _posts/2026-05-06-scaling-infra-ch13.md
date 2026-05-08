@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '工具']
 
 > **本章目标**：了解如何使用 Profiler 定位训练/推理中的性能瓶颈，包括 XLA/JAX profiler 和 NVIDIA 工具。
 >
-> **对应原书**：Chapter 9 (How to Profile TPU Programs)  
+> **对应原书**：[Chapter 9 (How to Profile TPU Programs)](https://jax-ml.github.io/scaling-book/profiling)  
 > **优先级**：⭐ 低 | **建议时间**：Day 13, 约 2 小时
 
 ---
@@ -806,7 +806,7 @@ nsys profile --trace=cuda,nvtx \
 
 ## 进一步阅读
 
-- 原书 Chapter 9: How to Profile TPU Programs
+- [原书 Chapter 9: How to Profile TPU Programs](https://jax-ml.github.io/scaling-book/profiling)
 - [JAX Profiling 文档](https://docs.jax.dev/en/latest/profiling.html)
 - [NVIDIA Nsight Systems 文档](https://developer.nvidia.com/nsight-systems)
 - [NVIDIA Nsight Compute 文档](https://developer.nvidia.com/nsight-compute)

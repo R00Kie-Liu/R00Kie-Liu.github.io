@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 
 > **本章目标**：理解多芯片如何连接成集群，不同互联方式（ICI/NVLink/InfiniBand/DCN）的带宽差异，以及拓扑结构如何影响并行策略。
 >
-> **对应原书**：Chapter 2 (TPU Networking) + Chapter 12 (GPU Networking)  
+> **对应原书**：[Chapter 2 (TPU Networking)](https://jax-ml.github.io/scaling-book/tpus) + [Chapter 12 (GPU Networking)](https://jax-ml.github.io/scaling-book/gpus)  
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 3-4, 约 2.5 小时
 
 ---
@@ -819,8 +819,8 @@ DP 的 spine 层级临界值约为 2475 tokens/GPU。但因为有 PP 分片：
 
 ## 进一步阅读
 
-- 原书 Chapter 2: TPU Networking
-- 原书 Chapter 12: Networking (GPU)
+- [原书 Chapter 2: TPU Networking](https://jax-ml.github.io/scaling-book/tpus)
+- [原书 Chapter 12: Networking (GPU)](https://jax-ml.github.io/scaling-book/gpus)
 - [NVIDIA DGX H100 架构](https://www.nvidia.com/en-us/data-center/dgx-h100/)
 - [NVIDIA DGX SuperPod 参考架构](https://docs.nvidia.com/dgx-superpod-reference-architecture-dgx-h100.pdf)
 - [NVSwitch Hot Chips Talk](https://hc34.hotchips.org/assets/program/conference/day2/Network%20and%20Switches/NVSwitch%20HotChips%202022%20r5.pdf)

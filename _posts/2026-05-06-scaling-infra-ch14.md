@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '工具']
 
 > **本章目标**：了解 JAX 的并行编程 API，作为理解 TPU 编程范式的补充。如果你主要使用 PyTorch/Megatron，此章可选读。
 >
-> **对应原书**：Chapter 10 (Programming TPUs in JAX)  
+> **对应原书**：[Chapter 10 (Programming TPUs in JAX)](https://jax-ml.github.io/scaling-book/jax-stuff)  
 > **优先级**：⭐ 低 | **建议时间**：Day 14, 约 2 小时
 
 ---
@@ -799,7 +799,7 @@ def mlp_jit(x, w_up, w_down):
 
 ## 进一步阅读
 
-- 原书 Chapter 10: Programming TPUs in JAX
+- [原书 Chapter 10: Programming TPUs in JAX](https://jax-ml.github.io/scaling-book/jax-stuff)
 - [JAX 官方教程: Distributed Arrays and Sharding](https://jax.readthedocs.io/en/latest/sharded-computation.html)
 - [shard_map JEP](https://jax.readthedocs.io/en/latest/jep/14273-shard-map.html)
 - [shard_map 示例笔记本](https://jax.readthedocs.io/en/latest/notebooks/shard_map.html)

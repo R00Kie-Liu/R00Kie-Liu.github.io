@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '推理', 'SGLang']
 
 > **本章目标**：掌握现代 LLM 推理引擎的核心优化技术，理解它们各自解决什么问题，以及如何设计一个高效的推理系统。
 >
-> **对应原书**：Chapter 7 (All About Transformer Inference) 下半部分  
+> **对应原书**：[Chapter 7 (All About Transformer Inference)](https://jax-ml.github.io/scaling-book/inference) 下半部分  
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 10-11, 约 4-5 小时（含习题）
 
 ---
@@ -828,7 +828,7 @@ $$\text{KV}[2, B_4, S, K_8, H]$$
 
 ## 进一步阅读
 
-- 原书 Chapter 7: All About Transformer Inference（下半部分 + Appendix A-D）
+- [原书 Chapter 7: All About Transformer Inference](https://jax-ml.github.io/scaling-book/inference)（下半部分 + Appendix A-D）
 - [vLLM / PagedAttention 论文 (Kwon et al., 2023)](https://arxiv.org/abs/2309.06180)
 - [SGLang / RadixAttention 论文 (Zheng et al., 2024)](https://arxiv.org/abs/2312.07104)
 - [Speculative Decoding 论文 (Leviathan et al., 2023)](https://arxiv.org/abs/2211.17192)

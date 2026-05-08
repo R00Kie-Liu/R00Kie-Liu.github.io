@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '训练', 'Megatron']
 
 > **本章目标**：掌握 LLM 训练的四大并行策略，理解每种策略的通信开销推导、适用场景和最优组合方式。
 >
-> **对应原书**：Chapter 5 (How to Parallelize a Transformer for Training)  
+> **对应原书**：[Chapter 5 (How to Parallelize a Transformer for Training)](https://jax-ml.github.io/scaling-book/training)  
 > **建议时间**：Day 7-8, 约 5-6 小时（含习题）
 
 ---
@@ -778,7 +778,7 @@ $$t = \frac{2.34 \times 10^{17}}{7.54 \times 10^{17}} = 0.31 \text{ 秒} = 310 \
 
 ## 进一步阅读
 
-- 原书 Chapter 5: How to Parallelize a Transformer for Training
+- [原书 Chapter 5: How to Parallelize a Transformer for Training](https://jax-ml.github.io/scaling-book/training)
 - [Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism](https://arxiv.org/abs/1909.08053)
 - [Reducing Activation Recomputation in Large Transformer Models](https://arxiv.org/abs/2205.05198)（Megatron v2: Sequence Parallelism）
 - [Efficient Large-Scale Language Model Training on GPU Clusters Using Megatron-LM](https://arxiv.org/abs/2104.04473)（Megatron v3: Pipeline Parallelism）

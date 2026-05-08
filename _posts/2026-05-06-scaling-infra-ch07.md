@@ -9,7 +9,7 @@ tags: ['LLM', 'Infra', 'Scaling', '训练', 'Megatron']
 
 > **本章目标**：精确计算 Transformer 每一层的参数量、FLOPs 和内存占用，建立"Transformer = 一系列已知大小的矩阵乘法"的量化直觉。
 >
-> **对应原书**：Chapter 4 (All the Transformer Math You Need to Know)  
+> **对应原书**：[Chapter 4 (All the Transformer Math You Need to Know)](https://jax-ml.github.io/scaling-book/transformers)  
 > **优先级**：⭐⭐ 中 | **建议时间**：Day 6, 约 2.5 小时
 
 ---
@@ -788,7 +788,7 @@ DeepSeek-V3：$B > 120 \times 256 / 8 = \textbf{3840}$ tokens。
 
 ## 进一步阅读
 
-- 原书 Chapter 4: All the Transformer Math You Need to Know
+- [原书 Chapter 4: All the Transformer Math You Need to Know](https://jax-ml.github.io/scaling-book/transformers)
 - [Flash Attention 论文 (Dao et al., 2022)](https://arxiv.org/abs/2205.14135)
 - [Flash Attention 2 (Dao, 2023)](https://arxiv.org/abs/2307.08691)
 - [GQA 论文 (Ainslie et al., 2023)](https://arxiv.org/abs/2305.13245)
