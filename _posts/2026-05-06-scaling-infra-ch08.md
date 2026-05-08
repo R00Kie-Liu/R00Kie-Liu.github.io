@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '训练', 'Megatron']
 ---
 
-# Scaling Book 第 8 章：训练并行策略 — DP / FSDP / TP / PP
 
 > **本章目标**：掌握 LLM 训练的四大并行策略，理解每种策略的通信开销推导、适用场景和最优组合方式。
 >

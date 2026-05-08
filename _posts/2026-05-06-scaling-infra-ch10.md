@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '推理', 'SGLang']
 ---
 
-# Scaling Book 入门第 10 章：推理基础 — Prefill vs Generation
 
 > **本章目标**：理解 LLM 推理的两个阶段（Prefill 和 Generation）为何性能特性完全不同，掌握推理中的核心瓶颈和关键指标。
 >

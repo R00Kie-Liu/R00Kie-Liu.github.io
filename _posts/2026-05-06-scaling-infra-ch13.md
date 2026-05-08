@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '工具']
 ---
 
-# Scaling Book 入门第 13 章：性能调优 — Profiling 与调试
 
 > **本章目标**：了解如何使用 Profiler 定位训练/推理中的性能瓶颈，包括 XLA/JAX profiler 和 NVIDIA 工具。
 >

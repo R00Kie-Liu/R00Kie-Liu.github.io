@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '推理', 'SGLang']
 ---
 
-# Scaling Book 入门第 12 章：实战 — Serving LLaMA 3
 
 > **本章目标**：将推理理论应用到 LLaMA 3-70B 的实际 serving 中，分析延迟/吞吐量权衡，给出 SGLang 的实际部署配置。
 >

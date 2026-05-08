@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 ---
 
-# Scaling Book 入门第 5 章：集合通信原语
 
 > **本章目标**：理解分布式训练/推理中最常用的几种通信操作（AllReduce、AllGather、ReduceScatter、AllToAll），以及它们的时间开销。
 >

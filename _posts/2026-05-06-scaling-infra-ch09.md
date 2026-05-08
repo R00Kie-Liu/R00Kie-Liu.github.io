@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '训练', 'Megatron']
 ---
 
-# Scaling Book 入门第 9 章：实战 — 训练 LLaMA 3 的分片决策
 
 > **本章目标**：将前几章的理论应用到具体模型（LLaMA 3）上，做端到端的训练配置推演和成本估算。
 >

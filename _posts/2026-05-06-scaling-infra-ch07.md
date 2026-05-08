@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '训练', 'Megatron']
 ---
 
-# Scaling Book 入门第 7 章：Transformer FLOPs/参数量/内存精确计算
 
 > **本章目标**：精确计算 Transformer 每一层的参数量、FLOPs 和内存占用，建立"Transformer = 一系列已知大小的矩阵乘法"的量化直觉。
 >

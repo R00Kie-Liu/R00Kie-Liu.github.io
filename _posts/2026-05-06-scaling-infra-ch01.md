@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 ---
 
-# Scaling Book 入门第 1 章：硬件基础 — GPU 与 TPU 是什么
 
 > **本章目标**：理解现代 ML 加速器（GPU/TPU）的核心组成部件，建立"芯片 = 计算单元 + 内存"的心智模型。
 >

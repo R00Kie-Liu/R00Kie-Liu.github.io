@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '工具']
 ---
 
-# Scaling Book 入门第 14 章：JAX 并行编程入门（选读）
 
 > **本章目标**：了解 JAX 的并行编程 API，作为理解 TPU 编程范式的补充。如果你主要使用 PyTorch/Megatron，此章可选读。
 >

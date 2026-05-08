@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 ---
 
-# Scaling Book 入门第 4 章：芯片互联与集群拓扑
 
 > **本章目标**：理解多芯片如何连接成集群，不同互联方式（ICI/NVLink/InfiniBand/DCN）的带宽差异，以及拓扑结构如何影响并行策略。
 >

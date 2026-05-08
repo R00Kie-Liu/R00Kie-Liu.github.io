@@ -5,7 +5,6 @@ date: 2026-05-06
 tags: ['LLM', 'Infra', 'Scaling', '推理', 'SGLang']
 ---
 
-# Scaling Book 入门第 11 章：推理优化 — KV Cache / Continuous Batching / 量化
 
 > **本章目标**：掌握现代 LLM 推理引擎的核心优化技术，理解它们各自解决什么问题，以及如何设计一个高效的推理系统。
 >
