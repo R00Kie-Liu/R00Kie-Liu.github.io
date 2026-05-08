@@ -40,7 +40,7 @@ favicon_dark: ./assets/img/favicon-sjtu-dark.png
 # footnote_link: https://github.com/yaoyao-liu/minimal-light
 
 auto_dark_mode: true
-future: false
+future: true
 # Analytics
 # Please remove the following lines about analytics services if you fork my project. 
 # Otherwise, the analytics information of your website will be recorded to my ClustrMaps accounts.
