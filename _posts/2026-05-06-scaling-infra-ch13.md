@@ -55,6 +55,7 @@ tags: ['LLM', 'Infra', 'Scaling', '工具']
 > MFU 是最常用的高级性能指标：
 >
 > $$\text{MFU} = \frac{\text{实际有效 FLOPs/s}}{\text{硬件峰值 FLOPs/s}}$$
+
 >
 > "有效 FLOPs" 指模型的理论 FLOPs（$6NP$ per token），不包括 recompute 等冗余计算。
 >
@@ -647,7 +648,7 @@ Op 4: all-reduce.1      | 2.1 ms
 
 **问题**：这在做什么计算？全局 shape 是什么？分片方式是什么？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 分析：
@@ -675,7 +676,7 @@ Op 4: all-reduce.1      | 2.1 ms
 
 **问题**：可能的原因是什么？如何修复？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **184 ms vs 90 ms → 效率只有 49%。** 可能原因：
@@ -715,7 +716,7 @@ def transformer_layer(x, w_up, w_down):
 
 **问题**：如何系统地诊断和优化？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **步骤 1：检查时间分解**（Megatron 内置 timer）
@@ -734,6 +735,7 @@ AllReduce 占 36% → DP 通信是瓶颈。
 **步骤 2：计算理论 AllReduce 时间**
 
 DP=4, 模型 70B×2 bytes = 140 GB。Ring AllReduce 理论时间：
+
 $$T_{AR} = \frac{2(N-1)}{N} \times \frac{\text{size}}{\text{bandwidth}} = \frac{6}{4} \times \frac{140 \times 10^9}{4 \times 10^{11}} = 525 \text{ ms (IB)}$$
 
 但实际应该被 gradient accumulation 分摊！如果 gradient accumulation = 1 → 每步都做全量 AllReduce。
@@ -760,7 +762,7 @@ SGLang 部署 LLaMA 70B（TP=8, 8×H100），理论 TPOT ≈ 5.2 ms，但实测 
 
 **问题**：可能的原因和诊断方法？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **P50 = 12 ms（理论的 2.3×）**：

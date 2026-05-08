@@ -237,7 +237,7 @@ $$\frac{\text{attention FLOPs}}{\text{matmul FLOPs}} = \frac{12BT^2NH}{18BTDF + 
 >
 > Dot-product attention FLOPs = $12BT^2NH$，QKVO 投影 FLOPs = $24BTDNH$。何时相等？
 >
-> <details>
+> <details markdown="1">
 > <summary>点击查看答案</summary>
 >
 > $12BT^2NH = 24BTDNH \implies T = 2D$
@@ -570,7 +570,7 @@ GQA 的 KV cache 只有 MHA 的 $\text{Kv\_heads}/H$ 倍。LLaMA 70B 用 GQA（8
 >
 > 对于 LLaMA 70B（L=80, Kv_heads=8, K=128），int8 精度下每 token 的 KV cache 大小是多少？
 >
-> <details>
+> <details markdown="1">
 > <summary>点击查看答案</summary>
 >
 > 每 token：$2 \times L \times \text{Kv\_heads} \times K = 2 \times 80 \times 8 \times 128 = 163,840$ bytes ≈ **160 KB/token**（int8）。
@@ -591,7 +591,7 @@ GQA 的 KV cache 只有 MHA 的 $\text{Kv\_heads}/H$ 倍。LLaMA 70B 用 GQA（8
 (b) Attention 参数占总参数的比例？
 (c) 每 token 的 KV cache 大小（int8）？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **(a)** 总参数量 $\approx L \times (3DF + 4D^2 + D) + 2DV$
@@ -616,7 +616,7 @@ $$\frac{4D^2}{4D^2 + 3DF} = \frac{4D^2}{4D^2 + 12D^2} = \frac{1}{4}$$
 
 计算 $A[B_X, D_Y] \cdot W[D_Y, F]$ 在 `{'X': 4, 'Y': 8, 'Z': 4}` 分片上的 FLOPs。每个 TPU 执行多少 FLOPs？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 "理论" FLOPs 为 $2BDF$。但计算没有在 Z 维度上分片，所以每个 Z 副本都做同样的计算，总实际 FLOPs = $2BDF \times Z$。
@@ -633,7 +633,7 @@ $$\frac{4D^2}{4D^2 + 3DF} = \frac{4D^2}{4D^2 + 12D^2} = \frac{1}{4}$$
 
 $A[I,J,K,L] \times B[I,J,M,N,O] \rightarrow C[K,L,M,N,O]$ 需要多少 FLOPs？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 - 收缩维度（在两个输入中但不在输出中）：I, J
@@ -652,7 +652,7 @@ $$\text{FLOPs} = 2 \times I \times J \times K \times L \times M \times N \times 
 
 给出 self-attention（不含 QKVO 投影）的算术强度，作为 Q 长度 $T$ 和 KV 长度 $S$ 的函数。在什么上下文长度下 attention 变成 compute-bound？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 使用 Flash Attention 时，self-attention 的数据加载量为 Q 和 KV 的输入输出：
@@ -677,7 +677,7 @@ $$\text{AI} = \frac{4BTSKGH}{4BHK(TG + S)}$$
 
 在什么序列长度下，dot-product attention FLOPs 等于 QKVO 投影 FLOPs？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 $$12BT^2NH = 24BTDNH$$
@@ -696,7 +696,7 @@ $$T = 2D$$
 
 假设我们只保存 Transformer 每层中 7 个主要 matmul 的输出（Q, K, V, O 投影 + 3 个 FFN 矩阵），反向传播需要多少额外的重计算 FLOPs？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 保存了 7 个 matmul 输出后，反向传播需要重新计算的是 attention 中的两个 dot-product matmul：
@@ -721,7 +721,7 @@ $$\text{额外 FLOPs} = 4BT^2NH$$
 
 DeepSeek-V3 在 14.8T tokens 上训练了 2.79M H800 GPU-hours（[论文](https://arxiv.org/pdf/2412.19437v1)）。已知其激活参数量为 37B，估算硬件利用率。（提示：使用 FP8 FLOPs，无结构化稀疏。）
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **Step 1**：H800 的 FP8 性能
@@ -750,7 +750,7 @@ $$\frac{3.3 \times 10^{24}}{1.52 \times 10^{25}} = \textbf{21.7\%}$$
 
 MoE 模型有 $E$ 个 expert，每个 token 激活 $k$ 个。int8 权重在 TPU v5e 上，需要多大的 batch size 才能 compute-bound？对于 DeepSeek-V3（$E=256$, $k=8$），这个数字是多少？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 每个权重矩阵需要加载 $E \times D \times F$ 字节（int8），FLOPs 为 $2k \times B \times D \times F$。

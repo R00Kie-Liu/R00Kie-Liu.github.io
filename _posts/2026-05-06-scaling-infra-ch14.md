@@ -640,7 +640,7 @@ with jax.profiler.trace("/tmp/jax_trace"):
 
 **(a)** 用 shard_map 计算每个 shard 的平均值，返回 [X, Y] 的数组。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 ```python
@@ -665,7 +665,7 @@ def average(x):
 
 **(b)** 用 shard_map 实现 `roll(x, shift, axis=0) - x`，仅在每个 X shard 内做 roll。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 ```python
@@ -690,7 +690,7 @@ def shift_shmap(x, shift):
 
 **(a)** 先忽略分片，写单设备版本。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 ```python
@@ -715,7 +715,7 @@ def moe_local(W, A, B):
 
 **(b)** 将 (a) 用 jax.jit 运行，profile 它做了什么通信？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 jax.jit 会 AllGather 整个 `A` 到每个设备 → 非常昂贵。因为每个 expert 可能需要任意 token，而 token 分布在不同设备上。
@@ -732,7 +732,7 @@ jax.jit 会 AllGather 整个 `A` 到每个设备 → 非常昂贵。因为每个
 
 提示：沿 output dimension 分 tile，用 `jax.lax.psum` 做 AllReduce。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 思路：将 F 维分成 Y 个 chunk，每步计算一个 chunk 的 partial sum 并同时 permute：
@@ -759,7 +759,7 @@ def collective_allreduce_matmul(lhs, rhs):
 
 分别用 jax.jit (explicit sharding) 和 shard_map (collective matmul) 实现，并比较 profile。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **jax.jit 版本**（最简单）：

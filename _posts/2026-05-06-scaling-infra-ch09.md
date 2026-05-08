@@ -89,6 +89,7 @@ $$T = \frac{C}{\text{GPU数} \times \text{FLOPs/s} \times \text{MFU}} = \frac{6.
 > MFU 衡量的是硬件 FLOPs 中有多少比例在做"有用计算"（模型前向+反向传播的矩阵乘法）。
 >
 > $$\text{MFU} = \frac{\text{实际模型 FLOPs/s}}{\text{硬件峰值 FLOPs/s}}$$
+
 >
 > MFU **不包含**：通信时间、pipeline bubble、激活重计算的 FLOPs、内存带宽等待时间。
 >
@@ -105,7 +106,7 @@ $$T = \frac{C}{\text{GPU数} \times \text{FLOPs/s} \times \text{MFU}} = \frac{6.
 >
 > LLaMA 3-70B 训练的**最少** GPU 数量是多少？（假设 bf16 参数 + fp32 Adam + 每层 4 个 gradient checkpoint，batch size = 4M tokens）
 >
-> <details>
+> <details markdown="1">
 > <summary>点击查看答案</summary>
 >
 > | 组件 | 公式 | 大小 |
@@ -212,12 +213,13 @@ TP=8 后，每卡参数内存 = 140 GB / 8 = 17.5 GB。加上优化器（使用 
 >
 > 如果有 N=8960 张 TPU v5p（$C = 4.6 \times 10^{14}$, $W_{\text{ICI}} = 1.8 \times 10^{11}$），batch size = 4M tokens，训练 LLaMA 3-70B（$F = 28672$），最优的 FSDP/TP 配比是什么？
 >
-> <details>
+> <details markdown="1">
 > <summary>点击查看答案</summary>
 >
 > 使用第 8 章的 $X_{opt}$ 公式：
 >
 > $$X_{opt} = \sqrt{\frac{B \cdot M_X}{F \cdot M_Y} \cdot N} = \sqrt{\frac{4.19 \times 10^6 \times 2}{28672 \times 1} \times 8960} \approx 1618$$
+
 >
 > 取最近的 2 的幂：**FSDP ≈ 2048, TP ≈ 4**。
 >
@@ -610,7 +612,7 @@ Step 3: 确定 TP = min(8, GPU/节点)
 (b) 是否 compute-bound？
 (c) 训练时间是多少？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **(a)** TP=8（节点内），PP=1 或 2，DP=64 或 32。
@@ -637,7 +639,7 @@ LLaMA 3-8B 的配置：D=4096, F=14336, L=32, H=32, Kv=8。
 (b) 能否用纯 FSDP 在 32 张 H100 上训练？
 (c) 推荐的配置是什么？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **(a)** 
@@ -676,7 +678,7 @@ LLaMA 3-405B：D=16384, F=53248, L=126, H=128, Kv=8, V=128256。
 (c) 推荐的 TP/PP/DP 配比？
 (d) 每卡内存估算？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **(a)**
@@ -718,7 +720,7 @@ Meta 实际使用了 TP=8, PP=16, DP=125（16000 H100），MFU 约 38-43%。
 (b) 在 IB 400 GB/s 带宽下，通信时间？
 (c) 能否被计算完全掩盖？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **(a)** DP 的梯度通信量 = 权重大小 / TP = 140 GB / 8 = **17.5 GB**（bf16）。

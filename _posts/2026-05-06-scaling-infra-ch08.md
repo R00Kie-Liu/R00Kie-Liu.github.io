@@ -655,7 +655,7 @@ torchrun \
 
 **题目**：计算 LLaMA-2 13B 的总参数数量。注意 LLaMA 有 3 个 FFN 矩阵（2 个上投影 + 1 个下投影）。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 - FFN 参数：$3 \times L \times D \times F = 3 \times 40 \times 5120 \times 13824 = 8.5 \times 10^9$
@@ -672,7 +672,7 @@ torchrun \
 
 **题目**：假设用 Adam 训练，参数用 bf16，优化器状态用 fp32。Batch = 16M tokens，使用 gradient checkpointing（每层 checkpoint 3 次）。计算总内存占用。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **参数 + 优化器**：
@@ -701,7 +701,7 @@ torchrun \
 2. 能用纯 FSDP 吗？会 communication-bound 吗？
 3. 应该用混合 FSDP+TP 吗？最优的 X 和 Y 是多少？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **1. 纯 DP**：
@@ -729,6 +729,7 @@ Roofline：
 实际 per-device batch = 732 > 235 ✓
 
 最优配置：
+
 $$X_{\text{opt}} = \sqrt{\frac{3 \times 10^6}{13824} \times 2 \times 4096} = \sqrt{217 \times 4096} \approx 942$$
 
 取 X = 1024（2^10），Y = 4096 / 1024 = 4
@@ -741,7 +742,7 @@ $$X_{\text{opt}} = \sqrt{\frac{3 \times 10^6}{13824} \times 2 \times 4096} = \sq
 
 **题目**：基于 Problem 3 的配置（FSDP=1024, TP=4），假设 MFU = 40%，估算每个训练步的时间。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 每步 FLOPs：
@@ -753,6 +754,7 @@ $$X_{\text{opt}} = \sqrt{\frac{3 \times 10^6}{13824} \times 2 \times 4096} = \sq
 - 总算力：$4096 \times 1.84 \times 10^{14} = 7.54 \times 10^{17}$ FLOPs/s
 
 时间：
+
 $$t = \frac{2.34 \times 10^{17}}{7.54 \times 10^{17}} = 0.31 \text{ 秒} = 310 \text{ ms}$$
 
 **答案**：每步约 310 ms。

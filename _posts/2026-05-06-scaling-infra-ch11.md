@@ -53,6 +53,7 @@ $$T_{\text{ICI}} > T_{\text{HBM}} \implies Y > \frac{F}{B \cdot \beta}$$
 其中 $\beta = W_{\text{hbm}} / W_{\text{ici}}$（HBM 和 ICI 的带宽比，TPU v5e 和 v6e 约为 8）。
 
 **例子**：$F = 16384$，$B = 32$，$\beta = 8$：
+
 $$Y_{\text{max}} = \frac{16384}{32 \times 8} = 64$$
 
 这意味着我们理论上可以做 64-way TP 而不受通信约束！远超训练时的 4-8 way 限制。
@@ -649,7 +650,7 @@ $$\frac{4BD}{3 \cdot W_{\text{ici}}} > \frac{11.3 BD}{\sqrt{N} \cdot W_{\text{ic
 
 应该选择哪种引擎设计模式？为什么？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **分析**：
@@ -678,7 +679,7 @@ $$\frac{4BD}{3 \cdot W_{\text{ici}}} > \frac{11.3 BD}{\sqrt{N} \cdot W_{\text{ic
 2. Speculative decoding 的平均吞吐量是多少？
 3. 最优 k 是多少？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **1. 正常解码**：
@@ -724,7 +725,7 @@ $$\frac{4BD}{3 \cdot W_{\text{ici}}} > \frac{11.3 BD}{\sqrt{N} \cdot W_{\text{ic
 2. 各自可以支持的最大 batch size？
 3. 在 batch=16 时，哪个方案的吞吐量更高？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 H100：HBM = 80GB，带宽 = 3.35 TB/s，bf16 FLOPs/s = 9.9×10¹⁴
@@ -732,9 +733,11 @@ H100：HBM = 80GB，带宽 = 3.35 TB/s，bf16 FLOPs/s = 9.9×10¹⁴
 **1. 理论最小延迟（batch=1）**：
 
 bf16（140 GB 参数）：
+
 $$T = 140e9 / 3.35e12 = 41.8 \text{ ms} \quad → 24 \text{ tokens/s}$$
 
 int4（35 GB 参数）：
+
 $$T = 35e9 / 3.35e12 = 10.4 \text{ ms} \quad → 96 \text{ tokens/s}$$
 
 **int4 快 4×！**
@@ -775,7 +778,7 @@ int4（单卡）：
 
 **题目**：一个模型有 8 个 KV heads，你需要在 32 个芯片上做 generation。如何分片 KV cache？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **约束**：

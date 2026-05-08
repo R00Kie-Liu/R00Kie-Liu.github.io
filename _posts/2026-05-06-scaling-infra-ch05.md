@@ -161,6 +161,7 @@ $$\textbf{AllReduce}_X(A[I, J] \{U_X\}) \to A[I, J]$$
 > 因此 AllReduce 的通信时间是单次 AllGather/ReduceScatter 的 **2 倍**：
 >
 > $$T_{\text{AllReduce}} = 2 \times \frac{V}{W_{\text{bi}}}$$
+
 >
 > 在 Ring AllReduce 实现中：
 > - N 个设备组成环
@@ -237,7 +238,7 @@ $$T_{\text{total}} = \max\left(\frac{T_{\text{min}} \times X}{2},\ \frac{V}{W_{\
 >
 > 在 TPU v5e 4×4 slice 上 AllGather `bf16[128]`（256 字节），沿轴 4 做。需要多久？
 >
-> <details>
+> <details markdown="1">
 > <summary>点击查看答案</summary>
 >
 > 每分片 = 256/4 = 64 字节。$64 / 4.5\text{e}10 \approx 0$ → 远小于 1μs → 延迟限制。
@@ -537,7 +538,7 @@ EP 使用 **AllToAll** 重新分布 token：
 
 (c) $\text{AllReduce}_Z([B_X, D_Y]\{U_Z\})$
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 TPU v4p 双向 ICI = 90 GB/s/轴，4×4×4 是完整 cube，所有轴有 wraparound。
@@ -566,7 +567,7 @@ $T = 2 \times 2\text{e}6 / 9\text{e}10 \approx 44\mu s$（也可以用 $4BD/(XYW
 
 **题目**：在 TPU v4p 4×4×4 上 $\text{AllGather}_X([B_X])$，$B=128$，bf16（256 字节）。需要多久？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 每分片 = 256/4 = 64 字节。$64 / 4.5\text{e}10 \approx 0$ → 远小于 $1\mu s$ → **延迟限制**。
@@ -585,7 +586,7 @@ $T = 2 \times 2\text{e}6 / 9\text{e}10 \approx 44\mu s$（也可以用 $4BD/(XYW
 
 分别计算 FLOPs 和通信量，哪种更优？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **策略 1**：
@@ -609,7 +610,7 @@ $T = 2 \times 2\text{e}6 / 9\text{e}10 \approx 44\mu s$（也可以用 $4BD/(XYW
 
 **题目**：一个 Transformer MLP block 有 $W_{\text{in}}[D, F]$ 和 $W_{\text{out}}[F, D]$，$D=8192, F=32768, B=128$，bf16。在 TPU v5e 2×2 上（每 TPU 只有 300 MB 可用内存）。如何分片以满足内存限制并最小化通信？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 内存分析：每个权重矩阵 = $2 \times 8192 \times 32768 = 512\text{ MB}$ > 300 MB → 必须分片。
@@ -635,7 +636,7 @@ $T = 2 \times 2\text{e}6 / 9\text{e}10 \approx 44\mu s$（也可以用 $4BD/(XYW
 
 **题目**：严格推导为什么双向环上 AllToAll 的代价是 AllGather 的 1/4。分别计算单向环和双向环上两种操作的单链路流量。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 设 $N$ 个设备，数据总量 $V = N^2$ 个标量（每设备 $N$ 个）。
@@ -656,7 +657,7 @@ $T = 2 \times 2\text{e}6 / 9\text{e}10 \approx 44\mu s$（也可以用 $4BD/(XYW
 
 **题目**：在 8×H100 节点上执行 TP（$W[D, F_Y]$，$D=8192, F=28672, B=2048$，bf16，Y=8）。每层 MLP 的前向传播中：(a) $T_{\text{math}}$ 和 $T_{\text{comms}}$ 分别是多少？(b) 通信能被完全掩盖吗？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **(a)** 前向有两个 matmul：$\text{In}[B, D] \times W_{\text{in}}[D, F_Y]$ 和 $\text{Mid}[B, F_Y] \times W_{\text{out}}[F_Y, D]$
@@ -681,7 +682,7 @@ $T_{\text{comms}} = 2 \times 134\text{e}6 / 450\text{e}9 = 596\mu s$
 
 **题目**：数组 $A[I_X, J, K, ...]$ 只沿 $X$ 分片，mesh 为 `{'X': 4, 'Y': 8, 'Z': 2}`。$A$ 在所有芯片上的总字节数与原始数组大小的比值是多少？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 $A$ 沿 $X$（大小 4）分片，沿 $Y$ 和 $Z$ **复制**。
@@ -702,7 +703,7 @@ $A$ 沿 $X$（大小 4）分片，沿 $Y$ 和 $Z$ **复制**。
 
 **题目**：一个 7B 参数模型（bf16）在 8 张、64 张、512 张 H100 上做纯 DP 的 AllReduce。三种情况下 AllReduce 时间分别是多少？你发现了什么？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 模型大小 = $7\text{e}9 \times 2 = 14\text{ GB}$。AllReduce = $2V$。
@@ -723,7 +724,7 @@ $A$ 沿 $X$（大小 4）分片，沿 $Y$ 和 $Z$ **复制**。
 
 **题目**：训练 70B 参数模型（bf16 权重），比较纯 DP 和 FSDP（ZeRO-3）每步的通信量。哪种通信量更大？哪种内存效率更高？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 模型大小 = $70\text{e}9 \times 2 = 140\text{ GB}$
@@ -748,7 +749,7 @@ $A$ 沿 $X$（大小 4）分片，沿 $Y$ 和 $Z$ **复制**。
 
 **题目**：LLaMA 70B（$D=8192$, 80 层）使用 TP=8 做推理。在 decode 阶段（每步 batch=1 token），每步每层的 AllReduce 通信量和时间是多少？与 prefill（prompt=2048 tokens）对比。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 每层 MLP 有 2 次 AllReduce（$W_{\text{in}}$ 后 + $W_{\text{out}}$ 后），每次 AllReduce $2BD$ 字节。

@@ -395,7 +395,7 @@ Compute-bound 条件：$2B > 240$，即 $B > 120$。
 3. 算术强度是多少？
 4. 估算 $T_{\text{math}}$ 和 $T_{\text{comms}}$，给出运行时间的上下界。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 1. **字节数**：int8 每个参数 1 byte，所以加载 $BD + DF$ bytes，写回 $BF$ bytes。
@@ -403,7 +403,9 @@ Compute-bound 条件：$2B > 240$，即 $B > 120$。
 2. **OPs**：和 bf16 一样是 $2BDF$（运算次数不变，只是每次运算更快）。
 
 3. **算术强度**：
+
 $$\text{AI} = \frac{2BDF}{BD + DF + BF}$$
+
 当 $B \ll D, F$ 时：$\text{AI} \approx 2B$。
 临界条件：$2B > 3.94e14 / 8.1e11 = 486$，即 $B > 243$。
 注意这和 bf16 的 $B > 240$ 几乎一样！
@@ -422,7 +424,7 @@ $$\text{AI} = \frac{2BDF}{BD + DF + BF}$$
 
 **题目**：权重用 int8 存储，激活和计算用 bf16。即 `bf16[B, D] × int8[D, F] → bf16[B, F]`。在什么 batch size 下变成 compute-bound？假设 bf16 FLOPs/s = `1.97×10¹⁴`。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 当 $B \ll D, F$ 时：
@@ -443,7 +445,7 @@ Compute-bound 条件：$2B > 240$，即 $B > 120$。
 
 **题目**：基于 Problem 2 的设置（int8 权重 + bf16 激活），画出 peak FLOPs/s vs. batch size B 的图，分别取 $F = D = 4096$ 和 $F = D = 1024$。使用精确的字节数（不用近似）。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 ```python
@@ -492,7 +494,7 @@ plt.show()
 
 **题目**：如果我们对每个 batch 元素使用不同的权重矩阵，即 `int8[B, D] × int8[B, D, F] → int8[B, F]`（每个 batch 有独立的 D×F 权重）。算术强度是多少？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 分析：
@@ -518,7 +520,7 @@ $$\text{AI} \approx \frac{2BDF}{BDF} = 2$$
 
 **题目**：使用 [NVIDIA H100 SXM 规格](https://www.nvidia.com/en-us/data-center/h100/)，计算 bf16 matmul 变成 compute-bound 的临界 batch size。注意：NVIDIA 标称的 Tensor Core FLOPs 包含了 structured sparsity（2:4 稀疏），实际密集计算需要除以 2。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 从 H100 规格表：
@@ -552,7 +554,7 @@ $$B_{\text{crit}} = \frac{9.9 \times 10^{14}}{3.35 \times 10^{12}} \approx 296$$
 2. Flash Attention（SMEM tile size $M$）的 HBM 访问字节数是多少？算术强度？
 3. 在 H100 上（HBM 3.35 TB/s, 990 TFLOPs/s），标准 Attention 在什么 N 下变成 memory-bound？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **1. 标准 Attention**：
@@ -572,6 +574,7 @@ HBM 访问：
 - 总计：$\approx 8BN^2 + 8BNd$ bytes
 
 算术强度：
+
 $$\text{AI} = \frac{4BN^2d}{8BN^2 + 8BNd} = \frac{4N^2d}{8N^2 + 8Nd} = \frac{Nd}{2N + 2d} \approx \frac{d}{2} \quad (N \gg d)$$
 
 当 $N \gg d$ 时，AI ≈ $d/2 = 64$（对于 $d=128$）。
@@ -588,12 +591,15 @@ HBM 访问：
 - 总计：$\approx O(BN^2d / \sqrt{M})$（对于典型 tile size）
 
 简化近似（$B_r = B_c = \sqrt{M/d}$）：
+
 $$\text{HBM 访问} \approx \frac{4BN^2d^2}{M}$$
 
 算术强度：
+
 $$\text{AI(Flash)} = \frac{4BN^2d}{4BN^2d^2/M} = \frac{M}{d}$$
 
 对于 H100 SMEM = 228 KB = 228,000 bytes, $d = 128$：
+
 $$\text{AI(Flash)} \approx \frac{228000}{128} \approx 1781$$
 
 远大于 H100 临界 AI（296）！Flash Attention **几乎总是 compute-bound**。
@@ -603,6 +609,7 @@ $$\text{AI(Flash)} \approx \frac{228000}{128} \approx 1781$$
 标准 Attention 的 AI ≈ $d/2 = 64$（当 $N \gg d$），始终 < 296。
 
 但当 $N$ 很小时，AI ≈ $Nd/(2N+2d)$。令 AI = 296：
+
 $$\frac{Nd}{2N + 2d} = 296 \implies N = \frac{296 \times 2d}{d - 2 \times 296} = \frac{592 \times 128}{128 - 592} < 0$$
 
 **标准 Attention 永远是 memory-bound**（因为 $d < 2 \times 296$）！这就是 Flash Attention 存在的根本原因。

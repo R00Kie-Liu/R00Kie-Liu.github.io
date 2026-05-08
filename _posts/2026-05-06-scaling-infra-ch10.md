@@ -279,9 +279,11 @@ $$T_{\text{min step}} = \frac{\text{Batch Size} \times \text{KV Cache Size} + \t
 - **总计**：约 **12.9B 参数**（bf16 下 25.8 GB）
 
 **KV Cache 大小**（每 token）：
+
 $$\text{KV size/token} = 2 \times L \times K \times H \times 2 = 2 \times 40 \times 40 \times 128 \times 2 = 819 \text{ KB}$$
 
 对于序列长度 S=2048：
+
 $$\text{KV cache/sequence} = 819 \text{ KB} \times 2048 = 1.68 \text{ GB}$$
 
 ### 单卡推理（H100）
@@ -472,17 +474,19 @@ $$B_{\text{crit}} \approx \frac{9.9 \times 10^{14}}{3.35 \times 10^{12}} \approx
 > **Q1**：batch size = 4 时，延迟下界是多少？
 > **Q2**：batch size = 256 时呢？
 >
-> <details>
+> <details markdown="1">
 > <summary>点击查看答案</summary>
 >
 > **batch=4**：int8 权重占 30e9 bytes，KV cache/sequence = 100e3 × 8192 = 819 MB。
 >
 > batch 小，memory-bound：
 > $$T = \frac{4 \times 819e6 + 30e9}{16 \times 8.2e11} = \frac{33.3e9}{1.31e13} \approx 2.5 \text{ ms}$$
+
 >
 > **batch=256**：MLP 已进入 compute-bound 区间（int8 权重 + bf16 的 B_crit = 120），attention 仍 memory-bound。
 >
 > $$T \approx \underbrace{\frac{256 \times 819e6}{16 \times 8.2e11}}_{\text{attention (bandwidth)}} + \underbrace{\frac{2 \times 256 \times 30e9}{16 \times 1.97e14}}_{\text{MLP (compute)}} = 16.0 + 4.9 \approx 21 \text{ ms}$$
+
 >
 > 注意 batch=256 下，吞吐量 = 256/0.021 ≈ 12,200 tokens/s，而 batch=4 的吞吐量 = 4/0.0025 = 1,600 tokens/s。batch 增加 64×，吞吐量只增加 7.6× — 这就是 KV cache 带来的边际收益递减。
 > </details>
@@ -863,7 +867,7 @@ python -m sglang.launch_server \
 2. 每个 token 的 KV cache 大小是多少（int8 格式）？
 3. 对于序列长度 128K，每个序列的 KV cache 总大小是多少？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **1. 参数量计算**：
@@ -900,7 +904,7 @@ $$262 \text{ KB} \times 128 \times 1024 = 33.5 \text{ GB}$$
 1. 对于 128K 序列长度，最大 batch size 是多少？
 2. 如果将 KV heads 降低到 1（MQA），最大 batch size 是多少？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **总内存**：`16 × 16GB = 256GB`
@@ -928,7 +932,7 @@ $$262 \text{ KB} \times 128 \times 1024 = 33.5 \text{ GB}$$
 
 估算每步 generation 的理论最小延迟。
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **需要加载的数据**：
@@ -963,7 +967,7 @@ $$T_{\text{step}} = \frac{18.9 \times 10^9}{8.2 \times 10^{11}} \approx 23 \text
 2. 配置 B 的单步延迟（忽略通信）和通信时间是多少？
 3. 哪个配置更好？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **配置 A（无 TP）**：
@@ -1006,7 +1010,7 @@ $$T_{\text{step}} = \frac{18.9 \times 10^9}{8.2 \times 10^{11}} \approx 23 \text
 2. 在 TPU v5e 上，需要多大的 batch size 才能变成 compute-bound？
 3. KV cache 大小是否改变？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **1. 参数量**：
@@ -1043,7 +1047,7 @@ MoE 的 HBM roofline 变化：
 1. 在 TPU v5e 8×16 slice（Y=8, Z=16）上，HBM 权重加载时间是多少？每个 TPU 有多少剩余 HBM？
 2. 能容纳该模型的最小 slice 是什么？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **1. 8×16 slice（128 芯片）**：
@@ -1083,7 +1087,7 @@ KV cache/token = 262 KB。在 2.8 GB × 16 = 44.8 GB 总剩余 HBM 中：
 2. 对于 prefill，如何分片？
 3. 对于 generation（batch=32），如何分片？generation 的大致步时间是多少？
 
-<details>
+<details markdown="1">
 <summary>点击查看答案</summary>
 
 **1. ICI 拓扑**：
