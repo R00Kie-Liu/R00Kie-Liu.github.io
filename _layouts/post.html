@@ -48,7 +48,14 @@
       </button>
     </div>
 
-    <div class="blog-container">
+    <div class="blog-container has-toc">
+      <aside class="post-toc" id="postToc">
+        <nav class="toc-nav">
+          <h4 class="toc-title">目录</h4>
+          <ul class="toc-list" id="tocList"></ul>
+        </nav>
+      </aside>
+
       <article class="blog-post">
         <div class="post-header">
           <a href="{{ '/blog' | relative_url }}" class="back-link"><i class="fas fa-arrow-left"></i> All Notes</a>
@@ -108,6 +115,46 @@
         }
         updateIcon();
       });
+    })();
+    </script>
+
+    <script>
+    (function() {
+      var tocList = document.getElementById('tocList');
+      var postContent = document.querySelector('.post-content');
+      if (!tocList || !postContent) return;
+
+      var headings = postContent.querySelectorAll('h2, h3');
+      if (headings.length < 2) {
+        document.querySelector('.blog-container').classList.remove('has-toc');
+        return;
+      }
+
+      headings.forEach(function(h, i) {
+        if (!h.id) h.id = 'heading-' + i;
+        var li = document.createElement('li');
+        li.className = 'toc-item toc-' + h.tagName.toLowerCase();
+        var a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        a.className = 'toc-link';
+        li.appendChild(a);
+        tocList.appendChild(li);
+      });
+
+      // Highlight current section on scroll
+      var tocLinks = tocList.querySelectorAll('.toc-link');
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            tocLinks.forEach(function(link) { link.classList.remove('active'); });
+            var active = tocList.querySelector('a[href="#' + entry.target.id + '"]');
+            if (active) active.classList.add('active');
+          }
+        });
+      }, { rootMargin: '-80px 0px -70% 0px' });
+
+      headings.forEach(function(h) { observer.observe(h); });
     })();
     </script>
 
