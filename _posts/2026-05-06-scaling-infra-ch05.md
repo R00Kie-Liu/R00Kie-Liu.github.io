@@ -22,15 +22,85 @@ tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 >
 > LLM 训练中，由于模型太大无法放在单卡上，需要更多种类的通信：切分权重后要 AllGather 拼回来，切分激活值后要 ReduceScatter 合并结果。理解这些原语是理解所有并行策略的基础。
 
+> 📋 **背景知识：MPI 与分布式计算**
+>
+> **MPI**（Message Passing Interface）是分布式计算的标准通信接口，定义了 AllGather、AllReduce 等集合通信的语义。NCCL、Gloo、XLA 的分布式通信都遵循 MPI 定义的语义。
+>
+> 关键概念：
+> - **进程 vs 线程**：分布式训练中每个 GPU/TPU 对应一个独立**进程**（有自己的内存空间），进程间通过**消息传递**通信。这与单机多线程（共享内存）不同。
+> - **Rank**：每个进程在通信组中的唯一编号（0 到 N-1）
+> - **World Size**：参与通信的总进程数（= 总 GPU/TPU 数）
+> - **通信组（Communicator）**：一组可以互相通信的进程。可以创建子组（如节点内、跨节点分别通信）
+> - **集合通信 vs 点对点通信**：集合通信是所有进程同步参与的操作（如 AllReduce）；点对点通信是两个特定进程间的发送/接收（如 PP 中的激活传递）
+>
+> ```python
+> # PyTorch 中初始化分布式进程组的典型代码
+> import torch.distributed as dist
+> dist.init_process_group(backend="nccl")  # GPU 用 NCCL
+> rank = dist.get_rank()          # 当前进程编号
+> world_size = dist.get_world_size()  # 总进程数
+> ```
+
 ---
 
-## 5.2 四种核心通信原语
+## 5.2 环形算法：集合通信的基础
+
+在理解具体原语之前，先理解它们共同的底层机制——**环形算法**（Ring Algorithm）。
+
+### 为什么用环形
+
+TPU 在 Torus 拓扑中天然形成环。GPU 虽然通过 NVSwitch 全互联，但 NCCL 也常用环形算法来实现集合通信（简单、高效、容易扩展）。
+
+### 单向环 vs 双向环
+
+**单向环**：数据只沿一个方向传递，每个分片需要 $N-1$ 跳到达所有设备。
+
+```
+N=4 设备的单向 AllGather（4 步）：
+
+初始：  D0=[A]  D1=[B]  D2=[C]  D3=[D]
+
+Step 1: D0=[A,D] D1=[B,A] D2=[C,B] D3=[D,C]   (每设备向右传一份)
+Step 2: D0=[A,D,C] D1=[B,A,D] D2=[C,B,A] D3=[D,C,B]
+Step 3: D0=[A,B,C,D] D1=[A,B,C,D] D2=[A,B,C,D] D3=[A,B,C,D] ✓
+```
+
+**双向环**（TPU 有 wraparound 时）：数据同时向两个方向传递，只需 $\lfloor N/2 \rfloor$ 跳。
+
+```
+N=4 设备的双向 AllGather（2 步）：
+
+初始：  D0=[A]  D1=[B]  D2=[C]  D3=[D]
+
+Step 1: D0=[A,D,B]  D1=[B,A,C]  D2=[C,B,D]  D3=[D,C,A]  (向左+向右)
+Step 2: D0=[A,B,C,D] D1=[A,B,C,D] D2=[A,B,C,D] D3=[A,B,C,D] ✓
+```
+
+### 通信时间推导
+
+设数组总大小为 $V$ 字节，分片在 $X$ 个设备上。
+
+**双向环 AllGather**：每跳传输 $2V/X$ 字节（两个方向各 $V/X$），需要 $X/2$ 跳。总时间：
+
+$$T = \frac{X}{2} \times \frac{2V}{X \times W_{\text{bi}}} = \frac{V}{W_{\text{bi}}}$$
+
+其中 $W_{\text{bi}}$ 是双向带宽。关键结论：**时间与设备数 $X$ 无关**！只取决于数据总量和链路带宽。
+
+这之所以成立，是因为虽然跳数随 $X$ 增加，但每跳传输的数据量随 $X$ 减少，两者恰好抵消。
+
+---
+
+## 5.3 四种核心通信原语
 
 假设有 N 个设备，每个设备持有一份数据。
 
 ### AllGather
 
-**功能**：每个设备持有一个分片，通信后每个设备拥有**完整数据**。
+**功能**：每个设备持有一个分片，通信后每个设备拥有**完整数据**。用分片记号表示：
+
+$$\textbf{AllGather}_X(A[I_X, J]) \to A[I, J]$$
+
+即"移除下标"——将沿 $X$ 轴分片的数据收集到所有设备上。
 
 ![AllGather 动画](/assets/scaling-book/img/all-gather.gif)
 
@@ -39,13 +109,18 @@ tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 通信后：设备0=[A,B,C,D], 设备1=[A,B,C,D], ...（每个设备都有全部）
 ```
 
-- **通信量**：每设备发送自己的分片（大小 S/N），接收其余 N-1 个分片
-- **总字节数/设备**：`S × (N-1)/N ≈ S`（接收端），发送量相同
-- **时间**：$T_{\text{AllGather}} = \frac{S}{B_{\text{link}}}$（在带宽为 $B_{\text{link}}$ 的环上）
+- **通信量**：每设备发送自己的分片（大小 $V/N$），接收其余 $N-1$ 个分片
+- **总字节/设备**：发送 $V \times (N-1)/N \approx V$
+- **时间**（带宽限制）：$T = V / W_{\text{bi}}$（与 $N$ 无关！）
+- **用途**：Case 2 分片矩阵乘法中恢复被分片的收缩维度；FSDP 中恢复完整权重
 
 ### ReduceScatter
 
-**功能**：每个设备持有完整数据，通信后每个设备持有**归约后的一个分片**（如求和后的 1/N）。
+**功能**：每个设备持有完整数据（但各设备的值不同，需要归约），通信后每个设备持有**归约后的一个分片**。用分片记号表示：
+
+$$\textbf{ReduceScatter}_{X,J}(A[I, J] \{U_X\}) \to A[I, J_X]$$
+
+即"移除 $\{U_X\}$（未归约标记），添加下标"——先求和再分片。
 
 ![ReduceScatter 动画](/assets/scaling-book/img/reduce-scatter.gif)
 
@@ -54,30 +129,55 @@ tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 通信后：设备0=[a₀+b₀+c₀+d₀], 设备1=[a₁+b₁+c₁+d₁], ...
 ```
 
-- **通信量和时间**：与 AllGather 相同
+- **通信量和时间**：与 AllGather 相同（$T = V / W_{\text{bi}}$）
+- **用途**：Case 3 分片矩阵乘法中归约部分和；DP 中归约梯度的第一步
+- **维度选择的自由度**：ReduceScatter 引入一个新的分片维度，可以选择沿哪个逻辑维度分片。例如 $C[I, K] \{U_X\}$ 可以归约为 $C[I_X, K]$ 或 $C[I, K_X]$，具体选择由后续计算需求决定
+
+**ReduceScatter 与 AllGather 的对偶关系**：
+
+这两个操作互为**转置**（也是互为反向传播的导数）：
+- 前向用 AllGather → 反向用 ReduceScatter
+- 前向用 ReduceScatter → 反向用 AllGather
+
+这源于广播（broadcast）和归约（reduce）作为线性算子互为转置的数学性质。
 
 ### AllReduce
 
-**功能**：每个设备持有一份数据，通信后每个设备拥有**所有设备数据的归约结果**（如总和）。
+**功能**：每个设备持有一份数据，通信后每个设备拥有**所有设备数据的归约结果**（如总和）。用分片记号表示：
+
+$$\textbf{AllReduce}_X(A[I, J] \{U_X\}) \to A[I, J]$$
+
+即"移除 $\{U_X\}$"——求和后保持完全复制。
 
 > 📋 **背景知识：AllReduce = ReduceScatter + AllGather**
 >
+> AllReduce 不是一个"基本"操作——它由两步组成：
+>
 > ```
-> 步骤1 (ReduceScatter)：每设备得到 sum 的一个分片
-> 步骤2 (AllGather)：每设备收集到完整的 sum
+> 步骤1 (ReduceScatter)：归约 + 分片 → 每设备得到 sum 的 1/N
+> 步骤2 (AllGather)：收集所有分片 → 每设备得到完整 sum
 > ```
 >
-> 因此 AllReduce 的通信量是 ReduceScatter 的 2 倍。
+> 因此 AllReduce 的通信时间是单次 AllGather/ReduceScatter 的 **2 倍**：
+>
+> $$T_{\text{AllReduce}} = 2 \times \frac{V}{W_{\text{bi}}}$$
 >
 > 在 Ring AllReduce 实现中：
 > - N 个设备组成环
 > - 数据分 N 份，经过 N-1 步传递完成 ReduceScatter
 > - 再经过 N-1 步完成 AllGather
-> - 总通信量：`2S × (N-1)/N ≈ 2S`
+> - 总通信量：`2V × (N-1)/N ≈ 2V`
+>
+> **NCCL 的实际实现**更为复杂：NCCL 会根据消息大小和拓扑自动选择最优算法。小消息用 Tree 算法（$\log N$ 延迟），大消息用 Ring 算法（最大化带宽利用）。
+
+- **用途**：DP 中同步梯度（最经典的用法）；Case 3 分片 matmul 中归约部分和（如果不需要输出分片）
+- **一个常见的优化**：如果后续操作本来就需要分片结果，可以只做 ReduceScatter 而跳过 AllGather，延迟到需要时再 AllGather。这在 FSDP / ZeRO-3 中被广泛使用
 
 ### AllToAll
 
-**功能**：每个设备将自己的数据分成 N 份，分别发送给 N 个设备。可以理解为"转置"通信。
+**功能**：每个设备将自己的数据分成 N 份，分别发送给 N 个设备。可以理解为**"将下标从一个维度移到另一个维度"**：
+
+$$\textbf{AllToAll}_{X,J}(A[I_X, J]) \to A[I, J_X]$$
 
 ![AllToAll 动画](/assets/scaling-book/img/all-to-all.gif)
 
@@ -86,103 +186,605 @@ tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
 通信后：设备0=[A₀,B₀,C₀,D₀], 设备1=[A₁,B₁,C₁,D₁], ...
 ```
 
-- 用途：MoE 模型中将 token 路由到不同 expert
-- 通信量：每设备发送 `S × (N-1)/N`
+**AllToAll 为什么比 AllGather 便宜？** AllGather 中每个分片需要到达**所有**设备；AllToAll 中每个分片只需到达**一个**目标设备。在双向环上，AllToAll 的代价仅为 AllGather 的 **1/4**：
+
+$$T_{\text{AllToAll}} = \frac{V}{4 \times W_{\text{bi}}}$$
+
+推导直觉：AllGather 中每个分片平均要跳 $N/2$ 步（环的半径），AllToAll 中每个子分片平均只需跳 $N/4$ 步（因为目标随机分布），再加上 AllToAll 的每个子分片比 AllGather 的分片更小（$V/N^2$ vs $V/N$），两个因素叠加得到 1/4。
+
+> 📋 **背景知识：AllToAll 1/4 代价的严格推导**
+>
+> 考虑 $N$ 个设备的**单向**环：
+> - AllGather：每个分片（$V/N$ 字节）传过 $N-1$ 条链路 → 每条链路总流量 = $V(N-1)/N \approx V$
+> - AllToAll：设备 $i$ 要将 $N$ 个子块分别发到 $N$ 个目标。距离为 $k$ 的子块需跳 $k$ 步 → 每设备总流量 = $(V/N^2) \times (1+2+...+(N-1)) = V(N-1)/(2N) \approx V/2$
+>
+> 单向环上 AllToAll 是 AllGather 的 **1/2**。
+>
+> 加上**双向**通信：AllGather 获得 2× 加速（可双向传递），AllToAll 获得 **4×** 加速（最远只需传 $N/2$ 而非 $N$，且双向）。
+>
+> 综合：AllToAll 时间 = AllGather 时间 × $\frac{1/2}{2} = 1/4$
+
+- **用途**：MoE 模型中将 token 路由到不同 expert；Expert Parallelism 中重新分布激活值
+- **ND AllToAll**：在 $A \times B \times C$ 的网格上，$T = V \times \max(A,B,C,...) / (4NW_{\text{bi}})$
+- **GPU 上的 AllToAll**：节点内全互联，AllToAll 更高效（$T \approx V/(N \times W_{\text{GPU}})$）；跨节点退化严重
 
 ### 所有原语一览
 
 ![四种集合通信操作](/assets/scaling-book/img/all-collectives.png)
 
+| 操作 | 分片记号变换 | 代价（双向环） |
+|------|------------|-------------|
+| AllGather | $[A_X, B] \to [A, B]$ | $V / W_{\text{bi}}$ |
+| ReduceScatter | $[A, B]\{U_X\} \to [A_X, B]$ | $V / W_{\text{bi}}$ |
+| AllReduce | $[A, B]\{U_X\} \to [A, B]$ | $2V / W_{\text{bi}}$ |
+| AllToAll | $[A, B_X] \to [A_X, B]$ | $V / (4W_{\text{bi}})$ |
+
 ---
 
-## 5.3 通信时间的计算
+## 5.4 通信时间的深入分析
+
+### 带宽限制 vs 延迟限制
+
+上面的公式 $T = V/W$ 假设了**带宽限制**（bandwidth-bound）模式——数据量大到传输时间远超固有延迟。但实际中每次 ICI 跳转有约 **1μs** 的固有延迟（不管传多少数据），当数据很小时进入**延迟限制**（latency-bound）模式：
+
+$$T_{\text{hop}} = \max\left(T_{\text{min}},\ \frac{2V}{X \times W_{\text{bi}}}\right)$$
+
+$$T_{\text{total}} = \max\left(\frac{T_{\text{min}} \times X}{2},\ \frac{V}{W_{\text{bi}}}\right)$$
+
+**延迟限制阈值**：在 TPU v5e 上（单向 ICI = $4.5\text{e}10$ B/s），发送任何小于 $4.5\text{e}10 \times 1\text{e-}6 = 45\text{ KB}$ 的缓冲区都会进入延迟限制。
+
+> 💡 **Pop Quiz：带宽限制还是延迟限制？**
+>
+> 在 TPU v5e 4×4 slice 上 AllGather `bf16[128]`（256 字节），沿轴 4 做。需要多久？
+>
+> <details>
+> <summary>点击查看答案</summary>
+>
+> 每分片 = 256/4 = 64 字节。$64 / 4.5\text{e}10 \approx 0$ → 远小于 1μs → 延迟限制。
+>
+> TPU v5e 4×4 中轴 4 无 wraparound（需要 16 才有），只能单向传 3 跳 → $T \approx 3\mu s$。
+>
+> 实测约 8μs（各种开销）。
+>
+> </details>
+
+### 多轴 AllGather
+
+当数组沿多个轴分片时（如 $A[I_{XY}, J]$），AllGather 可以利用多个 ICI 轴**同时**传输：
+
+$$T_{\text{total}} = \max\left(\frac{T_{\text{min}} \times \sum_i |X_i|}{2},\ \frac{V}{W_{\text{bi}} \times N_{\text{axes}}}\right)$$
+
+多轴带来的好处：
+- 带宽限制时：有效带宽乘以轴数（$W_{\text{effective}} = W_{\text{bi}} \times N_{\text{axes}}$）
+- 延迟限制时：路径长度为所有轴长度之和
 
 ### 在 Torus（TPU）上
 
-Ring-based 实现，N 个设备传输总大小 S 的数据：
+TPU v5e（2D，单向 ICI = 45 GB/s/轴）：
 
-$$T_{\text{AllGather}} = T_{\text{ReduceScatter}} = \frac{S}{B_{\text{ICI}}}$$
+$$T_{\text{AG/RS}} = \frac{V}{W_{\text{bi}}} = \frac{V}{90\text{ GB/s}}\ (\text{单轴, 有 wraparound})$$
 
-$$T_{\text{AllReduce}} = 2 \times \frac{S}{B_{\text{ICI}}}$$
+TPU v5p（3D，单向 ICI = 90 GB/s/轴）：
 
-其中 $B_{\text{ICI}}$ 是 ICI 的单向带宽（TPU v5p 约 90 GB/s/轴）。
-
-注意：这假设了最优的 ring 路径。在 3D torus 中，可以利用多个轴同时通信。
+$$T_{\text{AG/RS}} = \frac{V}{180\text{ GB/s}}\ (\text{单轴}) \quad \text{或} \quad \frac{V}{540\text{ GB/s}}\ (\text{三轴并行})$$
 
 ### 在 NVLink（GPU）上
 
-由于 NVSwitch 提供全带宽互联（非 ring），节点内 AllReduce 非常高效：
+GPU 节点内的集合通信走 NVSwitch 全互联，语义相同但实现不同：
 
-$$T_{\text{AllReduce}}^{\text{intra-node}} = \frac{2S}{B_{\text{NVLink}}} = \frac{2S}{900 \text{ GB/s}}$$
+$$T_{\text{AG/RS}}^{\text{intra-node}} = \frac{V \times (N-1)}{N \times W_{\text{GPU}}} \to \frac{V}{W_{\text{GPU}}}$$
 
-跨节点时退化为 InfiniBand 带宽，慢得多。
+H100：$W_{\text{GPU}} = 450$ GB/s；B200：$W_{\text{GPU}} = 900$ GB/s。
+
+跨节点走 InfiniBand：
+
+$$T_{\text{AG/RS}}^{\text{cross-node}} = \frac{V}{W_{\text{node}}} = \frac{V}{400\text{ GB/s}}$$
+
+### 经验带宽测量
+
+理论值和实测值之间有显著差距：
+
+| 平台 | 操作 | 理论带宽 | 实测峰值 | 达峰消息大小 |
+|------|------|---------|---------|------------|
+| TPU v5e (16轴) | AllGather | 90 GB/s | ~85 GB/s (95%) | ~10 MB（分片 ~625 KB）|
+| H100 (8 GPU 节点) | AllReduce | 450 GB/s | ~370 GB/s (82%) | ~10 GB |
+| H100 (8 GPU 节点) | AllGather | 450 GB/s | ~400 GB/s (89%) | ~1 GB |
+
+TPU 在更小的消息上就能达到接近峰值带宽（~600 KB vs GPU 的 ~10 MB），这是 TPU 直连低延迟的优势。
 
 ---
 
-## 5.4 通信与计算的重叠
+## 5.5 通信与计算的重叠（Collective Matmul）
 
 ![非重叠 vs 重叠](/assets/scaling-book/img/not-overlapped.png)
 ![重叠示意](/assets/scaling-book/img/overlapped.png)
 
-关键优化：在做矩阵乘法的同时进行通信。
+关键优化：**在做矩阵乘法的同时进行通信**。当 $T_{\text{math}} > T_{\text{comms}}$ 时，通信被完全掩盖。
 
-**AG-matmul**（AllGather + MatMul 重叠）：
+### 算法思路：AG-Matmul
 
 ![AG-matmul 重叠动画](/assets/scaling-book/img/ag_matmul.gif)
 
-1. AllGather 分 chunk 进行
-2. 每收到一个 chunk，立即开始计算该 chunk 的矩阵乘法
-3. 通信和计算交错进行
+考虑 Case 2 场景：$A[I, J_X] \cdot B[J, K]$，需要 AllGather A 后做 matmul。传统方法：
 
-当 $T_{\text{math}} > T_{\text{comms}}$ 时，通信被完全掩盖，总时间 ≈ $T_{\text{math}}$。
+```
+[AllGather A: 等待全部完成] → [Matmul: A × B]
+总时间 = T_comms + T_math
+```
 
-> 🛠️ **实践：Megatron**
+**Collective Matmul** 将两步融合：
+
+```
+[收到 chunk 0] → [计算 chunk 0 的 matmul]
+        [收到 chunk 1] → [计算 chunk 1 的 matmul]
+                [收到 chunk 2] → [计算 chunk 2 的 matmul]
+                        ...
+总时间 ≈ max(T_comms, T_math) + 启动延迟
+```
+
+1. 将 AllGather 分成多个 chunk
+2. 每收到一个 chunk，立即开始计算该 chunk 对应的矩阵乘法
+3. 通信和计算**流水线式**交错进行
+
+### RS-Matmul
+
+类似地，Case 3 场景 $A[I, J_X] \cdot B[J_X, K] \to C[I, K]\{U_X\}$ 后接 ReduceScatter，也可以重叠：
+
+```
+[计算 chunk 0] → [发送 chunk 0 的部分和]
+        [计算 chunk 1] → [发送 chunk 1 的部分和]
+                ...
+```
+
+### 实现条件
+
+通信能被有效掩盖的条件：
+
+$$T_{\text{math}} > T_{\text{comms}} \implies \frac{2BDF}{C} > \frac{V}{W}$$
+
+这本质上就是 Roofline 分析中的 compute-bound 条件。当操作已经是 memory-bound 时，通信无法被掩盖。
+
+> 🛠️ **实践：Megatron 中的通信重叠**
 >
-> Megatron 中的通信优化：
+> Megatron 中的核心通信优化配置：
 >
-> 1. **NCCL 后端**：Megatron 使用 NCCL（NVIDIA Collective Communications Library）进行 GPU 间通信
->    - `NCCL_IB_DISABLE=0` 启用 InfiniBand
->    - `NCCL_SOCKET_IFNAME` 指定网络接口
+> ```bash
+> # 梯度 ReduceScatter 与反向传播计算重叠
+> --overlap-grad-reduce
 >
-> 2. **通信-计算重叠**：Megatron 支持 `--overlap-grad-reduce` 和 `--overlap-param-gather`
->    - 梯度 ReduceScatter 与反向传播计算重叠
->    - 参数 AllGather 与前向计算重叠
+> # ZeRO-1 中参数 AllGather 与前向计算重叠
+> --overlap-param-gather
 >
-> 3. **Sequence Parallelism**：Megatron 的 SP 将 LayerNorm/Dropout 的计算分片到 TP 组内的设备上
->    - 使用 AllGather/ReduceScatter 替代 AllReduce
->    - 减少激活值的内存占用（每设备只存 1/TP 的激活值）
+> # Sequence Parallelism：用 AG/RS 替代 AllReduce
+> --sequence-parallel
+>
+> # 分布式优化器（ZeRO-1）
+> --use-distributed-optimizer
+> ```
+>
+> **Sequence Parallelism** 的思路：
+> - TP 组内，LayerNorm/Dropout 的输入不需要完整副本
+> - 将这些操作的激活值沿序列维度分片（ReduceScatter）
+> - 下一个 Attention/MLP 之前再 AllGather
+> - 效果：每设备只存 1/TP 的激活值 → 激活内存大幅减少
 
 ---
 
-## 5.5 通信开销的直觉
+## 5.6 NCCL：GPU 集合通信的实现
 
-一些有用的直觉：
+> 🛠️ **实践：NCCL 内部机制**
+>
+> **NCCL**（NVIDIA Collective Communication Library，读作 "nickel"）是 GPU 上集合通信的标准实现。
+>
+> **算法选择**：NCCL 根据消息大小和拓扑自动选择最优算法：
+> - **Ring**：大消息（> ~256 KB），最大化带宽利用
+> - **Tree**：中等消息，平衡延迟和带宽
+> - **Direct/P2P**：小消息或节点内全互联时
+>
+> **Ring vs Tree 的权衡**：
+>
+> | | Ring | Tree |
+> |--|------|------|
+> | 带宽利用 | 最优（100%） | 较低（~50%） |
+> | 延迟 | O(N)（N-1 步） | O(log N) |
+> | 适用场景 | 大消息 | 小消息、高延迟网络 |
+>
+> **关键环境变量**：
+> ```bash
+> NCCL_IB_DISABLE=0          # 启用 InfiniBand
+> NCCL_SOCKET_IFNAME=eth0    # 指定网络接口
+> NCCL_ALGO=Ring             # 强制使用 Ring 算法
+> NCCL_DEBUG=INFO            # 调试输出
+> NCCL_P2P_LEVEL=NVL         # NVLink 点对点
+> ```
+>
+> **与 XLA（TPU）的对比**：
+> - XLA 的通信由编译器静态调度，不需要运行时决策
+> - NCCL 是运行时库，动态选择算法
+> - XLA 可以做全局通信调度优化；NCCL 只优化单次集合操作
+
+---
+
+## 5.7 分布式训练中的通信模式
+
+理解了基本原语后，我们来看在实际的分布式训练/推理中，这些原语是如何组合使用的。
+
+### Data Parallelism（DP）
+
+DP 中每个设备持有完整模型副本，独立计算不同 batch 的梯度，然后 **AllReduce** 梯度求平均：
+
+```
+前向传播：各设备独立计算（无通信）
+反向传播：各设备独立计算梯度（无通信）
+梯度同步：AllReduce(gradients) → 所有设备得到平均梯度
+参数更新：各设备独立更新（无通信）
+```
+
+通信量 = $2 \times \text{模型大小}$（AllReduce = RS + AG）
+
+### ZeRO / FSDP
+
+ZeRO-3 将权重、梯度、优化器状态全部分片。每层需要：
+- **前向**：AllGather 权重 → 计算前向 → 丢弃非本地权重
+- **反向**：AllGather 权重 → 计算反向 → ReduceScatter 梯度 → 丢弃非本地权重
+
+通信量 = $3 \times \text{模型大小}$（1× AllGather 前向 + 1× AllGather 反向 + 1× RS 梯度）
+
+### Tensor Parallelism（TP）
+
+TP 将权重矩阵沿非收缩维度分片。每层 MLP 需要：
+- 前向：AllGather 或 ReduceScatter 激活值（取决于分片方式）
+- 反向：反过来的操作
+
+通信量 ∝ **激活值大小**（$B \times D$），远小于权重大小（$D \times F$）。但 TP 的通信**频率很高**（每层都要通信），且不能和计算完全重叠。
+
+### Pipeline Parallelism（PP）
+
+PP 使用 **点对点通信**（Send/Recv），不使用集合通信：
+
+```
+Stage 0 → Send(activations) → Stage 1 → Send(activations) → Stage 2
+Stage 2 → Send(gradients)   → Stage 1 → Send(gradients)   → Stage 0
+```
+
+通信量极小（$\sim B \times D$），但在关键路径上不可重叠。
+
+### Expert Parallelism（EP）
+
+EP 使用 **AllToAll** 重新分布 token：
+
+```
+前向：AllToAll(tokens → experts) → 专家计算 → AllToAll(results → 原设备)
+反向：对称的 AllToAll 操作
+```
+
+通信量 = $4 \times B \times D$（2× 前向 + 2× 反向的 AllToAll），但 AllToAll 代价只有 AllGather 的 1/4。
+
+### 通信模式总结
+
+| 并行策略 | 使用的原语 | 通信量 | 通信频率 | 可重叠？ |
+|---------|----------|--------|---------|---------|
+| DP | AllReduce | 2× 模型大小 | 每步 1 次 | 可以（和反向重叠） |
+| FSDP | AG + RS | 3× 模型大小 | 每层 3 次 | 部分可以 |
+| TP | AG/RS | 激活值大小 | 每层 2 次 | 部分可以 |
+| PP | Send/Recv | 激活值大小 | 每 stage 1 次 | 不能 |
+| EP | AllToAll | 激活值大小 | 每层 2 次 | 不能 |
+
+> 🛠️ **实践：Mini-SGLang 中的 TP 通信**
+>
+> 在 mini-sglang 的推理引擎中，TP 的集合通信由 NCCL 实现。
+>
+> ```python
+> # mini-sglang 中 TP 的 AllReduce 调用（简化）
+> # 每个 Attention 和 MLP 层的输出需要 AllReduce
+> if tp_size > 1:
+>     dist.all_reduce(output, op=dist.ReduceOp.SUM, group=tp_group)
+> ```
+>
+> 推理中 TP 的通信量远小于训练：
+> - 训练：$B$ = 数千 tokens → 激活值通信量大
+> - 推理 decode：$B$ = 1 token → 每次 AllReduce 只有几 KB → **延迟限制**
+> - 推理 prefill：$B$ = prompt 长度 → 类似训练
+>
+> 这也是为什么推理中 TP 的主要好处是**减少每卡权重加载量**（降低 decode 延迟），而非通信效率。
+
+---
+
+## 5.8 通信开销的直觉
+
+一些有用的直觉和具体数值：
 
 **AllReduce 梯度（Data Parallelism）**：
-- 通信量 ≈ 2 × 模型大小（与设备数无关！）
+- 通信量 ≈ 2 × 模型参数量（与设备数**无关**！）
 - 7B 模型，bf16：通信量 ≈ 2 × 14 GB = 28 GB
 - 在 900 GB/s NVLink 上：~31 ms
 - 在 50 GB/s InfiniBand 上：~560 ms
+- 在 180 GB/s ICI（TPU v5e）上：~156 ms
 
-**AllGather 权重（FSDP）**：
-- 通信量 ≈ 模型大小
-- 可以和计算重叠
+**AllGather 权重（FSDP / ZeRO-3）**：
+- 通信量 ≈ 模型参数量（bf16）
+- 7B 模型：~14 GB
+- 可以和前向计算重叠 → 如果模型够大，几乎免费
 
-**AllToAll（MoE）**：
-- 通信量取决于 token 路由分布
-- 通常不能和计算重叠 → 可能成为瓶颈
+**ReduceScatter 梯度（FSDP / ZeRO-3）**：
+- 通信量 ≈ 模型参数量（bf16）
+- 可以和反向传播重叠 → 每层计算完反向时立即发送
+
+**AllToAll（MoE Expert Parallelism）**：
+- 通信量 = 激活值大小 × $(N-1)/N$
+- 比 AllGather 便宜 4×，但**通常不能和计算重叠**（必须先收集完才能计算）
+- 在 MoE 中需要做 2 次（前向和反向各一次）→ 可能成为瓶颈
+
+**核心数字记忆**（H100 8 GPU 节点）：
+
+| 模型大小 | AllReduce 时间 | AllGather 时间 | 说明 |
+|---------|-------------|-------------|------|
+| 7B | ~31 ms | ~16 ms | 小模型，可完全掩盖 |
+| 70B | ~311 ms | ~156 ms | 大模型，需要分层并行 |
+| 405B | ~1.8 s | ~0.9 s | 超大模型，必须深度分片 |
+
+---
+
+## 5.9 Worked Problems（习题与详解）
+
+### Problem 1：AllGather 时间计算
+
+**题目**：在 TPU v4p 4×4×4 slice（mesh `{'X': 4, 'Y': 4, 'Z': 4}`）上做以下操作，分别需要多长时间？
+
+(a) $\text{AllGather}_X([B_X, D_Y])$，$B=1024, D=4096$，bf16
+
+(b) $\text{AllGather}_{XY}([B_X, D_Y])$
+
+(c) $\text{AllReduce}_Z([B_X, D_Y]\{U_Z\})$
+
+<details>
+<summary>点击查看答案</summary>
+
+TPU v4p 双向 ICI = 90 GB/s/轴，4×4×4 是完整 cube，所有轴有 wraparound。
+
+**(a)** 只沿 X 轴 AllGather，数据沿 Y 轴已分片，所以实际传输量 = $2BD/Y = 2 \times 1024 \times 4096 / 4 = 2\text{ MB}$
+
+$T = 2\text{e}6 / 9\text{e}10 = 22\mu s$
+
+延迟检查：X 轴 4 个设备，wraparound → 2 跳 → $2\mu s$ → 不是延迟限制 ✓
+
+**(b)** 沿 XY 两轴 AllGather，数据总量 = $2BD = 2 \times 1024 \times 4096 = 8\text{ MB}$，利用 2 个轴的带宽：
+
+$T = 8\text{e}6 / (2 \times 9\text{e}10) = 44\mu s$
+
+延迟检查：$X+Y = 4+4 = 8$ 的路径，$\sim 4\mu s$ → 不是延迟限制 ✓
+
+**(c)** AllReduce = 2× AllGather。每分片大小 = $2BD/(XY) = 2\text{e}6/16 = 128\text{ KB}$，总数据 = $2BD/(XY) = 2\text{ MB}$
+
+$T = 2 \times 2\text{e}6 / 9\text{e}10 \approx 44\mu s$（也可以用 $4BD/(XYW) = 4\times1024\times4096/(16\times9\text{e}10)$）
+
+但更精确地：AllReduce 等于 RS + AG。每一步传输 $V_{\text{per shard}}$，其中 $V = 2BD/(XY)$ 是每分片的总量... 简化计算：$T \approx 4BD/(XYW) = 11.6\mu s$
+
+</details>
+
+### Problem 2：延迟限制场景
+
+**题目**：在 TPU v4p 4×4×4 上 $\text{AllGather}_X([B_X])$，$B=128$，bf16（256 字节）。需要多久？
+
+<details>
+<summary>点击查看答案</summary>
+
+每分片 = 256/4 = 64 字节。$64 / 4.5\text{e}10 \approx 0$ → 远小于 $1\mu s$ → **延迟限制**。
+
+4×4×4 有 wraparound → 沿 X 轴只需 2 跳 → $T \approx 2\mu s$。
+
+</details>
+
+### Problem 3：两种 Matmul 策略的比较
+
+**题目**：执行 $X[B, D] \cdot_D Y[D_X, F] \to Z[B, F]$。
+
+**策略 1**：先 AllGather Y，再做 matmul
+
+**策略 2**：直接做本地 matmul（$X[B, D_X] \cdot Y[D_X, F] \to Z[B, F]\{U_X\}$），再 AllReduce 结果
+
+分别计算 FLOPs 和通信量，哪种更优？
+
+<details>
+<summary>点击查看答案</summary>
+
+**策略 1**：
+- 通信：AllGather $2DF$ 字节 → $T_{\text{comms}} = 2DF / W$
+- 计算：$2BDF$ FLOPs → $T_{\text{math}} = 2BDF / C$
+- $T = \max(T_{\text{math}}, T_{\text{comms}})$（可重叠）
+
+**策略 2**：
+- 计算：$2BDF/X$ FLOPs（分片后更少）→ $T_{\text{math}} = 2BDF / (XC)$
+- 通信：AllReduce $2 \times 2BF$ 字节 → $T_{\text{comms}} = 4BF / W$
+
+策略 2 几乎总是 comms-bound（$D/(2X) > C/W$ 很少成立）。
+
+比较 comms-bound 情况：$4BF/W < 2DF/W \iff D > 2B$。
+
+大模型（$D=8192$）小 batch（$B < 2550$）时策略 2 更优。但实际中很少有一个乘数的收缩维度被分片而另一个不被分片的情况（FSDP 中两者都沿 data 轴分片）。
+
+</details>
+
+### Problem 4：Transformer Block 分片设计
+
+**题目**：一个 Transformer MLP block 有 $W_{\text{in}}[D, F]$ 和 $W_{\text{out}}[F, D]$，$D=8192, F=32768, B=128$，bf16。在 TPU v5e 2×2 上（每 TPU 只有 300 MB 可用内存）。如何分片以满足内存限制并最小化通信？
+
+<details>
+<summary>点击查看答案</summary>
+
+内存分析：每个权重矩阵 = $2 \times 8192 \times 32768 = 512\text{ MB}$ > 300 MB → 必须分片。
+
+**方案 A（FSDP 风格）**：$W_{\text{in}}[D_{XY}, F]$, $W_{\text{out}}[F, D_{XY}]$
+
+每设备权重 = $512/4 = 128$ MB × 2 = 256 MB ✓。但需要 AllGather 收缩维度 → 通信量大。
+
+**方案 B（TP 风格）**：$W_{\text{in}}[D, F_{XY}]$, $W_{\text{out}}[F_{XY}, D]$
+
+每设备权重 = $128$ MB × 2 = 256 MB ✓。
+
+- 前向：$\text{In}[B, D] \cdot W_{\text{in}}[D, F_{XY}]$ = Case 1 → 无通信 ✓
+- 中间：$\text{Mid}[B, F_{XY}] \cdot W_{\text{out}}[F_{XY}, D]$ = Case 3 → 需要 ReduceScatter
+
+通信量：RS = $2BD = 2 \times 128 \times 8192 = 2\text{ MB}$（很小！）
+
+方案 B 更优：非收缩维度分片避免了 AllGather 大权重矩阵的开销。
+
+</details>
+
+### Problem 5：AllToAll 代价详解
+
+**题目**：严格推导为什么双向环上 AllToAll 的代价是 AllGather 的 1/4。分别计算单向环和双向环上两种操作的单链路流量。
+
+<details>
+<summary>点击查看答案</summary>
+
+设 $N$ 个设备，数据总量 $V = N^2$ 个标量（每设备 $N$ 个）。
+
+**AllGather（单向环）**：每个分片（$V/N = N$ 个标量）传过 $N-1$ 条链路。单链路流量 = $N(N-1) \approx N^2 = V$。
+
+**AllToAll（单向环）**：设备 0 的数据 $[A_0, A_1, ..., A_{N-1}]$ 中，$A_k$ 需要传到设备 $k$（距离 $k$ 跳）。每个子块大小 = $V/N^2 = 1$。单链路流量 = $1 + 2 + ... + (N-1) = N(N-1)/2 \approx V/2$。
+
+**单向环**：AllToAll = AllGather × **1/2**
+
+**双向环**：AllGather 获得 2× 加速（从 $V$ 到 $V/2$）。AllToAll 获得 4× 加速（最远只传 $N/2$ 跳，从 $V/2$ 到 $V/8$... 更精确地：从 $N(N-1)/2$ 到 $\frac{N}{2} \cdot \frac{N/2+1}{2} \approx N^2/8$）。
+
+**双向环**：AllToAll 单链路流量 $\approx V/8$，AllGather 单链路流量 $\approx V/2$。比值 = **1/4** ✓
+
+</details>
+
+### Problem 6：通信与计算重叠分析
+
+**题目**：在 8×H100 节点上执行 TP（$W[D, F_Y]$，$D=8192, F=28672, B=2048$，bf16，Y=8）。每层 MLP 的前向传播中：(a) $T_{\text{math}}$ 和 $T_{\text{comms}}$ 分别是多少？(b) 通信能被完全掩盖吗？
+
+<details>
+<summary>点击查看答案</summary>
+
+**(a)** 前向有两个 matmul：$\text{In}[B, D] \times W_{\text{in}}[D, F_Y]$ 和 $\text{Mid}[B, F_Y] \times W_{\text{out}}[F_Y, D]$
+
+每个 matmul 的 FLOPs = $2BDF/Y = 2 \times 2048 \times 8192 \times 28672 / 8 = 1.2\text{e}14$
+
+$T_{\text{math}} = 2 \times 1.2\text{e}14 / 9.9\text{e}14 = 242\mu s$（两个 matmul）
+
+通信：AG 激活 + RS 激活 = $2 \times 2BD = 4 \times 2048 \times 8192 \times 2 = 134\text{ MB}$（两次）
+
+$T_{\text{comms}} = 2 \times 134\text{e}6 / 450\text{e}9 = 596\mu s$
+
+**(b)** $T_{\text{comms}} > T_{\text{math}}$ → **通信无法被完全掩盖**！Comm/Compute 比 = 2.5×。
+
+但这是 B=2048 的情况。如果 B=8192：$T_{\text{math}} = 968\mu s > T_{\text{comms}} = 596\mu s$ → 可以掩盖。
+
+这正是 DP/TP roofline 的体现：B/GPU 需要足够大才能 compute-bound。
+
+</details>
+
+### Problem 7：复制比例
+
+**题目**：数组 $A[I_X, J, K, ...]$ 只沿 $X$ 分片，mesh 为 `{'X': 4, 'Y': 8, 'Z': 2}`。$A$ 在所有芯片上的总字节数与原始数组大小的比值是多少？
+
+<details>
+<summary>点击查看答案</summary>
+
+$A$ 沿 $X$（大小 4）分片，沿 $Y$ 和 $Z$ **复制**。
+
+每分片大小 = $\text{sizeof}(A) / 4$
+
+总共 $4 \times 8 \times 2 = 64$ 个芯片，但有效独立分片只有 4 个（其余都是副本）。
+
+总字节数 = $Y \times Z \times \text{sizeof}(A) = 8 \times 2 \times \text{sizeof}(A) = 16 \times \text{sizeof}(A)$
+
+**比值 = 16**（因为沿 Y 和 Z 完全复制了 16 份）。
+
+这告诉我们：不分片的维度会导致严重的内存浪费。在大规模集群上，应该尽量减少复制。
+
+</details>
+
+### Problem 8：AllReduce 与设备数的关系
+
+**题目**：一个 7B 参数模型（bf16）在 8 张、64 张、512 张 H100 上做纯 DP 的 AllReduce。三种情况下 AllReduce 时间分别是多少？你发现了什么？
+
+<details>
+<summary>点击查看答案</summary>
+
+模型大小 = $7\text{e}9 \times 2 = 14\text{ GB}$。AllReduce = $2V$。
+
+**8 GPU（1 节点）**：$T = 2 \times 14\text{e}9 / 450\text{e}9 = 62\text{ ms}$
+
+**64 GPU（8 节点）**：节点内 $T_{\text{node}} = 14\text{e}9 / 450\text{e}9 \times 7/8 = 27\text{ ms}$；跨节点 $T_{\text{cross}} = 14\text{e}9 / 400\text{e}9 = 35\text{ ms}$。$T = 27 + 35 = 62\text{ ms}$
+
+**512 GPU（64 节点）**：和 64 GPU 类似，跨节点 Fat Tree 保证 full bisection bandwidth → $T \approx 62\text{ ms}$
+
+**结论**：AllReduce 时间与 GPU 数量**基本无关**！这是 Fat Tree 拓扑和环形算法的核心优势。通信量只取决于数据大小，不取决于参与者数量。
+
+（实际中，更多 GPU 会增加延迟和协调开销，但带宽限制时影响很小。）
+
+</details>
+
+### Problem 9：FSDP vs DP 通信量比较
+
+**题目**：训练 70B 参数模型（bf16 权重），比较纯 DP 和 FSDP（ZeRO-3）每步的通信量。哪种通信量更大？哪种内存效率更高？
+
+<details>
+<summary>点击查看答案</summary>
+
+模型大小 = $70\text{e}9 \times 2 = 140\text{ GB}$
+
+**纯 DP**：
+- 每步通信：1× AllReduce 梯度 = $2 \times 140 = 280\text{ GB}$
+- 每 GPU 内存：完整权重 + 完整梯度 + 完整优化器 = $140 + 140 + 560 = 840\text{ GB}$（放不下！）
+
+**FSDP（ZeRO-3）**：
+- 每层前向：1× AllGather 权重 = $140\text{ GB}$
+- 每层反向：1× AllGather 权重 + 1× RS 梯度 = $140 + 140 = 280\text{ GB}$
+- 总通信 = $140 + 280 = 420\text{ GB}$
+- 每 GPU 内存：$1/N$ 的权重 + $1/N$ 的梯度 + $1/N$ 的优化器
+
+**FSDP 通信量多 50%**（420 vs 280 GB），但内存效率高得多。这是通信和内存之间的典型权衡。
+
+实际中，FSDP 的 AllGather 可以和计算重叠，所以有效通信开销可以接近纯 DP。
+
+</details>
+
+### Problem 10：推理中的 TP 通信
+
+**题目**：LLaMA 70B（$D=8192$, 80 层）使用 TP=8 做推理。在 decode 阶段（每步 batch=1 token），每步每层的 AllReduce 通信量和时间是多少？与 prefill（prompt=2048 tokens）对比。
+
+<details>
+<summary>点击查看答案</summary>
+
+每层 MLP 有 2 次 AllReduce（$W_{\text{in}}$ 后 + $W_{\text{out}}$ 后），每次 AllReduce $2BD$ 字节。
+
+**Decode**（B=1）：
+- 每次 AllReduce = $2 \times 1 \times 8192 \times 2 = 32\text{ KB}$
+- 远小于 45 KB → **延迟限制**！
+- $T \approx 2-5\mu s$（取决于实现）
+- 每层 2 次 → $\sim 10\mu s$，80 层 → $\sim 800\mu s$
+
+**Prefill**（B=2048）：
+- 每次 AllReduce = $2 \times 2048 \times 8192 \times 2 = 64\text{ MB}$
+- $T = 2 \times 64\text{e}6 / 450\text{e}9 = 284\mu s$
+- 每层 2 次 → $568\mu s$，80 层 → $45\text{ ms}$
+
+Decode 的通信量极小但受延迟限制；Prefill 通信量大但可以被计算掩盖（compute-bound）。这体现了推理两阶段的本质区别。
+
+</details>
 
 ---
 
 ## 关键要点
 
-- [ ] AllGather：分片 → 每设备拥有完整数据
-- [ ] ReduceScatter：完整数据 → 每设备持有归约后的分片
-- [ ] AllReduce = ReduceScatter + AllGather，通信量 ≈ 2× 数据大小
-- [ ] AllToAll：用于 MoE 的 token 路由
-- [ ] 通信可以和计算重叠（AG-matmul），当计算量大于通信量时被掩盖
-- [ ] AllReduce 的通信量与设备数无关（只取决于数据大小）
-- [ ] Megatron 用 NCCL，支持 `--overlap-grad-reduce` 重叠通信
+- [ ] AllGather：移除分片下标 $[A_X] \to [A]$，代价 $V/W$
+- [ ] ReduceScatter：移除未归约标记、添加分片 $[A]\{U_X\} \to [A_X]$，代价 $V/W$
+- [ ] AllReduce = ReduceScatter + AllGather，代价 $2V/W$
+- [ ] AllToAll：移动分片下标 $[A_X, B] \to [A, B_X]$，代价 $V/(4W)$（双向环）
+- [ ] ReduceScatter 和 AllGather 互为转置（反向传播的导数）
+- [ ] 通信时间与设备数无关（带宽限制时），只取决于数据量和链路带宽
+- [ ] 小缓冲区（< 45 KB on TPU v5e）进入延迟限制模式，此时与设备数相关
+- [ ] 多轴 AllGather 可利用多条 ICI 轴的带宽并行传输
+- [ ] Collective Matmul 将通信和计算流水线式重叠，当 compute-bound 时通信近乎免费
+- [ ] GPU 实测集合通信带宽显著低于理论值，且需大消息才能达峰
+- [ ] NCCL 自动选择 Ring/Tree/Direct 算法，大消息用 Ring，小消息用 Tree
+- [ ] Megatron 用 `--overlap-grad-reduce` 和 `--overlap-param-gather` 实现通信掩盖
+- [ ] AllReduce 时间与设备数无关是 Fat Tree 和环形算法的核心优势
 
 ---
 
@@ -190,5 +792,9 @@ $$T_{\text{AllReduce}}^{\text{intra-node}} = \frac{2S}{B_{\text{NVLink}}} = \fra
 
 - 原书 Chapter 3: A Deeper Dive into TPU Communication Primitives
 - [NCCL 文档](https://docs.nvidia.com/deeplearning/nccl/)
-- [Megatron-LM 论文的通信优化部分](https://arxiv.org/abs/2205.05198)
+- [NCCL 源码](https://github.com/NVIDIA/nccl)
+- [Megatron-LM 通信优化](https://arxiv.org/abs/2205.05198)
+- [Collective Matmul 论文（Wang et al.）](https://dl.acm.org/doi/pdf/10.1145/3567955.3567959)
+- [JAX Mosaic Collective Matmul 文档](https://docs.jax.dev/en/latest/pallas/gpu/collective_matmul.html)
+- [Ring AllReduce 详解](https://tech.preferred.jp/en/blog/technologies-behind-distributed-deep-learning-allreduce/)
 
