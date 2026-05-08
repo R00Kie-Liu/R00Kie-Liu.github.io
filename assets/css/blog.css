@@ -488,6 +488,12 @@ body:has(.blog-container) .wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 99;
+}
+@media (min-width: 1161px) {
+  .back-to-top {
+    right: calc(2vw + 250px + 48px);
+  }
 }
 .back-to-top.visible {
   opacity: 1;
