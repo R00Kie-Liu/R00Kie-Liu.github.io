@@ -468,11 +468,29 @@ body:has(.blog-container) .wrapper {
   border-top: 1px solid var(--border-color);
 }
 
-/* ===== Back to Top ===== */
-.back-to-top {
+/* ===== Scroll Buttons ===== */
+.scroll-btns {
   position: fixed;
   bottom: 32px;
   right: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.scroll-btns.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (min-width: 1161px) {
+  .scroll-btns {
+    right: calc(2vw + 250px + 48px);
+  }
+}
+.scroll-btn {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -481,25 +499,13 @@ body:has(.blog-container) .wrapper {
   color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s, color 0.2s, border-color 0.2s;
+  transition: color 0.2s, border-color 0.2s;
   box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 99;
 }
-@media (min-width: 1161px) {
-  .back-to-top {
-    right: calc(2vw + 250px + 48px);
-  }
-}
-.back-to-top.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-.back-to-top:hover {
+.scroll-btn:hover {
   color: var(--accent);
   border-color: var(--accent);
 }
