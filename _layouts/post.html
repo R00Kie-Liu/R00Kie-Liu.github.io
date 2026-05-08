@@ -23,6 +23,10 @@
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
     <link rel="stylesheet" href="{{ '/assets/css/nav.css' | relative_url }}">
     <link rel="stylesheet" href="{{ '/assets/css/blog.css' | relative_url }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" class="hljs-light" disabled />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" class="hljs-dark" disabled />
 
     <script>
     MathJax = {
@@ -33,6 +37,7 @@
     };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   </head>
   <body>
 
@@ -47,6 +52,8 @@
         <i class="fas fa-moon" id="themeIcon"></i>
       </button>
     </div>
+
+    <div class="progress-bar" id="progressBar"></div>
 
     <div class="blog-container has-toc">
       <article class="blog-post">
@@ -82,6 +89,24 @@
             {% endif %}
           </div>
         </div>
+
+        <div class="giscus-wrapper">
+          <script src="https://giscus.app/client.js"
+            data-repo="R00Kie-Liu/R00Kie-Liu.github.io"
+            data-repo-id=""
+            data-category="General"
+            data-category-id=""
+            data-mapping="pathname"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="preferred_color_scheme"
+            data-lang="zh-CN"
+            crossorigin="anonymous"
+            async>
+          </script>
+        </div>
       </article>
 
       <aside class="post-toc" id="postToc">
@@ -91,6 +116,10 @@
         </nav>
       </aside>
     </div>
+
+    <button class="back-to-top" id="backToTop" aria-label="回到顶部">
+      <i class="fas fa-chevron-up"></i>
+    </button>
 
     <script>
     (function() {
@@ -155,6 +184,60 @@
       }, { rootMargin: '-80px 0px -70% 0px' });
 
       headings.forEach(function(h) { observer.observe(h); });
+    })();
+    </script>
+
+    <script>
+    (function() {
+      var btn = document.getElementById('backToTop');
+      if (!btn) return;
+      var bar = document.getElementById('progressBar');
+      window.addEventListener('scroll', function() {
+        btn.classList.toggle('visible', window.scrollY > 400);
+        if (bar) {
+          var h = document.documentElement.scrollHeight - window.innerHeight;
+          bar.style.width = h > 0 ? (window.scrollY / h * 100) + '%' : '0%';
+        }
+      });
+      btn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    })();
+    </script>
+
+    <script>
+    (function() {
+      hljs.highlightAll();
+      document.querySelectorAll('.post-content pre code').forEach(function(block) {
+        var pre = block.parentElement;
+        var btn = document.createElement('button');
+        btn.className = 'code-copy-btn';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', function() {
+          navigator.clipboard.writeText(block.textContent).then(function() {
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+          });
+        });
+        pre.appendChild(btn);
+      });
+    })();
+    </script>
+
+    <script>
+    (function() {
+      var html = document.documentElement;
+      var light = document.querySelector('.hljs-light');
+      var dark = document.querySelector('.hljs-dark');
+      function updateHljs() {
+        var isDark = html.classList.contains('dark-mode') ||
+          (!html.classList.contains('light-mode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (light) { light.disabled = isDark; }
+        if (dark) { dark.disabled = !isDark; }
+      }
+      updateHljs();
+      new MutationObserver(updateHljs).observe(html, { attributes: true, attributeFilter: ['class'] });
     })();
     </script>
 
