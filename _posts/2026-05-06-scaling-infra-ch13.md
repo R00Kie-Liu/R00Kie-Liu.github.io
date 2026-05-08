@@ -629,6 +629,7 @@ print(f"Forward pass: {start.elapsed_time(end):.1f} ms")
 
 以下是一个 8 芯片 TPU 上的 profile 片段（只有 Trace Viewer 信息）：
 
+{% raw %}
 ```
 Op 1: reduce.6          | 0.5 ms
 Op 2: fusion.1          | 12.3 ms
@@ -642,6 +643,7 @@ Op 3: fusion.2          | 11.8 ms
 Op 4: all-reduce.1      | 2.1 ms
       → replica_groups={{0,16,32,48,64,80,96,112},...}
 ```
+{% endraw %}
 
 **问题**：这在做什么计算？全局 shape 是什么？分片方式是什么？
 
