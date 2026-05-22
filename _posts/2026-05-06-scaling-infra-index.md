@@ -1,14 +1,14 @@
 ---
 layout: post
-title: "LLM Infra 入门手册：两周精通大模型系统（总览）"
+title: "LLM Infra 入门手册：How to Scale Your Model — 中文导读"
 date: 2026-05-06
 tags: [LLM, Infra, Scaling, 教程索引]
 ---
 
-# LLM Infra 入门手册：两周精通大模型系统
+# LLM Infra 入门手册：How to Scale Your Model
 
 > 基于 Google DeepMind《How to Scale Your Model》定制化中文导读  
-> 面向背景：预训练研究员 | CV 博士 | 熟悉 Scaling Law / 数据管线 / 模型架构  
+> 面向背景：预训练研究员 | 熟悉 Scaling Law / 数据管线 / 模型架构  
 > 工具栈：训练用 Megatron-LM，推理用 SGLang
 
 ---
