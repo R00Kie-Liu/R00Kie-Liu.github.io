@@ -2,7 +2,7 @@
 layout: post
 title: "Scaling Book 第 8 章：训练并行策略 — DP / FSDP / TP / PP"
 date: 2026-05-06
-tags: ['LLM', 'Infra', 'Scaling', '训练', 'Megatron']
+tags: [Infra, Scaling Book]
 ---
 
 

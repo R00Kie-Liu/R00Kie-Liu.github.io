@@ -2,7 +2,7 @@
 layout: post
 title: "LLM Infra 入门手册：How to Scale Your Model — 中文导读"
 date: 2026-05-06
-tags: [LLM, Infra, Scaling, 教程索引]
+tags: [Infra, Scaling Book]
 ---
 
 # LLM Infra 入门手册：How to Scale Your Model

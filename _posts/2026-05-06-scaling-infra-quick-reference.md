@@ -2,7 +2,7 @@
 layout: post
 title: "LLM Infra 快速参考卡片"
 date: 2026-05-06
-tags: [LLM, Infra, Scaling, 速查表]
+tags: [Infra, Scaling Book]
 ---
 
 # LLM Infra 快速参考卡片

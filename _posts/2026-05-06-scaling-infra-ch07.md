@@ -2,7 +2,7 @@
 layout: post
 title: "Scaling Book 入门第 7 章：Transformer FLOPs/参数量/内存精确计算"
 date: 2026-05-06
-tags: ['LLM', 'Infra', 'Scaling', '训练', 'Megatron']
+tags: [Infra, Scaling Book]
 ---
 
 

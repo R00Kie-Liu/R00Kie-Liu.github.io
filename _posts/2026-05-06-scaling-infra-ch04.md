@@ -2,7 +2,7 @@
 layout: post
 title: "Scaling Book 入门第 4 章：芯片互联与集群拓扑"
 date: 2026-05-06
-tags: ['LLM', 'Infra', 'Scaling', '硬件基础']
+tags: [Infra, Scaling Book]
 ---
 
 

@@ -2,7 +2,7 @@
 layout: post
 title: "Scaling Book 入门第 9 章：实战 — 训练 LLaMA 3 的分片决策"
 date: 2026-05-06
-tags: ['LLM', 'Infra', 'Scaling', '训练', 'Megatron']
+tags: [Infra, Scaling Book]
 ---
 
 
