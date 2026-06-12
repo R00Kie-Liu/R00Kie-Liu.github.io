@@ -56,3 +56,5 @@ exclude:
   - README.md
   - LICENSE
   - CNAME
+  - .bundle
+  - vendor
