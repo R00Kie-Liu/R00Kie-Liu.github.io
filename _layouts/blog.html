@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
     <link rel="stylesheet" href="{{ '/assets/css/nav.css' | relative_url }}">
-    <link rel="stylesheet" href="{{ '/assets/css/blog.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/blog.css?v=20260613-blog-index' | relative_url }}">
   </head>
   <body>
 
@@ -42,6 +42,11 @@
       <div class="blog-header">
         <h1><i class="fas fa-book-open"></i> Learning Notes</h1>
         <p>Notes and thoughts on research, engineering, and everything in between.</p>
+      </div>
+
+      <div class="blog-search">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <input type="search" id="blogSearch" placeholder="Search notes" autocomplete="off" />
       </div>
 
       {% assign all_tags = "" | split: "" %}
@@ -67,16 +72,22 @@
         <h2 class="year-title">{{ year.name }}</h2>
         <div class="post-list">
           {% for post in year.items %}
-          <a href="{{ post.url | relative_url }}" class="post-card" data-tags="{{ post.tags | join: ',' }}">
+          {% assign post_desc = post.description %}
+          {% unless post_desc %}
+            {% assign post_desc = post.excerpt | strip_html | normalize_whitespace | truncate: 120 %}
+          {% endunless %}
+          {% assign tags_text = post.tags | join: ' ' %}
+          {% capture post_search %}{{ post.title }} {{ post_desc }} {{ tags_text }}{% endcapture %}
+          {% assign reading_chars = post.content | strip_html | strip_newlines | remove: " " | size %}
+          {% assign read_minutes = reading_chars | divided_by: 1200 %}
+          {% if read_minutes < 1 %}{% assign read_minutes = 1 %}{% endif %}
+          <a href="{{ post.url | relative_url }}" class="post-card" data-tags="{{ post.tags | join: ',' }}" data-search="{{ post_search | downcase | escape }}">
             <div class="post-card-body">
               <h3 class="post-card-title">{{ post.title }}</h3>
-              {% if post.description %}
-              <p class="post-card-desc">{{ post.description }}</p>
-              {% else %}
-              <p class="post-card-desc">{{ post.excerpt | strip_html | truncate: 120 }}</p>
-              {% endif %}
+              <p class="post-card-desc">{{ post_desc }}</p>
               <div class="post-card-meta">
                 <span class="post-card-date">{{ post.date | date: "%b %d" }}</span>
+                <span class="post-card-reading"><i class="far fa-clock"></i> {{ read_minutes }} min</span>
                 {% if post.tags.size > 0 %}
                 <div class="post-card-tags">
                   {% for tag in post.tags limit:3 %}
@@ -99,6 +110,10 @@
         <p>No notes yet. Coming soon!</p>
       </div>
       {% endif %}
+      <div class="blog-empty blog-no-results" id="blogNoResults" hidden>
+        <i class="fas fa-search"></i>
+        <p>No matching notes.</p>
+      </div>
     </div>
 
     <script>
@@ -130,29 +145,45 @@
     <script>
     (function() {
       var filter = document.getElementById('tagFilter');
-      if (!filter) return;
-      var btns = filter.querySelectorAll('.tag-filter-btn');
+      var search = document.getElementById('blogSearch');
+      var noResults = document.getElementById('blogNoResults');
+      var btns = filter ? filter.querySelectorAll('.tag-filter-btn') : [];
       var cards = document.querySelectorAll('.post-card');
       var years = document.querySelectorAll('.blog-year');
+      var activeTag = 'all';
+
+      function applyFilters() {
+        var query = search ? search.value.trim().toLowerCase() : '';
+        var totalVisible = 0;
+
+        cards.forEach(function(card) {
+          var tags = card.getAttribute('data-tags').split(',');
+          var searchText = card.getAttribute('data-search') || '';
+          var tagMatch = activeTag === 'all' || tags.indexOf(activeTag) >= 0;
+          var searchMatch = !query || searchText.indexOf(query) >= 0;
+          var visible = tagMatch && searchMatch;
+          card.style.display = visible ? '' : 'none';
+          if (visible) totalVisible += 1;
+        });
+
+        years.forEach(function(year) {
+          var visible = year.querySelectorAll('.post-card:not([style*="display: none"])');
+          year.style.display = visible.length ? '' : 'none';
+        });
+
+        if (noResults) noResults.hidden = totalVisible > 0;
+      }
 
       btns.forEach(function(btn) {
         btn.addEventListener('click', function() {
           btns.forEach(function(b) { b.classList.remove('active'); });
           btn.classList.add('active');
-          var tag = btn.getAttribute('data-tag');
-
-          cards.forEach(function(card) {
-            if (tag === 'all') { card.style.display = ''; return; }
-            var tags = card.getAttribute('data-tags').split(',');
-            card.style.display = tags.indexOf(tag) >= 0 ? '' : 'none';
-          });
-
-          years.forEach(function(year) {
-            var visible = year.querySelectorAll('.post-card:not([style*="display: none"])');
-            year.style.display = visible.length ? '' : 'none';
-          });
+          activeTag = btn.getAttribute('data-tag');
+          applyFilters();
         });
       });
+
+      if (search) search.addEventListener('input', applyFilters);
     })();
     </script>
 

@@ -3,6 +3,7 @@ layout: post
 title: "2025-2026开源LLM演进综述：From Scaling to Agentic system"
 date: 2026-06-13
 tags: [survey]
+description: "梳理 2025-2026 年开源、开放权重和开放报告 LLM 在 MoE、长上下文、RL、Agentic 系统和多模态方向的演进。"
 ---
 
 ## 写在前面
