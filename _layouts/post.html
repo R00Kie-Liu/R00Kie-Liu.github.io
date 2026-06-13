@@ -165,16 +165,58 @@
         return;
       }
 
-      headings.forEach(function(h, i) {
-        if (!h.id) h.id = 'heading-' + i;
-        var li = document.createElement('li');
-        li.className = 'toc-item toc-' + h.tagName.toLowerCase();
+      var currentSection = null;
+
+      function createLink(h) {
         var a = document.createElement('a');
         a.href = '#' + h.id;
         a.textContent = h.textContent;
         a.className = 'toc-link';
-        li.appendChild(a);
-        tocList.appendChild(li);
+        return a;
+      }
+
+      headings.forEach(function(h, i) {
+        if (!h.id) h.id = 'heading-' + i;
+
+        var li = document.createElement('li');
+        li.className = 'toc-item toc-' + h.tagName.toLowerCase();
+
+        if (h.tagName.toLowerCase() === 'h2') {
+          var row = document.createElement('div');
+          row.className = 'toc-row';
+
+          var toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'toc-toggle';
+          toggle.setAttribute('aria-label', '折叠小节');
+          toggle.setAttribute('aria-expanded', 'true');
+          toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+
+          var subList = document.createElement('ul');
+          subList.className = 'toc-sublist';
+
+          toggle.addEventListener('click', function() {
+            var collapsed = li.classList.toggle('collapsed');
+            toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            toggle.setAttribute('aria-label', collapsed ? '展开小节' : '折叠小节');
+          });
+
+          row.appendChild(toggle);
+          row.appendChild(createLink(h));
+          li.appendChild(row);
+          li.appendChild(subList);
+          tocList.appendChild(li);
+          currentSection = { item: li, subList: subList, toggle: toggle };
+          return;
+        }
+
+        li.appendChild(createLink(h));
+        if (currentSection) {
+          currentSection.subList.appendChild(li);
+          currentSection.item.classList.add('has-children');
+        } else {
+          tocList.appendChild(li);
+        }
       });
 
       // Highlight current section on scroll
@@ -184,7 +226,18 @@
           if (entry.isIntersecting) {
             tocLinks.forEach(function(link) { link.classList.remove('active'); });
             var active = tocList.querySelector('a[href="#' + entry.target.id + '"]');
-            if (active) active.classList.add('active');
+            if (active) {
+              active.classList.add('active');
+              var parent = active.closest('.toc-item.toc-h2');
+              if (parent && parent.classList.contains('collapsed')) {
+                parent.classList.remove('collapsed');
+                var parentToggle = parent.querySelector('.toc-toggle');
+                if (parentToggle) {
+                  parentToggle.setAttribute('aria-expanded', 'true');
+                  parentToggle.setAttribute('aria-label', '折叠小节');
+                }
+              }
+            }
           }
         });
       }, { rootMargin: '-80px 0px -70% 0px' });

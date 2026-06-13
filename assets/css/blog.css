@@ -74,11 +74,53 @@ body:has(.blog-container) .wrapper {
 .toc-item {
   margin: 0;
 }
-.toc-item.toc-h3 {
-  padding-left: 14px;
+.toc-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+.toc-toggle {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+}
+.toc-toggle:hover {
+  color: var(--text-primary);
+}
+.toc-toggle i {
+  transition: transform 0.15s ease;
+}
+.toc-item.toc-h2:not(.has-children) .toc-toggle {
+  visibility: hidden;
+}
+.toc-item.toc-h2.collapsed .toc-toggle i {
+  transform: rotate(-90deg);
+}
+.toc-sublist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2px 22px;
+}
+.toc-item.toc-h2.collapsed .toc-sublist {
+  display: none;
+}
+.toc-sublist .toc-item.toc-h3 {
+  padding-left: 0;
 }
 .toc-link {
   display: block;
+  flex: 1;
+  min-width: 0;
   padding: 4px 12px;
   font-size: 12.5px;
   line-height: 1.5;
