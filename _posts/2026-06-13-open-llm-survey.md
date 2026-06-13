@@ -951,7 +951,7 @@ Nemotron 3 Ultra 处在一个值得注意的位置：它是 open-weight，同时
 
 下面按模型系列整理本文使用过的官方技术报告、官方 blog、model card 或 repo。带有“未见独立 PDF”的条目，表示当前写作中只把它作为官方 reference/model card 资料使用，不从中推断完整训练 recipe、数据配比或 RL 细节。
 
-<details>
+<details markdown="1">
 <summary>展开技术报告、blog、model card 与 repo 链接表</summary>
 
 | 系列 | 模型/资料 | 链接 | 说明 |
