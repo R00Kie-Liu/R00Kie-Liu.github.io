@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
     <link rel="stylesheet" href="{{ '/assets/css/nav.css' | relative_url }}">
-    <link rel="stylesheet" href="{{ '/assets/css/blog.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/blog.css?v=20260613-toc' | relative_url }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" class="hljs-light" disabled />
@@ -188,8 +188,8 @@
           var toggle = document.createElement('button');
           toggle.type = 'button';
           toggle.className = 'toc-toggle';
-          toggle.setAttribute('aria-label', '折叠小节');
-          toggle.setAttribute('aria-expanded', 'true');
+          toggle.setAttribute('aria-label', '展开小节');
+          toggle.setAttribute('aria-expanded', 'false');
           toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
 
           var subList = document.createElement('ul');
@@ -214,6 +214,7 @@
         if (currentSection) {
           currentSection.subList.appendChild(li);
           currentSection.item.classList.add('has-children');
+          currentSection.item.classList.add('collapsed');
         } else {
           tocList.appendChild(li);
         }
