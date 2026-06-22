@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "如何设计一个好的 Tokenizer：面向预训练、长上下文和 Agentic 模型的实践指南"
+title: "Towards Better Tokenizer (1): 如何设计一个好的 Tokenizer"
 date: 2026-06-13
 tags: [Tokenizer, Pretraining]
 description: "从压缩率、训练效率、工程兼容性、协议表达和长期演进能力出发，总结面向中文、代码、长上下文和 Agent 模型的 tokenizer 设计方法。"
