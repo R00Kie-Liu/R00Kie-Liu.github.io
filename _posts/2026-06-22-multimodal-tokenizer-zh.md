@@ -168,6 +168,10 @@ image H x W
 
 vision encoder 输出的 patch embeddings 通常不能直接喂给 LLM，需要一个中间模块做对齐和压缩。不同模型会叫它 projector、merger、resampler、abstractor，名字不完全一样，但核心职责很接近：
 
+![BLIP-2 Q-Former overview](/assets/img/blog/tokenizer-series/blip2-qformer.png)
+
+*图源：[BLIP-2](https://arxiv.org/abs/2301.12597)。Q-Former 是 query-based bridge 的经典例子：它从 frozen image encoder 中抽取少量视觉语义，再接到语言模型。*
+
 ```text
 vision hidden size -> LLM hidden size
 many patch tokens -> fewer visual tokens
@@ -682,6 +686,10 @@ Gemma 4 的关键点有三个：
 
 X-Omni 的框架很典型：它包含 semantic image tokenizer、统一的 language-image autoregressive model，以及离线 diffusion decoder。这里的 image tokenizer 不是普通 VLM 里的 `<image>` placeholder，而是把图像内容压成可自回归预测的离散语义表示。它的目标不只是“看懂图片”，而是让模型像生成文本 token 一样生成图像 token，再交给 decoder 还原成图像。
 
+![X-Omni architecture](/assets/img/blog/tokenizer-series/x-omni-architecture.png)
+
+*图源：[X-Omni](https://arxiv.org/abs/2507.22058)。这类路线把图像 token 放进统一自回归序列，semantic image tokenizer 决定生成空间的离散粒度。*
+
 HunyuanImage 3.0 的技术报告则把自己定位成 native multimodal model，在自回归框架里统一多模态理解和生成，并引入 native Chain-of-Thoughts schema、渐进式预训练和后训练。它对 tokenizer 设计的启发是：当图像生成、图像编辑、文本理解和推理链放在同一个系统中时，tokenizer 不只是输入端的压缩器，也决定了生成端的 action space。
 
 按模态看，这条路线的重点是文本和图像生成：文本 prompt / CoT schema 进入自回归序列，图像被 semantic image tokenizer 离散化，模型生成 image tokens，再由 diffusion 或 image decoder 还原成图像。
@@ -1066,6 +1074,10 @@ SigLIP、CLIP 这类工作通常更适合放在“对齐”部分理解。它们
 | adaptive video tokenizer | [InfoTok](https://openreview.net/forum?id=JEYWpFGzvn) | 不再用固定压缩率处理所有视频，而是按信息密度动态分配 token |
 | training-free video pruning | [ForestPrune](https://openaccess.thecvf.com/content/CVPR2026F/html/Ju_ForestPrune_High-ratio_Visual_Token_Compression_for_Video_Multimodal_Large_Language_CVPRF_2026_paper.html) | 根据时空关系构造 token forest，在不重训模型的前提下做高比例剪枝 |
 | audio-guided compression | [OmniZip](https://arxiv.org/abs/2511.14582) | 用音频显著性指导视频 token 保留，适合 audio-video understanding |
+
+![InfoTok method overview](/assets/img/blog/tokenizer-series/infotok-method.jpg)
+
+*图源：[InfoTok](https://research.nvidia.com/labs/cosmos-lab/infotok/)。长视频 tokenizer 的关键不只是压缩，而是让 token 数随视频信息密度变化。*
 
 这些工作给 tokenizer 设计的启发是：长视频不应该被看成“很多张图片”。更合理的接口应该同时考虑：
 

@@ -57,6 +57,10 @@ description: "梳理 2026 年 tokenizer 相关研究趋势：模型与 tokenizer
 
 [Byte Latent Transformer, BLT](https://arxiv.org/abs/2412.09871) 把讨论推向 raw bytes 和动态 patch：模型不再依赖固定 subword tokenizer，而是在 byte 层级上形成更高层的计算单元。
 
+![BLT architecture](/assets/img/blog/tokenizer-series/blt-architecture.png)
+
+*图源：[Byte Latent Transformer](https://arxiv.org/abs/2412.09871)。BLT 用 local encoder / latent transformer / local decoder 把 raw bytes 动态组织成 patches，而不是依赖固定 subword vocab。*
+
 2026 年的 [ByteFlow](https://arxiv.org/abs/2603.03583) 更进一步，提出让模型直接从 raw byte stream 中学习自己的分段和压缩方式。它的核心主张是：固定 tokenizer 把模型限制在预先决定好的粒度上，而 byte-level 自适应建模可以让模型根据输入自己形成语义单元。
 
 [T-FREE](https://arxiv.org/abs/2406.19223) 则走另一条弱 tokenizer 路线，用 character triplets 的稀疏激活模式替代传统 subword 词表，试图减少 embedding 参数和固定词表带来的语料偏置。
