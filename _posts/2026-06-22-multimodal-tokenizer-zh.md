@@ -4,7 +4,6 @@ title: "Towards Better Tokenizer (4): 多模态大模型如何把世界变成 To
 date: 2026-06-22
 tags: [Tokenizer, Multimodal, Pretraining]
 description: "从 image token、audio token、video token、media placeholder、processor、position encoding 和原生多模态设计出发，讨论多模态大模型 tokenizer 的设计取舍。"
-published: false
 ---
 
 系列一讲文本 tokenizer：BPE、pre-tokenizer、词表规模、压缩率和预训练成本。
