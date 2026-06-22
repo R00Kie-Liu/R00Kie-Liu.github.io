@@ -2,7 +2,7 @@
 layout: post
 title: "Towards Better Tokenizer (3): 固定分词之外，最新 Tokenizer 研究在关心什么"
 date: 2026-06-22
-tags: [Tokenizer, Research, Pretraining]
+tags: [Tokenizer, survey, Pretraining]
 description: "梳理 2026 年 tokenizer 相关研究趋势：模型与 tokenizer co-design、tokenizer-free、动态 tokenization、多语种 token tax、旧 tokenizer 适配、工具/图/action tokenization 和多模态接口。"
 published: false
 ---
