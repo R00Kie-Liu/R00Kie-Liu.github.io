@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "从 DFlash 到 dLLM Self-Spec（四）：模型内 Draft / Verify 与 SGLang DLLM Runtime"
+title: "从 DFlash 到 dLLM Self-Spec（四）：Self-Spec dLLM & AR Uni-Model"
 date: 2026-06-29
 tags: [Infra, Speculative Decoding, dLLM]
 description: "从 I-DLM 和 Nemotron tri-mode 出发，分析 dLLM / AR unified model 如何在同一个模型内实现 self-spec，以及 serving 侧的 KV、scheduler 和 phase switching 瓶颈。"
