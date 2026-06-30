@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1420" height="640" viewBox="0 0 1420 640" role="img" aria-labelledby="title desc">
+  <title id="title">DSpark algorithm and serving infrastructure integration</title>
+  <desc id="desc">A left-to-right architecture diagram showing target hidden states, DSpark parallel backbone, Markov/RNN head, confidence head, hardware-aware scheduler, variable target verify, and accepted tokens.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#334155"/>
+    </marker>
+    <style>
+      .bg { fill: #ffffff; }
+      .title { font: 700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; }
+      .subtitle { font: 400 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .nodeText { font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; }
+      .small { font: 400 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .groupTitle { font: 700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .box { rx: 10; ry: 10; stroke-width: 1.5; }
+      .target { fill: #dcfce7; stroke: #16a34a; }
+      .draft { fill: #ede9fe; stroke: #7c3aed; }
+      .head { fill: #e0f2fe; stroke: #0284c7; }
+      .sched { fill: #fef3c7; stroke: #d97706; }
+      .verify { fill: #ffe4e6; stroke: #e11d48; }
+      .state { fill: #f1f5f9; stroke: #64748b; }
+      .container { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.2; stroke-dasharray: 7 5; rx: 16; ry: 16; }
+      .arrow { stroke: #334155; stroke-width: 1.8; fill: none; marker-end: url(#arrow); }
+      .dash { stroke-dasharray: 6 5; }
+    </style>
+  </defs>
+  <rect class="bg" width="1420" height="640"/>
+  <text class="title" x="40" y="42">DSpark：把 draft 质量信号变成 serving 调度信号</text>
+  <text class="subtitle" x="40" y="67">核心观点：半自回归 head 提高 accepted length，confidence head 让 scheduler 知道哪些 prefix 值得送进 target verify。</text>
+
+  <rect class="container" x="35" y="100" width="500" height="410"/>
+  <text class="groupTitle" x="55" y="128">Algorithm side: cheap but better draft</text>
+  <rect class="container" x="555" y="100" width="385" height="410"/>
+  <text class="groupTitle" x="575" y="128">Scheduling side: verify as budget</text>
+  <rect class="container" x="960" y="100" width="405" height="410"/>
+  <text class="groupTitle" x="980" y="128">Target side: lossless verification</text>
+
+  <rect class="box target" x="70" y="176" width="170" height="64"/>
+  <text class="nodeText" x="88" y="199">Target hidden states</text>
+  <text class="small" x="88" y="218">selected target layers</text>
+
+  <rect class="box draft" x="295" y="176" width="190" height="64"/>
+  <text class="nodeText" x="313" y="199">Parallel backbone</text>
+  <text class="small" x="313" y="218">DFlash-style block logits</text>
+  <line class="arrow" x1="240" y1="208" x2="295" y2="208"/>
+
+  <rect class="box head" x="295" y="300" width="190" height="64"/>
+  <text class="nodeText" x="313" y="323">Markov / RNN head</text>
+  <text class="small" x="313" y="342">light sequential correction</text>
+  <line class="arrow" x1="390" y1="240" x2="390" y2="300"/>
+
+  <rect class="box head" x="295" y="410" width="190" height="64"/>
+  <text class="nodeText" x="313" y="433">Confidence head</text>
+  <text class="small" x="313" y="452">prefix survival probability</text>
+  <line class="arrow" x1="430" y1="240" x2="430" y2="410"/>
+
+  <rect class="box state" x="590" y="300" width="170" height="64"/>
+  <text class="nodeText" x="608" y="323">Draft token prefix</text>
+  <text class="small" x="608" y="342">candidate tokens</text>
+  <line class="arrow" x1="485" y1="332" x2="590" y2="332"/>
+
+  <rect class="box state" x="590" y="410" width="170" height="64"/>
+  <text class="nodeText" x="608" y="433">Survival scores</text>
+  <text class="small" x="608" y="452">c_k and cumulative a_k</text>
+  <line class="arrow" x1="485" y1="442" x2="590" y2="442"/>
+
+  <rect class="box sched" x="805" y="350" width="180" height="78"/>
+  <text class="nodeText" x="823" y="374">Hardware-aware</text>
+  <text class="nodeText" x="823" y="392">prefix scheduler</text>
+  <text class="small" x="823" y="411">maximize tau * SPS(B)</text>
+  <line class="arrow" x1="760" y1="332" x2="805" y2="380"/>
+  <line class="arrow" x1="760" y1="442" x2="805" y2="400"/>
+
+  <rect class="box sched" x="805" y="176" width="180" height="64"/>
+  <text class="nodeText" x="823" y="199">Engine profile</text>
+  <text class="small" x="823" y="218">SPS(B) + current load</text>
+  <line class="arrow dash" x1="895" y1="240" x2="895" y2="350"/>
+
+  <rect class="box verify" x="1030" y="350" width="190" height="78"/>
+  <text class="nodeText" x="1048" y="374">Variable verify length</text>
+  <text class="small" x="1048" y="393">per request prefix budget</text>
+  <text class="small" x="1048" y="412">flattened verify tokens</text>
+  <line class="arrow" x1="985" y1="389" x2="1030" y2="389"/>
+
+  <rect class="box target" x="1030" y="176" width="190" height="64"/>
+  <text class="nodeText" x="1048" y="199">Target verify</text>
+  <text class="small" x="1048" y="218">lossless distribution</text>
+  <line class="arrow" x1="1125" y1="350" x2="1125" y2="240"/>
+
+  <rect class="box state" x="1260" y="176" width="150" height="64"/>
+  <text class="nodeText" x="1276" y="199">Accepted tokens</text>
+  <text class="small" x="1276" y="218">prefix + bonus</text>
+  <line class="arrow" x1="1220" y1="208" x2="1260" y2="208"/>
+
+  <rect class="box state" x="1260" y="350" width="150" height="78"/>
+  <text class="nodeText" x="1276" y="374">Next round state</text>
+  <text class="small" x="1276" y="393">seq_lens / KV</text>
+  <text class="small" x="1276" y="412">draft input</text>
+  <line class="arrow" x1="1335" y1="240" x2="1335" y2="350"/>
+
+  <rect x="70" y="548" width="1230" height="48" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text class="small" x="95" y="569">读图方式：DSpark 不是把 draft 完全改回自回归，而是在并行 backbone 后加轻量 token 依赖；同时把 confidence 变成 scheduler 的 verify budget 输入。</text>
+  <text class="small" x="95" y="588">因此算法收益和 infra 要求绑定在一起：accepted length 更高，但 serving engine 必须高效支持动态、变长的 target verify。</text>
+</svg>

@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="820" viewBox="0 0 1500 820" role="img" aria-labelledby="title desc">
+  <title id="title">I-DLM vs Nemotron draft / verify trigger timeline</title>
+  <desc id="desc">A two-lane timeline comparing I-DLM cross-round self-speculation with Nemotron same-round diffusion draft and causal verification.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#4b79a8"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#7c5f91"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#5f8f4e"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#a94d49"/>
+    </marker>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1f2933; }
+      .title { font-size: 26px; font-weight: 700; }
+      .tick { font-size: 15px; font-weight: 700; fill: #3f4a57; }
+      .lane-title { font-size: 17px; font-weight: 700; }
+      .lane-sub { font-size: 13px; fill: #425466; }
+      .box-title { font-size: 15px; font-weight: 700; }
+      .box-body { font-size: 12px; fill: #334155; }
+      .caption { font-size: 14px; fill: #2d3748; }
+      .small { font-size: 11px; fill: #475569; }
+      .edge-label { font-size: 12px; fill: #3f4a57; }
+    </style>
+  </defs>
+  <rect x="0" y="0" width="1500" height="820" fill="#ffffff"/>
+  <text x="750" y="48" text-anchor="middle" class="title">I-DLM vs Nemotron：draft / verify 触发时间流水线</text>
+
+  <text x="300" y="98" text-anchor="middle" class="tick">Round t</text>
+  <text x="660" y="98" text-anchor="middle" class="tick">Round t+1</text>
+  <text x="1010" y="98" text-anchor="middle" class="tick">Round t+2</text>
+  <line x1="190" y1="112" x2="1320" y2="112" stroke="#cbd5e1" stroke-width="2"/>
+  <line x1="300" y1="106" x2="300" y2="118" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="660" y1="106" x2="660" y2="118" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="1010" y1="106" x2="1010" y2="118" stroke="#94a3b8" stroke-width="2"/>
+
+  <rect x="40" y="130" width="1420" height="250" rx="16" fill="#eef6ff" stroke="#6c8ebf" stroke-width="2"/>
+  <rect x="40" y="130" width="130" height="250" rx="16" fill="#dbeafe" stroke="#6c8ebf" stroke-width="2"/>
+  <text x="105" y="230" text-anchor="middle" class="lane-title">
+    <tspan x="105" dy="0">I-DLM / ISD</tspan>
+    <tspan x="105" dy="23" class="lane-sub">跨轮次</tspan>
+    <tspan x="105" dy="18" class="lane-sub">self-spec</tspan>
+  </text>
+
+  <rect x="220" y="185" width="170" height="82" rx="10" fill="#fff2cc" stroke="#d6b656" stroke-width="2"/>
+  <text x="305" y="216" text-anchor="middle" class="box-title">第 t 轮</text>
+  <text x="305" y="237" text-anchor="middle" class="box-body">MASK draft</text>
+  <text x="305" y="256" text-anchor="middle" class="small">sample spec<tspan baseline-shift="sub">t</tspan> + q<tspan baseline-shift="sub">t</tspan></text>
+
+  <rect x="450" y="185" width="210" height="82" rx="10" fill="#e1d5e7" stroke="#9673a6" stroke-width="2"/>
+  <text x="555" y="215" text-anchor="middle" class="box-title">carry request state</text>
+  <text x="555" y="238" text-anchor="middle" class="small">_pending / _spec_tokens</text>
+  <text x="555" y="256" text-anchor="middle" class="small">_spec_draft_probs</text>
+
+  <rect x="730" y="166" width="275" height="120" rx="10" fill="#d5e8d4" stroke="#82b366" stroke-width="2"/>
+  <text x="867" y="196" text-anchor="middle" class="box-title">第 t+1 轮：同一次 forward</text>
+  <text x="867" y="219" text-anchor="middle" class="small">输入 [pending, spec<tspan baseline-shift="sub">t</tspan>..., M...]</text>
+  <text x="867" y="245" text-anchor="middle" class="box-body">verify old specs</text>
+  <text x="867" y="266" text-anchor="middle" class="box-body">+ draft new specs</text>
+
+  <rect x="1070" y="185" width="190" height="82" rx="10" fill="#dae8fc" stroke="#6c8ebf" stroke-width="2"/>
+  <text x="1165" y="213" text-anchor="middle" class="box-title">提交 accepted prefix</text>
+  <text x="1165" y="235" text-anchor="middle" class="box-body">或 correction token</text>
+  <text x="1165" y="254" text-anchor="middle" class="small">trim rejected / MASK KV</text>
+
+  <rect x="1095" y="298" width="210" height="62" rx="10" fill="#f8cecc" stroke="#b85450" stroke-width="2"/>
+  <text x="1200" y="323" text-anchor="middle" class="box-title">缓存下一批 specs</text>
+  <text x="1200" y="345" text-anchor="middle" class="small">进入 t+2 verify；stride = committed tokens</text>
+
+  <path d="M390 226 H440" fill="none" stroke="#4b79a8" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <path d="M660 226 H720" fill="none" stroke="#7c5f91" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow-purple)"/>
+  <text x="690" y="211" text-anchor="middle" class="edge-label">下一轮再 verify</text>
+  <path d="M1005 226 H1060" fill="none" stroke="#5f8f4e" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <path d="M1005 270 C1045 305, 1060 329, 1085 329" fill="none" stroke="#a94d49" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
+  <text x="1048" y="311" text-anchor="middle" class="edge-label">new specs</text>
+
+  <text x="300" y="428" text-anchor="middle" class="tick">Round k</text>
+  <text x="660" y="428" text-anchor="middle" class="tick">same round</text>
+  <text x="1185" y="428" text-anchor="middle" class="tick">Round k+1</text>
+  <line x1="190" y1="442" x2="1320" y2="442" stroke="#cbd5e1" stroke-width="2"/>
+  <line x1="300" y1="436" x2="300" y2="448" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="660" y1="436" x2="660" y2="448" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="1185" y1="436" x2="1185" y2="448" stroke="#94a3b8" stroke-width="2"/>
+
+  <rect x="40" y="460" width="1420" height="250" rx="16" fill="#fff7ed" stroke="#d79b00" stroke-width="2"/>
+  <rect x="40" y="460" width="130" height="250" rx="16" fill="#ffedd5" stroke="#d79b00" stroke-width="2"/>
+  <text x="105" y="560" text-anchor="middle" class="lane-title">
+    <tspan x="105" dy="0">Nemotron</tspan>
+    <tspan x="105" dy="23">LinearSpec</tspan>
+    <tspan x="105" dy="23" class="lane-sub">同轮次切换</tspan>
+  </text>
+
+  <rect x="215" y="518" width="185" height="82" rx="10" fill="#dae8fc" stroke="#6c8ebf" stroke-width="2"/>
+  <text x="307" y="548" text-anchor="middle" class="box-title">committed prefix</text>
+  <text x="307" y="572" text-anchor="middle" class="small">origin_input_ids + output_ids</text>
+
+  <rect x="465" y="518" width="190" height="82" rx="10" fill="#fff2cc" stroke="#d6b656" stroke-width="2"/>
+  <text x="560" y="546" text-anchor="middle" class="box-title">diffusion / block draft</text>
+  <text x="560" y="570" text-anchor="middle" class="small">填 [next, M, M, ...]</text>
+
+  <rect x="720" y="518" width="190" height="82" rx="10" fill="#d5e8d4" stroke="#82b366" stroke-width="2"/>
+  <text x="815" y="546" text-anchor="middle" class="box-title">causal / AR verify</text>
+  <text x="815" y="570" text-anchor="middle" class="small">同一轮切回 causal view</text>
+
+  <rect x="975" y="518" width="195" height="82" rx="10" fill="#e1d5e7" stroke="#9673a6" stroke-width="2"/>
+  <text x="1072" y="546" text-anchor="middle" class="box-title">accept prefix + bonus</text>
+  <text x="1072" y="570" text-anchor="middle" class="small">crop / refresh causal KV</text>
+
+  <rect x="1235" y="518" width="190" height="82" rx="10" fill="#f8cecc" stroke="#b85450" stroke-width="2"/>
+  <text x="1330" y="546" text-anchor="middle" class="box-title">下一轮重新构造 block</text>
+  <text x="1330" y="570" text-anchor="middle" class="small">从新 committed prefix 启动</text>
+
+  <path d="M400 559 H455" fill="none" stroke="#4b79a8" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <path d="M655 559 H710" fill="none" stroke="#d79b00" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <text x="682" y="541" text-anchor="middle" class="edge-label">same round</text>
+  <path d="M910 559 H965" fill="none" stroke="#5f8f4e" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <path d="M1170 559 H1225" fill="none" stroke="#a94d49" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
+  <text x="1198" y="541" text-anchor="middle" class="edge-label">commit 后重启窗口</text>
+
+  <rect x="210" y="742" width="1080" height="54" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+  <text x="750" y="765" text-anchor="middle" class="caption">关键差异：I-DLM 的 verify 滞后一轮，并在同一次 forward 里同时 draft 下一批；</text>
+  <text x="750" y="785" text-anchor="middle" class="caption">Nemotron 的 draft 和 verify 在同一轮内通过 attention mode 切换完成。</text>
+</svg>

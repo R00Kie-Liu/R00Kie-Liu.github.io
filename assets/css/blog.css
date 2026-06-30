@@ -417,7 +417,9 @@ body:has(.blog-container) .wrapper {
   margin-bottom: 0.4em;
 }
 .post-content table {
+  display: block;
   width: 100%;
+  overflow-x: auto;
   border-collapse: collapse;
   margin: 1.5em 0;
 }
