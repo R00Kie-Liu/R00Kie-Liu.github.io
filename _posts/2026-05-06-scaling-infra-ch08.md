@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：掌握 LLM 训练的四大并行策略，理解每种策略的通信开销推导、适用场景和最优组合方式。
 >
 > **对应原书**：[Chapter 5 (How to Parallelize a Transformer for Training)](https://jax-ml.github.io/scaling-book/training)  
+> **改写范围**：原书主线是 TPU 上的 DP/FSDP/TP/PP roofline；Megatron-LM 3D 并行配置是面向 GPU 训练的实践补充。
 > **建议时间**：Day 7-8, 约 5-6 小时（含习题）
 
 ---

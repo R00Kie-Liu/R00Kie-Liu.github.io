@@ -152,6 +152,6 @@ $$D > \frac{2 \times TP \times \text{FLOPs/s}}{B_{\text{link}}}$$
 
 第1-2章 + 第10-12章
 
-### 完整学习（14 天）
+### 完整学习（13 天）
 
 查看 [总览]({% post_url 2026-05-06-scaling-infra-index %}) 按顺序阅读

@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：先把分布式计算里的通信"积木"讲清楚：AllReduce、AllGather、ReduceScatter、AllToAll 分别做什么，以及它们的时间开销如何估算。下一章再把这些积木组合成分片矩阵乘法。
 >
 > **对应原书**：[Chapter 3 (Sharded Matrices)](https://jax-ml.github.io/scaling-book/sharding) 上篇：通信原语
+> **改写范围**：原书把通信原语穿插在分片 matmul 中讲；这里单独拆出通信语义、ring 成本和 GPU/NCCL 对照。
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 4, 约 2 小时
 
 ---

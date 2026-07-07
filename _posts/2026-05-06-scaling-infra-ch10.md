@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：理解 LLM 推理的两个阶段（Prefill 和 Generation）为何性能特性完全不同，掌握推理中的核心瓶颈和关键指标。
 >
 > **对应原书**：[Chapter 7 (All About Transformer Inference)](https://jax-ml.github.io/scaling-book/inference) 上半部分  
+> **改写范围**：本章只保留推理性能模型主线：prefill/generation、KV cache、batching 和分片直觉；具体 engine 技术放到第 11 章，LLaMA serving sizing 放到第 12 章。
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 9-10, 约 3 小时
 
 ---
@@ -553,296 +554,24 @@ $$B_{\text{crit}} \approx \frac{9.9 \times 10^{14}}{3.35 \times 10^{12}} \approx
 
 ---
 
-## 10.9 Disaggregated Serving（分离式服务）
+## 10.9 从性能模型到推理引擎
 
-![分离式推理](/assets/scaling-book/img/disaggregation.png)
+到这里为止，我们已经得到推理系统最重要的性能分解：
 
-由于 Prefill 和 Generation 性能特性完全不同：
+| 问题 | 本章给出的答案 | 后续展开 |
+|------|----------------|----------|
+| 为什么 prefill 和 generation 要分开看 | prefill 更像训练前向，通常 compute-bound；generation 每步重读权重和 KV cache，通常 memory-bound | 第 11 章讲 engine 如何调度两类任务 |
+| 为什么 batching 能提升吞吐 | linear 层的权重加载可以被更多请求摊薄，但 KV cache 会带来边际收益递减 | 第 11 章讲 continuous batching / chunked prefill |
+| 为什么 KV cache 是核心瓶颈 | KV cache 同时限制并发数、attention 带宽和长上下文延迟 | 第 11 章讲 PagedAttention / Prefix Caching / KV cache 分片 |
+| 为什么 serving sizing 不能只看最小可部署拓扑 | 最小拓扑能放下权重，但未必有足够 HBM 留给 batch 和 KV cache | 第 12 章用 LLaMA 3 做端到端 sizing |
 
-| 阶段 | 瓶颈 | 理想硬件 | 理想 Batch Size |
-|------|------|---------|----------------|
-| Prefill | Compute | 高 FLOPs/s 的芯片 | 大（数百-数千 tokens）|
-| Generation | Memory BW | 高带宽的芯片 | 中等（16-64）|
+一个自然推论是：**prefill 和 generation 往往不该被同一种资源配置绑死**。Prefill 喜欢高 FLOPs、大 token batch；generation 更关心 HBM 带宽、KV cache 容量和稳定的 per-token latency。这就是 disaggregated serving 的动机：让 prefill 侧专门处理 prompt，把生成好的 KV cache 交给 decode 侧继续逐 token 生成。
 
-**Disaggregated Serving** 将二者分开：
-- **Prefill 集群**：用高算力卡处理 prompt，batch size = 1（低延迟）或更大（高吞吐）
-- **Decode 集群**：用高带宽/大内存卡做生成，batch 多个请求
-- **中间传递**：通过网络传递 KV cache
-
-### 架构优势
-
-1. **专用优化**：
-   - Prefill 服务器：可以用更激进的 model parallelism（因为 compute-bound）
-   - Decode 服务器：可以用更大的 batch size 和更多内存用于 KV cache
-
-2. **独立扩展**：
-   - 高峰期 prefill 请求多 → 增加 prefill 服务器
-   - 长文本生成多 → 增加 decode 服务器
-
-3. **延迟优化**：
-   - 用户的 prefill 不会被其他用户的 generation 阻塞
-   - 每个请求立即被 prefill，然后立即进入 generation 队列
-
-### 网络开销
-
-需要传输的 KV cache 大小：
-
-$$\text{Transfer size} = 2 \times L \times K \times H \times S \times 2$$
-
-对于 LLaMA 2-13B，S=2048：
-- KV cache = 1.68 GB
-- 假设网络带宽 100 Gbps（12.5 GB/s）
-- 传输时间：`1.68 / 12.5 ≈ 134 ms`
-
-这个开销不小！但可以通过以下方式缓解：
-- **压缩 KV cache**：量化到 int8（减半）或 int4（1/4）
-- **流式传输**：边 prefill 边传输（overlap）
-- **GQA/MQA**：减少 KV heads，直接减少 cache 大小
-
-### 何时使用 Disaggregated Serving
-
-**适合的场景**：
-- 高并发、延迟敏感的服务（如聊天机器人）
-- Prefill 和 Generation 的负载比例波动大
-- 需要独立扩展 prefill 和 decode 容量
-
-> 🛠️ **实践：Google JetStream**
->
-> Google 的 JetStream 是 disaggregated serving 的开源实现：
->
-> ```python
-> # JetStream 架构
-> class Orchestrator:
->     def __init__(self):
->         self.prefill_engines = [...]  # Prefill TPU slice
->         self.generate_engines = [...]  # Generate TPU slice
->         self.transfer_queue = Queue()
->     
->     def prefill_thread(self):
->         while True:
->             request = self.prefill_queue.get()
->             kv_cache = self.prefill_engines[0].prefill(request.tokens)
->             self.transfer_queue.put((request.id, kv_cache))
->     
->     def transfer_thread(self):
->         while True:
->             req_id, kv_cache = self.transfer_queue.get()
->             # 通过网络传输 KV cache 到 generate slice
->             self.generate_engines[0].insert(req_id, kv_cache)
->     
->     def generate_thread(self):
->         while True:
->             # Continuous batching: 处理所有活跃请求
->             tokens = self.generate_engines[0].generate()
->             for req_id, token in tokens:
->                 self.stream_output(req_id, token)
-> ```
->
-> 关键设计：
-> 1. **三个独立线程**：prefill、transfer、generate 互不阻塞
-> 2. **Continuous batching**：generate 线程动态管理 batch
-> 3. **流式输出**：token 生成后立即返回给用户
-
-## 10.10 SGLang 的推理优化
-
-> 🛠️ **实践：SGLang 和 Mini-SGLang**
->
-> SGLang 是一个高性能的 LLM 推理引擎，专注于优化 serving 的吞吐量和延迟。让我们结合 mini-sglang 项目来理解其核心设计。
-
-### Mini-SGLang 系统架构
-
-Mini-SGLang 采用分布式架构,将推理系统分解为多个独立进程:
-
-```
-用户请求 → API Server → Tokenizer → Scheduler (Rank 0) 
-                                        ↓
-                                   广播到所有 Schedulers
-                                        ↓
-                                   Engine (每个 GPU)
-                                        ↓
-                                   Detokenizer → API Server → 用户
-```
-
-**关键组件**:
-- **API Server**: 提供 OpenAI 兼容的 API 接口
-- **Tokenizer/Detokenizer Worker**: 文本和 token 的转换
-- **Scheduler Worker**: 每个 GPU 一个,管理该 GPU 的计算和资源分配
-- **Engine**: 实际执行模型推理的组件
-
-**通信机制**:
-- **ZeroMQ (ZMQ)**: 用于控制消息(请求调度、状态同步)
-- **NCCL**: 用于 GPU 间的张量数据交换(TP 通信)
-
-### RadixAttention：前缀共享的 KV Cache
-
-SGLang 的核心创新是 **RadixAttention**，将 KV cache 组织为 Radix Tree（前缀树）：
-
-```python
-# mini-sglang/kvcache/radix_cache.py 的简化版本
-class RadixCache:
-    def __init__(self):
-        self.root = TreeNode()
-    
-    def match_prefix(self, tokens: List[int]) -> Tuple[TreeNode, int]:
-        """找到最长匹配前缀"""
-        node = self.root
-        matched_len = 0
-        
-        for i, token in enumerate(tokens):
-            if token in node.children:
-                node = node.children[token]
-                matched_len = i + 1
-            else:
-                break
-        
-        return node, matched_len
-    
-    def insert(self, tokens: List[int], kv_data):
-        """插入新的 KV cache"""
-        node, matched_len = self.match_prefix(tokens)
-        
-        # 只需要为未匹配的部分创建新节点
-        for token in tokens[matched_len:]:
-            new_node = TreeNode(token, kv_data[token])
-            node.children[token] = new_node
-            node = new_node
-```
-
-**优势**：
-- **自动前缀共享**：多个请求的公共前缀只存储一次
-- **灵活性**：支持任意长度的共享前缀（不限于固定的 system prompt）
-- **内存效率**：LRU 淘汰策略，自动管理内存
-
-**实际效果**（Few-shot prompting 场景）：
-- 传统方法：每个请求独立存储 KV cache
-  - 100 个请求，每个 2048 tokens prompt → 100 × 1.68 GB = 168 GB
-- RadixAttention：共享前缀
-  - 假设前 1800 tokens 是共同的 few-shot examples
-  - 共享部分：1.68 × (1800/2048) = 1.48 GB（只存一次）
-  - 独特部分：100 × 1.68 × (248/2048) = 20.3 GB
-  - **总计**：21.8 GB（节省 87% 内存！）
-
-### Chunked Prefill：避免阻塞
-
-传统推理引擎的问题：长 prompt 的 prefill 会阻塞所有正在 decode 的请求。
-
-SGLang 的解决方案：**Chunked Prefill**
-
-```python
-# mini-sglang/scheduler.py 的简化逻辑
-class Scheduler:
-    def __init__(self, chunked_prefill_size=512):
-        self.chunked_prefill_size = chunked_prefill_size
-        self.running_batch = []
-        self.waiting_queue = []
-    
-    def schedule_step(self):
-        # 优先处理 decode（低延迟）
-        if self.running_batch:
-            decode_batch = self.get_decode_batch()
-            if decode_batch:
-                return decode_batch
-        
-        # 如果有空闲，处理 prefill chunk
-        if self.waiting_queue:
-            prefill_req = self.waiting_queue[0]
-            chunk_size = min(
-                self.chunked_prefill_size,
-                len(prefill_req.remaining_tokens)
-            )
-            
-            # 只处理一个 chunk，然后回到 decode
-            chunk = prefill_req.remaining_tokens[:chunk_size]
-            prefill_req.remaining_tokens = prefill_req.remaining_tokens[chunk_size:]
-            
-            if not prefill_req.remaining_tokens:
-                # Prefill 完成，加入 running batch
-                self.running_batch.append(prefill_req)
-                self.waiting_queue.pop(0)
-            
-            return chunk
-```
-
-**效果**：
-- 长 prompt（4096 tokens）被分成 8 个 chunk（每个 512 tokens）
-- 每处理一个 prefill chunk，就处理一轮所有 decode 请求
-- Decode 请求的延迟抖动从 ~200ms 降低到 ~25ms
-
-### Continuous Batching
-
-SGLang 实现了真正的 continuous batching：
-
-```python
-# mini-sglang/engine.py 的简化版本
-class LLMEngine:
-    def step(self):
-        # 动态 batch：随时可以加入/移除请求
-        batch = self.scheduler.get_next_batch()
-        
-        if batch.is_prefill:
-            # Prefill: 可变长度输入
-            logits = self.model.forward(
-                input_ids=batch.input_ids,
-                positions=batch.positions,
-                kv_cache=None  # 创建新 cache
-            )
-        else:
-            # Decode: 每个请求只处理 1 个 token
-            logits = self.model.forward(
-                input_ids=batch.input_ids,  # [batch_size, 1]
-                positions=batch.positions,
-                kv_cache=batch.kv_cache  # 复用已有 cache
-            )
-        
-        # 采样下一个 token
-        next_tokens = self.sampler.sample(logits)
-        
-        # 更新请求状态，移除已完成的
-        self.scheduler.update(next_tokens)
-```
-
-**关键特性**：
-- 请求可以在任意时刻加入 batch（不需要等待当前 batch 完成）
-- 完成的请求立即移除，空出的 slot 立即被新请求填充
-- 没有 padding 浪费（每个请求处理自己的实际长度）
-
-### Tensor Parallelism 推理
-
-```bash
-# 启动 8 卡 TP 推理
-python -m sglang.launch_server \
-  --model-path meta-llama/Llama-3-70B \
-  --tp-size 8 \
-  --mem-fraction-static 0.8  # 80% 内存用于 KV cache
-```
-
-**TP 在推理中的权衡**：
-- ✅ 减少每卡权重加载量：`70B / 8 = 8.75B/卡`
-- ✅ 增加总内存容量：`8 × 80GB = 640GB`（可以支持更大 batch）
-- ❌ 每步需要 AllReduce：增加延迟
-
-**何时使用 TP**：
-- 模型太大，单卡放不下（必须用）
-- Batch size 足够大，通信可以被计算掩盖
-- 节点内 TP（NVLink 高带宽）而非跨节点
-
-### 实际性能对比
-
-基于 LLaMA 2-70B，A100 80GB × 8：
-
-| 配置 | TTFT (ms) | ITL (ms) | 吞吐量 (tokens/s) | Max Batch |
-|------|-----------|----------|-------------------|-----------|
-| 朴素实现 | 850 | 45 | 356 | 16 |
-| + Continuous Batching | 850 | 45 | 711 | 32 |
-| + RadixAttention | 120 | 45 | 711 | 32 |
-| + Chunked Prefill | 120 | 28 | 914 | 32 |
-| SGLang (全部优化) | 120 | 28 | 914 | 32 |
-
-（数据来自 SGLang 论文，few-shot prompting 场景）
+这里先只保留概念，不展开实现细节。真正的推理引擎设计会涉及 continuous batching、chunked prefill、PagedAttention、prefix caching、speculative decoding，以及 SGLang/vLLM 这类系统的具体调度策略，这些放到第 11 章统一讲；LLaMA 3-70B 该用几张卡、batch 能开多大、TTFT/ITL 怎么估，则放到第 12 章。
 
 ---
 
-## 10.11 Worked Problems（习题与详解）
+## 10.10 Worked Problems（习题与详解）
 
 以下习题改编自原书，帮助你巩固推理性能分析的核心概念。
 
@@ -1137,12 +866,10 @@ $$Y_{\max} = \frac{F}{B \cdot \beta} = \frac{16384}{32 \times (8.2e11 / 4.5e10)}
 - [ ] Attention 的算术强度 ≈ 1，永远 memory-bound，且时间随序列长度线性增长
 - [ ] KV Cache 大小：`2 × L × K × H × S × 2` bytes（bf16）
 - [ ] GQA/MQA 大幅减少 KV cache 大小（K 倍），提升 batch size 上限和吞吐量（可达 4-5× 提升）
-- [ ] 其他 KV cache 优化：Local attention、跨层 KV 共享、Paged Attention
+- [ ] 其他 KV cache 优化：Local attention、跨层 KV 共享、Paged Attention（第 11 章展开）
 - [ ] Batching 可以提升吞吐量，但临界 batch size ≈ 240-300（之后增长放缓）
 - [ ] Prefill 分片策略和训练类似（TP + Sequence Parallelism），Generation 几乎只能用 TP
-- [ ] Disaggregated serving 将 prefill 和 generation 分离，独立优化和扩展
-- [ ] SGLang 的 RadixAttention 实现高效的前缀共享 KV cache
-- [ ] Chunked prefill 避免长 prompt 阻塞 decode 请求
+- [ ] Disaggregated serving 的动机来自 prefill/generation 的性能差异，具体 engine 策略见第 11 章
 - [ ] TP 在推理中的效果取决于 batch size 和通信开销的平衡
 - [ ] MoE 模型需要更大的 batch size（E/k 倍）才能 compute-bound
 
@@ -1151,11 +878,7 @@ $$Y_{\max} = \frac{F}{B \cdot \beta} = \frac{16384}{32 \times (8.2e11 / 4.5e10)}
 ## 进一步阅读
 
 - [原书 Chapter 7: All About Transformer Inference](https://jax-ml.github.io/scaling-book/inference)（前半部分）
-- [SGLang 论文 (Zheng et al., 2024)](https://arxiv.org/abs/2312.07104)
 - [GQA 论文 (Ainslie et al., 2023)](https://arxiv.org/abs/2305.13245)
 - [Flash Attention 论文 (Dao et al., 2022)](https://arxiv.org/abs/2205.14135)
-- [vLLM 论文 (Kwon et al., 2023)](https://arxiv.org/abs/2309.06180) — PagedAttention
 - [ESTI 论文 (Pope et al., 2022)](https://arxiv.org/abs/2211.05102) — 推理 Roofline 和 Pareto 分析
 - [Megatron-LM Inference](https://github.com/NVIDIA/Megatron-LM) — NVIDIA 的分布式推理框架
-- [JetStream 开源项目](https://github.com/google/JetStream)
-- Mini-SGLang 教程：`/Users/huabin/mini-sglang-main/tutorials/`

@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：理解多芯片如何连接成集群，不同互联方式（ICI/NVLink/InfiniBand/DCN）的带宽差异，以及拓扑结构如何影响并行策略。
 >
 > **对应原书**：[Chapter 2 (TPU Networking)](https://jax-ml.github.io/scaling-book/tpus) + [Chapter 12 (GPU Networking)](https://jax-ml.github.io/scaling-book/gpus)  
+> **改写范围**：原书主线是 TPU ICI/torus 和 GPU bonus 章；NVLink、IB、SHARP 与 Megatron 配置是面向 GPU 集群的扩展。
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 3-4, 约 2.5 小时
 
 ---
@@ -825,4 +826,3 @@ DP 的 spine 层级临界值约为 2475 tokens/GPU。但因为有 PP 分片：
 - [NVSwitch Hot Chips Talk](https://hc34.hotchips.org/assets/program/conference/day2/Network%20and%20Switches/NVSwitch%20HotChips%202022%20r5.pdf)
 - [DeepSeek-V3 技术报告](https://arxiv.org/abs/2412.19437)
 - [HuggingFace Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
-

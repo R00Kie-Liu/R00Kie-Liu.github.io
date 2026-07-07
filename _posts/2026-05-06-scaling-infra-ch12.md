@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：将推理理论应用到 LLaMA 3-70B 的实际 serving 中，分析延迟/吞吐量权衡，给出 SGLang 的实际部署配置。
 >
 > **对应原书**：[Chapter 8 (Serving LLaMA 3-70B on TPUs)](https://jax-ml.github.io/scaling-book/applied-inference)  
+> **改写范围**：原书案例基于 TPU v5e；这里保留 serving sizing 主线，并加入 H100/SGLang 部署参数和排障视角。
 > **优先级**：⭐⭐ 中 | **建议时间**：Day 11-12, 约 2 小时
 
 ---
@@ -340,13 +341,13 @@ $$T_{\text{step}} = \underbrace{T_{\text{param}}}_{\text{权重加载}} + \under
 
 ## 12.6 Generation 中的分片策略
 
-### 推理只有模型并行
+### 单副本 decode 主要靠模型并行
 
-训练中可以使用 DP + TP + PP 等多种并行方式，但 **Generation 阶段几乎只能使用模型并行**（TP）：
+训练中可以使用 DP + TP + PP 等多种并行方式；在 serving 中，外层 DP/多副本仍然很重要，用来扩展总吞吐和隔离请求。但如果目标是降低**单个模型副本**的 decode 步时间，Generation 阶段主要依赖模型并行（TP）：
 
-- **DP** 在推理中不适用（每个请求独立，不需要梯度同步）
+- **DP / 多副本** 适合横向扩展 QPS，但不会让单个请求更快生成下一个 token
 - **PP** 会增加延迟（每步 decode 必须串行经过所有 stage），在延迟敏感的推理中代价太高
-- **TP** 是唯一可行的方案：将权重分到多卡 → 减少每卡加载量 → 降低延迟
+- **TP** 是单副本低延迟的核心方案：将权重分到多卡 → 减少每卡加载量 → 降低延迟
 
 ### 模型并行的上限
 
@@ -881,4 +882,3 @@ QPS/拓扑 = 43 / 9.73 = **4.4 QPS**。
 - [vLLM: PagedAttention](https://arxiv.org/abs/2309.06180)
 - [LLaMA 3 模型卡](https://huggingface.co/meta-llama/Meta-Llama-3-70B)
 - [Splitwise: Disaggregated Serving](https://arxiv.org/abs/2311.18677)
-

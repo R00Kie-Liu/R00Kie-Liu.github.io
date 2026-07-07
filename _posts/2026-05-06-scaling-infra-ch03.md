@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：理解加速器内部的内存层级（HBM → Cache → 计算单元），以及数据搬运如何成为性能瓶颈。
 >
 > **对应原书**：[Chapter 2 (TPU internals)](https://jax-ml.github.io/scaling-book/tpus) + [Chapter 12 (GPU memory)](https://jax-ml.github.io/scaling-book/gpus)  
+> **改写范围**：原书侧重 TPU 内部数据流；GPU memory hierarchy、PCIe 和推理内存预算是工程补充。
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 3, 约 2 小时
 
 ---
@@ -811,4 +812,3 @@ ICI gather 是瓶颈。实际时间大约在 170-250 ms 之间。
 - [Megatron-LM Activation Recomputation](https://arxiv.org/abs/2205.05198) — Selective Recomputation 策略
 - [Systolic Array 动画 (fleetwood.dev)](https://fleetwood.dev/posts/domain-specific-architectures#google-tpu) — 交互式理解脉动阵列
 - [How to Optimize a CUDA Matmul (Simon Boehm)](https://siboehm.com/articles/22/CUDA-MMM) — GPU 内存层级与 tiling 实战
-

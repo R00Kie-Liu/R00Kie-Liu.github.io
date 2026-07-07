@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：了解如何使用 Profiler 定位训练/推理中的性能瓶颈，包括 XLA/JAX profiler 和 NVIDIA 工具。
 >
 > **对应原书**：[Chapter 9 (How to Profile TPU Programs)](https://jax-ml.github.io/scaling-book/profiling)  
+> **改写范围**：原书主线是 JAX/XLA/XProf；Nsight、PyTorch Profiler 和常见 GPU 诊断流程是实践补充。
 > **优先级**：⭐ 低 | **建议时间**：Day 13, 约 2 小时
 
 ---
@@ -812,4 +813,3 @@ nsys profile --trace=cuda,nvtx \
 - [PyTorch Profiler 教程](https://pytorch.org/tutorials/recipes/recipes/profiler_recipe.html)
 - [Perfetto Trace Viewer](https://ui.perfetto.dev/) — 在线查看 trace 文件
 - [XLA 编译器源码](https://github.com/openxla/xla)
-

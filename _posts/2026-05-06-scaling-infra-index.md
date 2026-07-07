@@ -13,7 +13,7 @@ tags: [Infra, Scaling Book]
 
 ---
 
-## 学习路线图（14天）
+## 学习路线图（13天）
 
 ### 第一周：硬件与通信基础（Day 1-5）
 
@@ -26,7 +26,7 @@ tags: [Infra, Scaling Book]
 | 4 | [第5章：Sharded Matrices 上篇 — 集合通信原语]({% post_url 2026-05-06-scaling-infra-ch05 %}) | ⭐⭐⭐ | 2h |
 | 5 | [第6章：Sharded Matrices 下篇 — 分片矩阵乘法]({% post_url 2026-05-06-scaling-infra-ch06 %}) | ⭐⭐⭐ | 3h |
 
-### 第二周：训练与推理（Day 6-14）
+### 第二周：训练与推理（Day 6-13）
 
 | Day | 章节 | 优先级 | 预计时间 |
 |-----|------|--------|----------|
@@ -37,7 +37,6 @@ tags: [Infra, Scaling Book]
 | 10-11 | [第11章：推理优化 — KV Cache / Batching / 量化]({% post_url 2026-05-06-scaling-infra-ch11 %}) | ⭐⭐⭐ | 3h |
 | 11-12 | [第12章：实战 — Serving LLaMA 3]({% post_url 2026-05-06-scaling-infra-ch12 %}) | ⭐⭐ | 2h |
 | 13 | [第13章：性能调优 — Profiling 与调试]({% post_url 2026-05-06-scaling-infra-ch13 %}) | ⭐ | 2h |
-| 14 | [第14章：JAX 并行编程入门（选读）]({% post_url 2026-05-06-scaling-infra-ch14 %}) | ⭐ | 2h |
 
 ---
 

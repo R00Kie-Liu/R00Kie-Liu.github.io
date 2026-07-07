@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：精确计算 Transformer 每一层的参数量、FLOPs 和内存占用，建立"Transformer = 一系列已知大小的矩阵乘法"的量化直觉。
 >
 > **对应原书**：[Chapter 4 (All the Transformer Math You Need to Know)](https://jax-ml.github.io/scaling-book/transformers)  
+> **改写范围**：沿原书 Transformer math 主线展开，额外加入 MoE、FlashAttention、KV cache 等与现代模型/推理更贴近的补充。
 > **优先级**：⭐⭐ 中 | **建议时间**：Day 6, 约 2.5 小时
 
 ---
@@ -794,4 +795,3 @@ DeepSeek-V3：$B > 120 \times 256 / 8 = \textbf{3840}$ tokens。
 - [DeepSeek-V3 技术报告](https://arxiv.org/abs/2412.19437)
 - [Memory-Efficient Attention (Rabe & Staats, 2021)](https://arxiv.org/abs/2112.05682) — Flash Attention 的前身
 - [Megatron-LM Selective Recomputation](https://arxiv.org/abs/2205.05198) — Megatron 的选择性重计算策略
-

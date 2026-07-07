@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：掌握现代 LLM 推理引擎的核心优化技术，理解它们各自解决什么问题，以及如何设计一个高效的推理系统。
 >
 > **对应原书**：[Chapter 7 (All About Transformer Inference)](https://jax-ml.github.io/scaling-book/inference) 下半部分  
+> **改写范围**：承接原书 inference engine 设计部分，额外补入 vLLM/SGLang、PagedAttention、RadixAttention、量化和 speculative decoding 等现代 serving 实践。
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 10-11, 约 4-5 小时（含习题）
 
 ---
@@ -27,13 +28,13 @@ tags: [Infra, Scaling Book]
 
 **关键约束**——与训练完全不同：
 
-1. **FSDP 不可行**：Generation 是 memory-bound（被 HBM 带宽限制），我们不希望通过 ICI（比 HBM 慢一个数量级）搬运权重。**我们应该搬运激活值而非权重**。
+1. **FSDP 通常不适合优化单请求 decode latency**：Generation 是 memory-bound（被 HBM 带宽限制），如果每步都通过 ICI 搬运权重，往往会把 HBM 瓶颈换成更慢的网络瓶颈。对单个模型副本来说，通常应该搬运较小的激活值，而不是频繁重组完整权重。
 
-2. **纯 Data Parallelism 无意义**：DP 复制参数到每个芯片，但不会帮助我们更快地加载参数。不如直接运行多个模型副本。
+2. **Data Parallelism 的含义变了**：DP 复制参数到多个模型副本，适合扩展服务总吞吐和做请求隔离；但对单个请求的 decode 步时间没有帮助，因为每个副本仍然要从自己的 HBM 读取完整参数。
 
-3. **没有序列并行**：Generation 每步只有 1 个 token，无法沿序列维度分片。
+3. **序列并行空间很小**：Generation 每步只有 1 个新 token，沿新 token 维度没什么可切；长上下文主要体现在 KV cache 上，通常用 KV/head/batch 维度的 cache 分片来处理。
 
-**结论**：Generation 几乎只能使用 **Model Parallelism（Tensor Parallelism）** 的变体。
+**结论**：如果目标是降低单个模型副本的 decode latency，核心手段通常是 **Model Parallelism（Tensor Parallelism）** 及其变体；如果目标是扩展服务吞吐，再在外层复制多个模型副本。
 
 ### 超越 ICI Bound 的 Model Parallelism
 
@@ -207,7 +208,7 @@ class Orchestrator:
 
 ---
 
-## 11.3 PagedAttention（分页注意力）
+## 11.4 PagedAttention（分页注意力）
 
 ![PagedAttention](/assets/scaling-book/img/paged-attention.png)
 
@@ -241,7 +242,7 @@ PagedAttention（来自 vLLM）：
 
 ---
 
-## 11.4 Prefix Caching（前缀缓存）
+## 11.5 Prefix Caching（前缀缓存）
 
 ![Prefix Caching Trie](/assets/scaling-book/img/prefix-caching-trie.png)
 
@@ -277,7 +278,7 @@ SGLang 的 **RadixAttention**：
 
 ---
 
-## 11.5 KV Cache 分片策略
+## 11.6 KV Cache 分片策略
 
 在大规模推理中，KV cache 是一个需要特殊处理的数据结构。
 
@@ -330,18 +331,19 @@ $$\text{KV}[2, B_Z, S, K_Y, H]$$
 
 ---
 
-## 11.6 量化（Quantization）
+## 11.7 量化（Quantization）
 
 ### 原理
 
 用更少的 bit 表示模型权重：
 
-| 精度 | 每参数 bytes | 70B 模型大小 | 相对速度 | Roofline 影响 |
+| 配置 | 每参数 bytes | 70B 模型大小 | 相对速度 | Roofline 影响 |
 |------|-------------|-------------|---------|--------------|
-| fp16/bf16 | 2 | 140 GB | 1× | 临界 B ≈ 240 |
-| fp8 | 1 | 70 GB | ~2× | 临界 B ≈ 240 |
-| int8 | 1 | 70 GB | ~2× | 临界 B ≈ 240 |
-| int4 (GPTQ/AWQ) | 0.5 | 35 GB | ~3-4× | 临界 B ≈ 120 |
+| bf16 权重 + bf16 计算 | 2 | 140 GB | 1× | 临界 B ≈ 240 |
+| fp8 权重 + fp8 计算 | 1 | 70 GB | ~2× | 临界 B 近似不变 |
+| int8 权重 + bf16 计算（W8A16） | 1 | 70 GB | ~2× | 临界 B ≈ 120 |
+| int8 权重 + int8 计算（W8A8） | 1 | 70 GB | ~2× | 临界 B 近似不变 |
+| int4 权重 + bf16 计算（W4A16） | 0.5 | 35 GB | ~3-4× | 临界 B ≈ 60 |
 
 ### 为什么量化能加速推理
 
@@ -400,7 +402,7 @@ $$T_{\text{decode}}(\text{int4}) \approx \frac{P \times 0.5}{W_{\text{hbm}}} = \
 
 ---
 
-## 11.7 Speculative Decoding（投机解码）
+## 11.8 Speculative Decoding（投机解码）
 
 ![Speculative Decoding](/assets/scaling-book/img/spec-sampling1.png)
 
@@ -521,7 +523,7 @@ def verify_stochastic(draft_tokens, target_probs, draft_probs):
 
 ---
 
-## 11.8 其他优化技术
+## 11.9 其他优化技术
 
 ### FlashInfer / FlashDecoding
 
@@ -554,7 +556,7 @@ def verify_stochastic(draft_tokens, target_probs, draft_probs):
 
 ---
 
-## 11.9 Latency-Bound 通信（附录）
+## 11.10 Latency-Bound 通信（附录）
 
 在推理的小 batch 场景下，通信不再受带宽限制，而是受**延迟**限制。
 
@@ -594,7 +596,7 @@ $$\text{Latency-bound 条件}: \frac{\text{bytes}}{n_{\text{shards}} \times 4.5e
 
 ---
 
-## 11.10 2D Weight Stationary 分片（附录）
+## 11.11 2D Weight Stationary 分片（附录）
 
 对于大规模推理（64+ 芯片），传统的 1D Megatron TP（只分片 F 维度）变得低效。**2D Weight Stationary** 分片同时分片 D 和 F 维度。
 
@@ -641,7 +643,7 @@ $$\frac{4BD}{3 \cdot W_{\text{ici}}} > \frac{11.3 BD}{\sqrt{N} \cdot W_{\text{ic
 
 ---
 
-## 11.11 Worked Problems（习题与详解）
+## 11.12 Worked Problems（习题与详解）
 
 ### Problem 1：推理引擎设计选择
 
@@ -810,14 +812,14 @@ $$\text{KV}[2, B_4, S, K_8, H]$$
 
 ## 关键要点
 
-- [ ] Generation 只能用 Model Parallelism（FSDP 和 DP 不适用）
+- [ ] 单个模型副本的 Generation latency 主要靠 Model Parallelism 优化；外层 DP 仍可用于扩展服务吞吐
 - [ ] Memory-bound 下可以超越训练的 ICI bound，更大的 TP 仍有收益
 - [ ] 推理引擎三种模式：Batched、Interleaved、Disaggregated（生产推荐后者）
 - [ ] Continuous Batching：动态增删请求，消除"等最慢"的浪费
 - [ ] PagedAttention：分页管理 KV cache，内存利用率 40% → 95%
 - [ ] Prefix Caching：共享前缀的 KV cache 复用（SGLang 的 RadixAttention）
 - [ ] KV cache 分片：先 head 维度，不够再 batch 维度（需要 AllToAll）
-- [ ] 量化：int4 将 decode 延迟减少 4×，且降低 compute-bound 门槛（B > 60 而非 240）
+- [ ] 量化：W8A16 / W4A16 同时降低权重加载量和 compute-bound 门槛；全低精度计算则通常让临界 batch 近似不变
 - [ ] Speculative Decoding：利用闲置 FLOPs，最优 k ≈ 3-5，吞吐提升 2-3×
 - [ ] Latency-bound 通信：小 batch 时通信受固定延迟限制，非带宽限制
 - [ ] 2D Weight Stationary：81+ 芯片时优于 1D Megatron，通信随 √N 下降
@@ -836,4 +838,3 @@ $$\text{KV}[2, B_4, S, K_8, H]$$
 - [EAGLE: Speculative Sampling with Embedded Drafter](https://arxiv.org/abs/2401.15077)
 - [FlashDecoding](https://pytorch.org/blog/flash-decoding/)
 - [JetStream 开源项目](https://github.com/google/JetStream)
-

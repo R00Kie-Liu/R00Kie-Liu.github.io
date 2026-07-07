@@ -9,6 +9,7 @@ tags: [Infra, Scaling Book]
 > **本章目标**：掌握 Roofline 模型——用一个简单框架判断任何算法在硬件上是"算力瓶颈"还是"带宽瓶颈"，并通过大量习题建立定量分析直觉。
 >
 > **对应原书**：[Chapter 1 (All About Rooflines)](https://jax-ml.github.io/scaling-book/roofline)  
+> **改写范围**：基本沿原书 Roofline 主线展开，额外加入 GPU、MFU 和推理系统里的使用方式。
 > **建议时间**：Day 2, 约 3-4 小时（含习题）
 
 ---
