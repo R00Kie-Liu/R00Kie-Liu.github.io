@@ -376,6 +376,110 @@ body:has(.blog-container) .wrapper {
   box-shadow: var(--shadow-sm);
   margin: 1em 0;
 }
+.post-image-frame {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 1.2em 0;
+  line-height: 0;
+}
+.post-content .post-image-frame img {
+  display: block;
+  margin: 0;
+}
+.post-image-expand {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.72);
+  color: #ffffff;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+.post-image-frame:hover .post-image-expand,
+.post-image-frame:focus-within .post-image-expand {
+  opacity: 1;
+  transform: translateY(0);
+}
+.post-image-expand:hover,
+.post-image-expand:focus-visible {
+  background: rgba(17, 24, 39, 0.92);
+  outline: none;
+}
+.post-image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 28px 56px;
+  background: rgba(15, 23, 42, 0.86);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+.post-image-lightbox.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.post-image-lightbox-img {
+  max-width: min(96vw, 1440px);
+  max-height: calc(100vh - 128px);
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+}
+.post-image-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #ffffff;
+  cursor: pointer;
+}
+.post-image-lightbox-close:hover,
+.post-image-lightbox-close:focus-visible {
+  background: rgba(15, 23, 42, 0.96);
+  outline: none;
+}
+.post-image-lightbox-caption {
+  position: absolute;
+  left: 32px;
+  right: 32px;
+  bottom: 18px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  text-align: center;
+}
+body.image-lightbox-open {
+  overflow: hidden;
+}
+@media (hover: none) {
+  .post-image-expand {
+    opacity: 1;
+    transform: none;
+  }
+}
 .post-content a {
   color: var(--link-color);
   text-decoration: underline;
