@@ -76,6 +76,20 @@
           {{ content }}
         </div>
 
+        <script>
+        (function() {
+          var assetRoot = "{{ '/assets/' | relative_url }}";
+          document.querySelectorAll('.post-content img').forEach(function(img) {
+            var src = img.getAttribute('src') || '';
+            if (src.indexOf('../assets/') === 0) {
+              img.src = assetRoot + src.slice('../assets/'.length);
+            } else if (src.indexOf('assets/') === 0) {
+              img.src = assetRoot + src.slice('assets/'.length);
+            }
+          });
+        })();
+        </script>
+
         <div class="post-footer">
           <div class="post-nav">
             {% if page.previous.url %}

@@ -23,8 +23,8 @@ tags: [Infra, Scaling Book]
 | 2 | [第2章：性能分析基石 — Roofline 模型]({% post_url 2026-05-06-scaling-infra-ch02 %}) | ⭐⭐⭐ | 2h |
 | 3 | [第3章：内存层级与带宽 — 数据如何流动]({% post_url 2026-05-06-scaling-infra-ch03 %}) | ⭐⭐⭐ | 2h |
 | 3-4 | [第4章：芯片互联与集群拓扑]({% post_url 2026-05-06-scaling-infra-ch04 %}) | ⭐⭐⭐ | 2.5h |
-| 4 | [第5章：集合通信原语]({% post_url 2026-05-06-scaling-infra-ch05 %}) | ⭐⭐⭐ | 2h |
-| 5 | [第6章：分片矩阵乘法 — 分布式计算的核心]({% post_url 2026-05-06-scaling-infra-ch06 %}) | ⭐⭐⭐ | 3h |
+| 4 | [第5章：Sharded Matrices 上篇 — 集合通信原语]({% post_url 2026-05-06-scaling-infra-ch05 %}) | ⭐⭐⭐ | 2h |
+| 5 | [第6章：Sharded Matrices 下篇 — 分片矩阵乘法]({% post_url 2026-05-06-scaling-infra-ch06 %}) | ⭐⭐⭐ | 3h |
 
 ### 第二周：训练与推理（Day 6-14）
 

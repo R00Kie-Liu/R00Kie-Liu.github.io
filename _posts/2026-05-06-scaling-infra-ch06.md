@@ -1,14 +1,14 @@
 ---
 layout: post
-title: "Scaling Book 入门第 6 章：分片矩阵乘法 — 分布式计算的核心"
+title: "Scaling Book 入门第 6 章：Sharded Matrices 下篇 — 分片矩阵乘法"
 date: 2026-05-06
 tags: [Infra, Scaling Book]
 ---
 
 
-> **本章目标**：理解当矩阵被分片到多个设备上时，如何高效地完成矩阵乘法，以及不同分片方式对通信开销的影响。
+> **本章目标**：承接第 5 章的通信原语，理解当矩阵被分片到多个设备上时，如何高效完成矩阵乘法，以及不同分片方式为什么会触发 AllGather、ReduceScatter 或 AllReduce。
 >
-> **对应原书**：[Chapter 3 (Sharded Matrices and How to Multiply Them)](https://jax-ml.github.io/scaling-book/sharding)  
+> **对应原书**：[Chapter 3 (Sharded Matrices and How to Multiply Them)](https://jax-ml.github.io/scaling-book/sharding) 下篇：分片矩阵乘法
 > **优先级**：⭐⭐⭐ 高 | **建议时间**：Day 5, 约 3 小时
 
 ---
@@ -16,6 +16,8 @@ tags: [Infra, Scaling Book]
 ## 6.1 什么是分片（Sharding）
 
 LLM 的参数太大，无法放在单个设备的 HBM 中。因此必须将矩阵"切"成多份，分布到多个设备上。
+
+> 阅读建议：如果你对 AllGather / ReduceScatter / AllReduce / AllToAll 的语义和 $V/W$ 成本模型还不熟，先回到 [第 5 章：集合通信原语]({% post_url 2026-05-06-scaling-infra-ch05 %})。本章不再重复推导通信原语，而是专注于它们在 matmul sharding 中如何组合。
 
 ![分片示例](/assets/scaling-book/img/sharding-example.png)
 
@@ -243,131 +245,7 @@ $$A[I_X, J] \cdot B[J, K] \rightarrow C[I_X, K]$$
 
 ---
 
-## 6.4 通信原语详解
-
-### AllGather
-
-**语义**：`AllGather_X(A[I_X, J]) → A[I, J]`（去掉分片下标，每个设备获得完整数据）
-
-**实现**：环形传递，每个设备将自己的 shard 传给邻居，经过 X/2 跳后所有设备都有完整数据。
-
-**通信时间**（带宽限制下）：
-
-$$T_{\text{AllGather}} = \frac{V}{W_{\text{ici}}}$$
-
-其中 V 是完整数组的字节数，$W_{\text{ici}}$ 是双向 ICI 带宽。
-
-**关键性质**：通信时间**不依赖于设备数量 X**！这是因为更多设备 = 更多链路带宽 = 完美补偿了更多的 hop。
-
-**多轴 AllGather**：当沿多个轴 gather 时（如 AllGather_{XY}），可用的 ICI 带宽乘以轴数 $N_{\text{axes}}$：
-
-$$T_{\text{AllGather}} = \max\left(\frac{T_{\min} \cdot \sum_i |X_i|}{2},\ \frac{V}{W_{\text{ici}} \cdot N_{\text{axes}}}\right)$$
-
-其中 $\sum_i |X_i| / 2$ 是 TPU mesh 中最长路径的跳数，$T_{\min} \approx 1\mu s$ 是单跳延迟。
-
-**延迟限制（Latency-bound）详解**：每一跳有固定开销 ~1μs，不管数据量多小。当每跳的数据传输时间 < 1μs 时，进入延迟限制模式：
-
-$$T_{\text{hop}} = \max\left(T_{\min},\ \frac{2V}{|X| \cdot W_{\text{ici}}}\right)$$
-
-$$T_{\text{total}} = \max\left(\frac{T_{\min} \cdot |X|}{2},\ \frac{V}{W_{\text{ici}}}\right)$$
-
-对于 TPU v5e（单向 ICI = 4.5×10¹⁰ B/s），任何小于 `4.5e10 × 1e-6 = 45KB` 的 buffer 都会是 latency-bound。
-
-> 💡 **Pop Quiz**
->
-> 在 TPU v5e 的 Mesh({'X': 8, 'Y': 4}) 上执行 AllGather_Y(A[E_Y, F])，E=2048, F=8192, bf16。需要多久？如果 E=256, F=256 呢？
->
-> <details markdown="1">
-> <summary>点击查看答案</summary>
->
-> **(a) E=2048, F=8192**：
-> - 完整数组大小：`2 × 2048 × 8192 = 34MB`
-> - TPU v5e 的 Y=4 轴**没有环绕连接**（只有当某轴=16时才有），所以不能做完全双向 AllGather
-> - 需要 3 跳（从边缘到边缘），每跳传 shard：`34MB / 4 = 8.4MB`
-> - 时间 ≈ `3 × 8.4e6 / 4.5e10 ≈ 560μs`（实测约 680μs，因为达不到 100% 理论带宽）
->
-> **(b) E=256, F=256**：
-> - 每 shard：`2 × 64 × 256 = 32KB < 45KB` → **latency-bound**
-> - 3 跳 × 1μs ≈ 3μs（实测约 8μs）
-> </details>
-
-### ReduceScatter
-
-**语义**：`ReduceScatter_{X,K}(A[I, K] {U_X}) → A[I, K_X]`（累加部分和并分片结果）
-
-**实现**：与 AllGather 类似的环形传递，但每一步同时做累加。
-
-**通信时间**：与 AllGather 相同 = $V / W_{\text{ici}}$
-
-**核心性质**：ReduceScatter 是 AllGather 的**反向传播对偶**（transpose）：
-- 前向 AllGather → 反向 ReduceScatter
-- 前向 ReduceScatter → 反向 AllGather
-
-> 📋 **背景知识：为什么 AllGather 和 ReduceScatter 互为转置**
->
-> 这源于线性代数中 broadcast 和 reduce 互为转置的事实。设 $x \in \mathbb{R}^n$，$p$ 个设备，$u = (1, \ldots, 1) \in \mathbb{R}^p$：
->
-> $$\text{broadcast} = u \otimes I_n : \mathbb{R}^n \to \mathbb{R}^{pn}$$
-
->
-> $$\text{reduce} = u^T \otimes I_n : \mathbb{R}^{pn} \to \mathbb{R}^n$$
-
->
-> 由 Kronecker 积的性质 $(A \otimes B)^T = A^T \otimes B^T$，得 $\text{reduce} = \text{broadcast}^T$。
->
-> AllGather 和 ReduceScatter 是它们的外积扩展：
->
-> $$\text{AllGather} = \text{broadcast} \otimes I_p$$
-
->
-> $$\text{ReduceScatter} = \text{reduce} \otimes I_p$$
-
->
-> 因此 $\text{AllGather}^T = \text{ReduceScatter}$。
->
-> **实践意义**：在反向传播中，如果前向用了 AllGather（$A[I_X] \to A[I]$），反向就需要 ReduceScatter（$A'[I]\{U_X\} \to A'[I_X]$），反之亦然。这意味着每次前向通信都对应一次反向通信。
-
-ReduceScatter 还有一个重要的**灵活性**：它可以选择沿哪个维度引入新的分片。例如：
-
-$$\text{ReduceScatter}_{X,K}\ C[I, K] \{U_X\} \to C[I, K_X]$$
-
-$$\text{ReduceScatter}_{X,I}\ C[I, K] \{U_X\} \to C[I_X, K]$$
-
-具体选择取决于后续操作需要的 sharding 布局。在 Megatron 的 Row Parallel 中，通常选择不引入新分片的 AllReduce（= ReduceScatter + AllGather），因为下一层的输入需要完整的激活值。
-
-### AllReduce
-
-**语义**：`AllReduce_X(A[I, K] {U_X}) → A[I, K]`（累加部分和，每个设备都获得完整结果）
-
-**实现**：= ReduceScatter + AllGather
-
-**通信时间**：= 2× AllGather = $2V / W_{\text{ici}}$
-
-### AllToAll
-
-**语义**：`AllToAll_{X,J}(A[I_X, J]) → A[I, J_X]`（移动分片下标从一个维度到另一个维度）
-
-**实现**：每个设备只需将数据发送到特定目标设备（不需要广播到所有设备）。
-
-**通信时间**（1D 双向环）：= AllGather / 4 = $V / (4 \cdot W_{\text{ici}})$
-
-**ND AllToAll**（AxBxC mesh 上的推广）：
-
-$$T_{\text{AllToAll}} = \frac{V \cdot \max(A, B, C, \ldots)}{4 \cdot N \cdot W_{\text{ici}}}$$
-
-其中 $N = A \times B \times C$ 是总设备数。对于 1D mesh，退化为 $V / (4 \cdot W_{\text{ici}})$。在 2D 中，代价随最小轴的增大而降低。
-
-> 📋 **背景知识：为什么 AllToAll 比 AllGather 快 4 倍**
->
-> 直觉：AllGather 需要将每个设备的数据发送到**所有其他设备**。AllToAll 只需要将每个设备的数据的**一小部分**发送到**特定设备**。
->
-> 数学：在 N 个设备的双向环上：
-> - AllGather：每个设备发送 N-1 个完整 shard，每个距离不同 → 总通信 ∝ N²
-> - AllToAll：每个设备发送 N-1 个 sub-shard（每个只有 1/N 大小），平均距离 N/4 → 总通信 ∝ N²/4
->
-> AllToAll 常见于 Mixture of Experts（MoE）中，用于将 token 路由到不同 expert 所在的设备。
-
-### 通信代价总结
+## 6.4 通信原语速查
 
 | 操作 | 语义 | 通信时间 |
 |------|------|---------|
@@ -376,7 +254,14 @@ $$T_{\text{AllToAll}} = \frac{V \cdot \max(A, B, C, \ldots)}{4 \cdot N \cdot W_{
 | AllReduce | `[A, B] {U_X} → [A, B]` | 2V / W_ici |
 | AllToAll | `[A, B_X] → [A_X, B]` | V / (4·W_ici) |
 
-**注意**：以上都是带宽限制下的公式。当数据量很小时（< 45KB/shard on TPU v5e），通信变成**延迟限制**，时间 = hop 数 × 每 hop 延迟（~1μs）。
+这里的 $V$ 是参与这次 collective 的逻辑 payload 大小，$W_{\text{ici}}$ 是双向 ICI 带宽；小消息仍然会进入 latency-bound 区域。完整语义、ring 推导、AllToAll 的 1/4 直觉、以及 latency-bound 的阈值都在第 5 章展开过。
+
+本章只记住一个映射即可：
+
+- **需要完整输入 shard** → AllGather
+- **产生多个设备的部分和，但希望输出仍分片** → ReduceScatter
+- **产生多个设备的部分和，并且每个设备都要完整结果** → AllReduce
+- **需要把分片下标从一个维度换到另一个维度** → AllToAll
 
 ---
 
@@ -538,52 +423,7 @@ A 只沿 X 分片（4 份），在 Y 和 Z 上被复制。
 
 </details>
 
-### Problem 2：AllGather 时间
-
-**题目**：在 TPU v4p 4×4×4 slice（Mesh{'X':4, 'Y':4, 'Z':4}，双向 ICI = 9×10¹⁰ B/s）上执行 `AllGather_X(A[B_X, D_Y])`，B=1024, D=4096, bf16。
-
-1. AllGather_X 需要多久？
-2. AllGather_XY 呢？
-3. AllReduce_Z 呢？
-
-<details markdown="1">
-<summary>点击查看答案</summary>
-
-**1. AllGather_X**：
-- 需要 gather 的是 A 在 X 方向的分片，但 Y 方向也是分片的
-- 实际每个 Y-plane 内 gather 的数据量：`2 × B × D / Y = 2 × 1024 × 4096 / 4 = 2MB`
-- 时间：`2e6 / 9e10 = 22μs`
-
-**2. AllGather_XY**：
-- 需要 gather 完整数组：`2 × 1024 × 4096 = 8.4MB`
-- 跨 2 个轴 gather，可用带宽 ×2：`8.4e6 / (2 × 9e10) = 47μs`
-
-**3. AllReduce_Z**：
-- 每个 shard 大小（已经被 X 和 Y 分片）：`2 × 1024 × 4096 / (4 × 4) = 524KB`
-- AllReduce = 2× 单轴通信：`2 × 524e3 / 9e10 = 11.6μs`
-
-</details>
-
-### Problem 3：延迟限制
-
-**题目**：在同样的 TPU v4p 4×4×4 上执行 `AllGather_X(A[B_X])`，但 B 只有 128（bf16）。需要多久？
-
-<details markdown="1">
-<summary>点击查看答案</summary>
-
-总数据：`128 × 2 = 256 bytes`。每设备 shard：`256 / 4 = 64 bytes`。
-
-带宽限制时间：`64 / 4.5e10 ≈ 0`
-
-明显是 **latency-bound**！
-
-TPU v4p 的 4×4×4 cube 在每个轴上有环绕连接。X 轴长度 4，双向环只需 2 跳。
-
-**时间 ≈ 2 × 1μs = 2μs**
-
-</details>
-
-### Problem 4：两种 Matmul 策略比较
+### Problem 2：两种 Matmul 策略比较
 
 **题目**：执行 `X[B, D] ×_D Y[D_X, F] → Z[B, F]`，比较两种策略：
 
@@ -620,7 +460,7 @@ TPU v4p 的 4×4×4 cube 在每个轴上有环绕连接。X 轴长度 4，双向
 
 </details>
 
-### Problem 5：Transformer Block 分片设计
+### Problem 3：Transformer Block 分片设计
 
 **题目**：Transformer block 有 `W_in[D, F]` 和 `W_out[F, D]`，其中 D=8192, F=32768, B=128, bf16。在 TPU v5e 2×2 slice 上，每设备只有 300MB 空闲内存。
 
@@ -670,37 +510,7 @@ FLOPs/设备：
 
 </details>
 
-### Problem 6：AllToAll 的优势
-
-**题目**：为什么 AllToAll 比 AllGather 快 4 倍（在双向环上）？请解释直觉。
-
-<details markdown="1">
-<summary>点击查看答案</summary>
-
-考虑 N 个设备的双向环：
-
-**AllGather**：
-- 每个设备的 shard 需要发送到**所有其他设备**
-- 每个 shard 最远需要传 N/2 hop
-- 但由于是双向，可以两个方向同时发送
-- 实际每条链路的总负载：V（完整数组大小）
-- 时间：V / W_ici
-
-**AllToAll**：
-- 每个设备的 shard 被分成 N 份，每份只需发送到**一个特定设备**
-- 平均传输距离只有 N/4 hop（而非 N/2）
-- 每条链路的总负载：V/4
-- 时间：V / (4·W_ici)
-
-**关键差异**：
-1. AllGather 需要将**完整 shard** 传到所有设备 → 每条链路满载
-2. AllToAll 只需将 **sub-shard** 传到特定设备 → 链路只用 1/4
-
-**实践应用**：MoE 模型中 token 路由到不同 expert 时使用 AllToAll，比 AllGather 便宜 4×。
-
-</details>
-
-### Problem 7：最小延迟的 Matmul 分片
+### Problem 4：最小延迟的 Matmul 分片
 
 **题目**：在 TPU v4p 4×4×4 上执行 $A[I, J] \cdot_J B[J, K] \to C[I, K]$，要求结果完全复制（不分片）。输入可以任意分片。如何分片能获得最低延迟？
 
@@ -731,7 +541,7 @@ FLOPs/设备：
 
 </details>
 
-### Problem 8：具体分片的通信与计算分析
+### Problem 5：具体分片的通信与计算分析
 
 **题目**：在 TPU v5e 4×4（16 设备）上，分析以下三种分片方案的通信和计算时间。设 I=4096, J=8192, K=4096, bf16。
 
@@ -773,7 +583,7 @@ TPU v5e 参数：FLOPs/s = 1.97×10¹⁴, 双向 ICI = 9×10¹⁰ B/s。
 
 </details>
 
-### Problem 9：另一种 Matmul 策略
+### Problem 6：另一种 Matmul 策略
 
 **题目**：在 Case 2 中，我们说当只有一个输入的收缩维度被分片时（$A[I, J_X] \cdot B[J, K]$），标准做法是先 AllGather A。但另一种策略是：先做本地 matmul 得到部分和，再 AllReduce。
 
@@ -818,65 +628,18 @@ ReduceScatter 的通信量只有 AllReduce 的一半。
 
 </details>
 
-### Problem 10：JAX 通信原语基准测试（挑战题）
-
-**题目**：使用上面的 JAX 代码模板，分配分片数组并用 `jax.lax` 中的原语测量四种通信操作的性能：
-
-```python
-import jax
-import jax.numpy as jnp
-from jax.experimental.shard_map import shard_map
-from jax.sharding import PartitionSpec as P
-
-mesh = jax.make_mesh((len(jax.devices()),), ('X',))
-N = len(jax.devices())
-
-# AllGather
-@jax.jit
-@shard_map(mesh, in_specs=P('X', None), out_specs=P(None, None))
-def all_gather_fn(x):
-    return jax.lax.all_gather(x, 'X', tiled=True)
-
-# ReduceScatter
-@jax.jit
-@shard_map(mesh, in_specs=P(None, None), out_specs=P('X', None))
-def reduce_scatter_fn(x):
-    return jax.lax.psum_scatter(x, 'X', tiled=True)
-
-# AllReduce
-@jax.jit
-@shard_map(mesh, in_specs=P(None, None), out_specs=P(None, None))
-def all_reduce_fn(x):
-    return jax.lax.psum(x, 'X')
-
-# AllToAll
-@jax.jit
-@shard_map(mesh, in_specs=P('X', None), out_specs=P(None, 'X'))
-def all_to_all_fn(x):
-    return jax.lax.all_to_all(x, 'X', split_axis=1, concat_axis=0, tiled=True)
-```
-
-尝试不同的数组大小（1KB 到 100MB），绘制带宽曲线。你应该能观察到：
-1. 小数据量时的 latency-bound 区域
-2. 大数据量时接近理论峰值带宽
-3. AllToAll 确实比 AllGather 快约 4×
-4. AllReduce ≈ 2× AllGather
-
----
-
 ## 关键要点
 
 - [ ] 分片非收缩维度 → 无需通信（好！）
 - [ ] 分片收缩维度 → 需要 AllReduce/ReduceScatter（有开销）
-- [ ] 4 种核心通信原语：AllGather（V/W）、ReduceScatter（V/W）、AllReduce（2V/W）、AllToAll（V/4W）
-- [ ] 通信时间不依赖设备数量（带宽限制下）——只依赖数据量和链路带宽
-- [ ] 小数据量时转为 latency-bound（时间 = hops × ~1μs）
+- [ ] 一个输入的收缩维度被分片时，可以在 AllGather 输入和归约输出之间权衡
+- [ ] 两个输入的收缩维度沿同一轴分片时，本地 matmul 只得到部分和，必须 ReduceScatter 或 AllReduce
+- [ ] 两个非收缩维度沿同一 mesh 轴分片是非法布局，需要先 AllGather 修复
 - [ ] Megatron 的 TP 用 Column Parallel（无通信）+ Row Parallel（ReduceScatter）交替
 - [ ] 每个 Transformer 层需要 2 次 ReduceScatter + 2 次 AllGather（前向+反向共 4 对）
 - [ ] D 越大，TP 越容易保持 compute-bound
 - [ ] Collective Matmul 可以将通信和计算重叠，实现 T = max(T_math, T_comms)
-- [ ] AllToAll 常用于 MoE 的 token 路由，代价只有 AllGather 的 1/4
-- [ ] ReduceScatter 和 AllGather 是反向传播中的对偶操作
+- [ ] 通信原语的完整推导见第 5 章，本章只关心它们如何服务于分片 matmul
 
 ---
 
@@ -887,4 +650,3 @@ def all_to_all_fn(x):
 - [Megatron-LM v2: Reducing Activation Recomputation](https://arxiv.org/abs/2205.05198)
 - [Wang et al., Overlap Communication with Dependent Computation via Decomposition in Large Deep Learning Models](https://dl.acm.org/doi/pdf/10.1145/3567955.3567959) — Collective Matmul 论文
 - [JAX Pallas Collective Matmul 文档](https://docs.jax.dev/en/latest/pallas/gpu/collective_matmul.html)
-
