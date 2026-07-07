@@ -2,7 +2,7 @@
 layout: post
 title: "Why Muon Works"
 date: 2026-07-07
-tags: [Optimizer]
+tags: [Pretraining, Optimizer, Megatron]
 description: "调研 Muon 优化器为什么能 work、相比 AdamW 的优劣、开源大模型如何使用 Muon，以及在 Megatron 中落地 Muon 的工程要点。"
 ---
 
