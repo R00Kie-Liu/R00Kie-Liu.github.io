@@ -8,11 +8,9 @@ description: "记录 Megatron/MoE 预训练里的 BF16 baseline、FP8/FP4 recipe
 
 ## 写在前面
 
-这是一篇给自己补低精度训练脉络的笔记。我的默认起点不是“从零理解 mixed precision”，而是已经在用 Megatron 跑 MoE 预训练，训练脚本里 `--bf16` 基本是默认项；但一看到 FP8、FP4、Transformer Engine、amax、param gather dtype、all-to-all overlap 这些词，还是会想知道：哪些是我真的该改的，哪些只是 infra 文档和硬件厂商材料里的术语。
+我在预训练里默认一直使用 BF16。最近 profile 之后发现，单纯开启 FP8 并没有带来 MFU 提升；但另一方面，开源更大规模的模型和训练报告里又越来越多地使用 FP8 甚至 FP4/NVFP4 做训练。
 
-所以这篇不想把低精度写成“FP32 -> BF16 -> FP8 -> FP4”的线性科普。我更关心的是：如果 BF16 baseline 已经能稳定收敛，下一步为什么要动它？动的是 expert GEMM、param gather、通信，还是 router？如果出了 loss spike，应该先怀疑 scale、kernel fallback，还是 MoE load balance？
-
-这份笔记和之前的 [2025-2026 开源 LLM 演进综述]({% post_url 2026-06-13-open-llm-survey %}) 算是互补：那篇更关注模型谱系、MoE、长上下文、后训练和 agentic system；这里把视角收窄到训练精度和系统 recipe 上，尽量把 infra 概念翻译成 Megatron 实验里能落地的决策。
+所以这份笔记主要想弄清楚：低精度/混合精度预训练到底是怎么做的，它和 Megatron/MoE、通信、router、optimizer、kernel 之间有什么关系，以及 FP8/FP4 是否一定能提升训练效率。它和之前的 [2025-2026 开源 LLM 演进综述]({% post_url 2026-06-13-open-llm-survey %}) 互补：那篇看模型演进，这篇只看训练精度和系统 recipe。
 
 ## 先说结论
 
