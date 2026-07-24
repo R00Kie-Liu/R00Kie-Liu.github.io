@@ -1,6 +1,7 @@
 <h2 id="news" style="margin: 60px 0px 10px;">News</h2>
 
 <ul class="news-list">
+<li><strong>[07/2026]</strong> Our team releases <a href="https://huggingface.co/inclusionAI/LLaDA2.2-flash"><strong>LLaDA 2.2</strong></a>, enabling agentic diffusion language models via Levenshtein editing.</li>
 <li><strong>[02/2026]</strong> 😁 Paper about <a href="./pub_img/vim.txt">Few-shot action recogition</a> is accepted to <strong>TPAMI</strong>.</li>
 <li><strong>[02/2026]</strong> ✍🏻 Our team release <strong>LLaDA 2.1</strong>, which supports token editing now!</li>
 <li><strong>[12/2025]</strong> 🤖 Our team release the largest diffusion large language model (dLLM) <strong>LLaDA 2.0</strong></li>

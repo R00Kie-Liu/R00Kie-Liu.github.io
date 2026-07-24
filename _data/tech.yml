@@ -1,5 +1,15 @@
 main:
 
+  - title: "LLaDA2.2: Enabling Agentic Diffusion Language Models via Levenshtein Editing"
+    authors: Inclusion AI Team, Ant Group
+    conference_short: Report
+    conference: Technical Report, 2026
+    pdf: https://github.com/inclusionAI/LLaDA2.X/blob/main/LLaDA2_2_tech_report.pdf
+    image: ./pub_img/llada22.png
+    bibtex: ./pub_img/llada22.txt
+    code: https://github.com/inclusionAI/LLaDA2.X
+    page: https://huggingface.co/inclusionAI/LLaDA2.2-flash
+
   - title: "LLaDA2.1: Speeding Up Text Diffusion via Token Editing"
     authors: Inclusion AI Team, Ant Group
     conference_short: Report

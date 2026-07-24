@@ -1,0 +1,7 @@
+@techreport{bie2026llada22,
+  title={LLaDA2.2: Enabling Agentic Diffusion Language Models via Levenshtein Editing},
+  author={Bie, Tiwei and Cai, Jiansheng and Cao, Maosong and Cao, Xiang and Chen, Binbin and Chen, Fuyuan and Chen, Kun and Ding, Yuqi and Du, Lun and Gong, Zhuocheng and Gu, Yanmei and Guan, Kaiyuan and Guo, Xiaoxu and Han, Kairong and Huang, Zenan and Huang, Zijin and Lan, Zhenzhong and Li, Chengxi and Li, Jianguo and Li, Zhe and Liang, Ruiqi and Lin, Xinyao and Liu, Huabin and others},
+  institution={Inclusion AI},
+  year={2026},
+  url={https://github.com/inclusionAI/LLaDA2.X/blob/main/LLaDA2_2_tech_report.pdf}
+}
