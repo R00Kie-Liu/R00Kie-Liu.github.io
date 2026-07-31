@@ -35,8 +35,7 @@ body:has(.blog-container) .wrapper {
   display: flex;
   align-items: flex-start;
   gap: 36px;
-  margin-left: auto;
-  margin-right: 2vw;
+  margin: 0 auto;
 }
 .blog-container.has-toc .blog-post {
   flex: 1;
@@ -681,7 +680,7 @@ body.image-lightbox-open {
 }
 @media (min-width: 1161px) {
   .scroll-btns {
-    right: calc(2vw + 250px + 48px);
+    right: max(24px, calc((100vw - 1108px) / 2 - 56px));
   }
 }
 .scroll-btn {
