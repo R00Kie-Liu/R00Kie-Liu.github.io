@@ -31,21 +31,22 @@ body:has(.blog-container) .wrapper {
 }
 
 .blog-container.has-toc {
-  max-width: 1060px;
-  display: flex;
-  align-items: flex-start;
-  gap: 36px;
+  max-width: 1332px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 760px) 250px;
+  column-gap: 36px;
+  align-items: start;
   margin: 0 auto;
 }
 .blog-container.has-toc .blog-post {
-  flex: 1;
+  grid-column: 2;
   min-width: 0;
   max-width: 760px;
 }
 
 /* ===== Sidebar TOC ===== */
 .post-toc {
-  flex-shrink: 0;
+  grid-column: 3;
   width: 250px;
   position: sticky;
   top: 80px;
@@ -137,7 +138,7 @@ body:has(.blog-container) .wrapper {
   font-weight: 500;
 }
 
-@media (max-width: 1160px) {
+@media (max-width: 1380px) {
   .blog-container.has-toc {
     display: block;
     max-width: 760px;
@@ -680,7 +681,7 @@ body.image-lightbox-open {
 }
 @media (min-width: 1161px) {
   .scroll-btns {
-    right: max(24px, calc((100vw - 1108px) / 2 - 56px));
+    right: max(24px, calc((100vw - 1380px) / 2 + 8px));
   }
 }
 .scroll-btn {
