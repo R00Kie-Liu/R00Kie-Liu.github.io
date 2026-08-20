@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
     <link rel="stylesheet" href="{{ '/assets/css/nav.css' | relative_url }}">
-    <link rel="stylesheet" href="{{ '/assets/css/blog.css?v=20260803-centered-copy' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/blog.css?v=20260820-responsive-toc' | relative_url }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" class="hljs-light" disabled />
@@ -71,6 +71,16 @@
             {% endif %}
           </div>
         </div>
+
+        <details class="inline-toc" id="inlineToc">
+          <summary>
+            <span><i class="fas fa-list-ul"></i> 目录</span>
+            <i class="fas fa-chevron-down"></i>
+          </summary>
+          <nav class="toc-nav">
+            <ul class="toc-list" id="inlineTocList" data-toc-list></ul>
+          </nav>
+        </details>
 
         <div class="post-content">
           {{ content }}
@@ -128,10 +138,27 @@
       <aside class="post-toc" id="postToc">
         <nav class="toc-nav">
           <h4 class="toc-title">目录</h4>
-          <ul class="toc-list" id="tocList"></ul>
+          <ul class="toc-list" id="tocList" data-toc-list></ul>
         </nav>
       </aside>
     </div>
+
+    <button class="toc-fab" id="tocFab" type="button" aria-controls="tocDrawer" aria-expanded="false">
+      <i class="fas fa-list-ul"></i>
+      <span>目录</span>
+    </button>
+    <div class="toc-drawer-overlay" id="tocDrawerOverlay" hidden></div>
+    <aside class="toc-drawer" id="tocDrawer" aria-hidden="true">
+      <div class="toc-drawer-header">
+        <span>目录</span>
+        <button class="toc-drawer-close" id="tocDrawerClose" type="button" aria-label="Close table of contents">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <nav class="toc-nav">
+        <ul class="toc-list" id="drawerTocList" data-toc-list></ul>
+      </nav>
+    </aside>
 
     <div class="scroll-btns" id="scrollBtns">
       <button class="scroll-btn" id="backToTop" aria-label="回到顶部">
@@ -170,79 +197,126 @@
 
     <script>
     (function() {
-      var tocList = document.getElementById('tocList');
+      var tocLists = Array.prototype.slice.call(document.querySelectorAll('[data-toc-list]'));
       var postContent = document.querySelector('.post-content');
-      if (!tocList || !postContent) return;
+      var tocFab = document.getElementById('tocFab');
+      var tocDrawer = document.getElementById('tocDrawer');
+      var tocDrawerOverlay = document.getElementById('tocDrawerOverlay');
+      var tocDrawerClose = document.getElementById('tocDrawerClose');
+      if (!tocLists.length || !postContent) return;
 
       var headings = postContent.querySelectorAll('h2, h3');
       if (headings.length < 2) {
         document.querySelector('.blog-container').classList.remove('has-toc');
+        document.body.classList.add('toc-disabled');
         return;
       }
 
-      var currentSection = null;
+      function openDrawer() {
+        if (!tocDrawer) return;
+        if (tocDrawerOverlay) tocDrawerOverlay.hidden = false;
+        requestAnimationFrame(function() {
+          document.body.classList.add('toc-drawer-open');
+          tocDrawer.classList.add('open');
+          if (tocDrawerOverlay) tocDrawerOverlay.classList.add('open');
+          tocDrawer.setAttribute('aria-hidden', 'false');
+          if (tocFab) tocFab.setAttribute('aria-expanded', 'true');
+        });
+      }
 
-      function createLink(h) {
+      function closeDrawer() {
+        if (!tocDrawer) return;
+        document.body.classList.remove('toc-drawer-open');
+        tocDrawer.classList.remove('open');
+        if (tocDrawerOverlay) tocDrawerOverlay.classList.remove('open');
+        tocDrawer.setAttribute('aria-hidden', 'true');
+        if (tocFab) tocFab.setAttribute('aria-expanded', 'false');
+        setTimeout(function() {
+          if (tocDrawerOverlay && !tocDrawer.classList.contains('open')) tocDrawerOverlay.hidden = true;
+        }, 220);
+      }
+
+      if (tocFab) tocFab.addEventListener('click', openDrawer);
+      if (tocDrawerClose) tocDrawerClose.addEventListener('click', closeDrawer);
+      if (tocDrawerOverlay) tocDrawerOverlay.addEventListener('click', closeDrawer);
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDrawer();
+      });
+      window.addEventListener('resize', function() {
+        if (!window.matchMedia('(max-width: 1380px) and (min-width: 901px)').matches) {
+          closeDrawer();
+        }
+      });
+
+      function createLink(h, closeOnClick) {
         var a = document.createElement('a');
         a.href = '#' + h.id;
         a.textContent = h.textContent;
         a.className = 'toc-link';
+        if (closeOnClick) a.addEventListener('click', closeDrawer);
         return a;
       }
 
-      headings.forEach(function(h, i) {
-        if (!h.id) h.id = 'heading-' + i;
+      function buildToc(list) {
+        var currentSection = null;
+        var closeOnClick = list.id === 'drawerTocList';
+        list.innerHTML = '';
 
-        var li = document.createElement('li');
-        li.className = 'toc-item toc-' + h.tagName.toLowerCase();
+        headings.forEach(function(h, i) {
+          if (!h.id) h.id = 'heading-' + i;
 
-        if (h.tagName.toLowerCase() === 'h2') {
-          var row = document.createElement('div');
-          row.className = 'toc-row';
+          var li = document.createElement('li');
+          li.className = 'toc-item toc-' + h.tagName.toLowerCase();
 
-          var toggle = document.createElement('button');
-          toggle.type = 'button';
-          toggle.className = 'toc-toggle';
-          toggle.setAttribute('aria-label', '展开小节');
-          toggle.setAttribute('aria-expanded', 'false');
-          toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+          if (h.tagName.toLowerCase() === 'h2') {
+            var row = document.createElement('div');
+            row.className = 'toc-row';
 
-          var subList = document.createElement('ul');
-          subList.className = 'toc-sublist';
+            var toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'toc-toggle';
+            toggle.setAttribute('aria-label', '展开小节');
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
 
-          toggle.addEventListener('click', function() {
-            var collapsed = li.classList.toggle('collapsed');
-            toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-            toggle.setAttribute('aria-label', collapsed ? '展开小节' : '折叠小节');
-          });
+            var subList = document.createElement('ul');
+            subList.className = 'toc-sublist';
 
-          row.appendChild(toggle);
-          row.appendChild(createLink(h));
-          li.appendChild(row);
-          li.appendChild(subList);
-          tocList.appendChild(li);
-          currentSection = { item: li, subList: subList, toggle: toggle };
-          return;
-        }
+            toggle.addEventListener('click', function() {
+              var collapsed = li.classList.toggle('collapsed');
+              toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+              toggle.setAttribute('aria-label', collapsed ? '展开小节' : '折叠小节');
+            });
 
-        li.appendChild(createLink(h));
-        if (currentSection) {
-          currentSection.subList.appendChild(li);
-          currentSection.item.classList.add('has-children');
-          currentSection.item.classList.add('collapsed');
-        } else {
-          tocList.appendChild(li);
-        }
-      });
+            row.appendChild(toggle);
+            row.appendChild(createLink(h, closeOnClick));
+            li.appendChild(row);
+            li.appendChild(subList);
+            list.appendChild(li);
+            currentSection = { item: li, subList: subList, toggle: toggle };
+            return;
+          }
+
+          li.appendChild(createLink(h, closeOnClick));
+          if (currentSection) {
+            currentSection.subList.appendChild(li);
+            currentSection.item.classList.add('has-children');
+            currentSection.item.classList.add('collapsed');
+          } else {
+            list.appendChild(li);
+          }
+        });
+      }
+
+      tocLists.forEach(buildToc);
 
       // Highlight current section on scroll
-      var tocLinks = tocList.querySelectorAll('.toc-link');
+      var tocLinks = document.querySelectorAll('.toc-link');
       var observer = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
           if (entry.isIntersecting) {
             tocLinks.forEach(function(link) { link.classList.remove('active'); });
-            var active = tocList.querySelector('a[href="#' + entry.target.id + '"]');
-            if (active) {
+            document.querySelectorAll('.toc-link[href="#' + entry.target.id + '"]').forEach(function(active) {
               active.classList.add('active');
               var parent = active.closest('.toc-item.toc-h2');
               if (parent && parent.classList.contains('collapsed')) {
@@ -253,7 +327,7 @@
                   parentToggle.setAttribute('aria-label', '折叠小节');
                 }
               }
-            }
+            });
           }
         });
       }, { rootMargin: '-80px 0px -70% 0px' });
