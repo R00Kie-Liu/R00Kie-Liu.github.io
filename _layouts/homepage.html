@@ -38,8 +38,8 @@
     <meta name="twitter:image" content="{{ site.avatar }}">
 
     <link rel="canonical" href="{{site.canonical}}"/>
-    <link rel="icon" media="(prefers-color-scheme:dark)" href="{{ site.favicon_dark }}" type="image/png" />
-    <link rel="icon" media="(prefers-color-scheme:light)" href="{{ site.favicon }}" type="image/png" />
+    <link rel="icon" media="(prefers-color-scheme:dark)" href="{{ site.favicon_dark | remove_first: './' | relative_url }}" type="image/png" />
+    <link rel="icon" media="(prefers-color-scheme:light)" href="{{ site.favicon | remove_first: './' | relative_url }}" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,500;1,600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
@@ -66,73 +66,7 @@
   </head>
   <body>
 
-    <!-- Top Navigation Bar -->
-    <div class="topnav">
-      <a href="https://github.com/inclusionAI"><img width="120" src="./assets/img/inclusionai_logo.png"></a>
-      <div id="myLinks">
-      {% include navigation.md %}
-      </div>
-      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-        <i class="fas fa-moon" id="themeIcon"></i>
-      </button>
-      <a href="javascript:void(0);" class="icon" id="navMenuBtn" aria-label="Menu">
-        <i class="fa fa-bars"></i>
-      </a>
-    </div>
-
-    <!-- Mobile Slide-out Drawer -->
-    <div class="nav-overlay" id="navOverlay"></div>
-    <nav class="nav-drawer" id="navDrawer">
-      <div class="nav-drawer-header">
-        <span>Menu</span>
-        <button class="nav-drawer-close" id="navDrawerClose" aria-label="Close">&times;</button>
-      </div>
-      <div class="nav-drawer-links">
-        <a href="#about-me"><i class="fas fa-user" style="width:20px;text-align:center;color:#2563EB"></i> Bio</a>
-        <a href="#news"><i class="fas fa-newspaper" style="width:20px;text-align:center;color:#2563EB"></i> News</a>
-        <a href="#Tech report"><i class="fas fa-file-alt" style="width:20px;text-align:center;color:#2563EB"></i> Tech Report</a>
-        <a href="#publications"><i class="fas fa-book" style="width:20px;text-align:center;color:#2563EB"></i> Publications</a>
-        <a href="#awards"><i class="fas fa-trophy" style="width:20px;text-align:center;color:#2563EB"></i> Awards</a>
-        <a href="#contact"><i class="fas fa-envelope" style="width:20px;text-align:center;color:#2563EB"></i> Contact</a>
-        <a href="./blog/"><i class="fas fa-pen-fancy" style="width:20px;text-align:center;color:#2563EB"></i> Blog</a>
-      </div>
-    </nav>
-
-    <script>
-    (function() {
-      var btn = document.getElementById('navMenuBtn');
-      var drawer = document.getElementById('navDrawer');
-      var overlay = document.getElementById('navOverlay');
-      var closeBtn = document.getElementById('navDrawerClose');
-
-      function openDrawer() {
-        drawer.classList.add('active');
-        overlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      }
-      function closeDrawer() {
-        drawer.classList.remove('active');
-        overlay.classList.remove('active');
-        document.body.style.overflow = '';
-      }
-
-      if (btn) btn.addEventListener('click', openDrawer);
-      if (overlay) overlay.addEventListener('click', closeDrawer);
-      if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
-
-      // Close drawer when a link is clicked
-      var links = drawer ? drawer.querySelectorAll('a') : [];
-      links.forEach(function(link) {
-        link.addEventListener('click', closeDrawer);
-      });
-
-      // Close on Escape key
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeDrawer();
-      });
-    })();
-    </script>
-
+    {% include site-navigation.html %}
     <script src="./assets/js/vanilla-back-to-top.min.js"></script>
     <script>addBackToTop({
         backgroundColor: 'var(--bg-card)',

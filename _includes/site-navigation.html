@@ -1,0 +1,40 @@
+<div class="topnav">
+  {% if page.layout == 'homepage' %}
+  <a href="https://github.com/inclusionAI"><img width="120" src="{{ '/assets/img/inclusionai_logo.png' | relative_url }}" alt="inclusionAI"></a>
+  {% else %}
+  <a href="{{ '/' | relative_url }}"><img width="120" src="{{ '/assets/img/inclusionai_logo.png' | relative_url }}" alt="Home"></a>
+  {% endif %}
+  <div id="myLinks">
+    {% if page.layout == 'homepage' %}
+      {% include navigation.md %}
+    {% else %}
+    <a class="normal" href="{{ '/' | relative_url }}">Home</a>
+    <a class="normal" href="{{ '/blog/' | relative_url }}">Blog</a>
+    {% endif %}
+  </div>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+    <i class="fas fa-moon" id="themeIcon"></i>
+  </button>
+  <button class="nav-menu-toggle" id="navMenuBtn" type="button" aria-label="Open menu" aria-controls="navDrawer" aria-expanded="false">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  </button>
+</div>
+
+<div class="nav-overlay" id="navOverlay"></div>
+<nav class="nav-drawer" id="navDrawer" role="dialog" aria-modal="true" aria-label="Site menu" aria-hidden="true" inert>
+  <div class="nav-drawer-header">
+    <span>Menu</span>
+    <button class="nav-drawer-close" id="navDrawerClose" type="button" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="nav-drawer-links">
+    <a href="{{ '/' | relative_url }}">Home</a>
+    <a href="{{ '/' | relative_url }}#about-me">Bio</a>
+    <a href="{{ '/' | relative_url }}#news">News</a>
+    <a href="{{ '/' | relative_url }}#Tech%20report">Tech Report</a>
+    <a href="{{ '/' | relative_url }}#publications">Publications</a>
+    <a href="{{ '/' | relative_url }}#awards">Awards</a>
+    <a href="{{ '/' | relative_url }}#contact">Contact</a>
+    <a href="{{ '/blog/' | relative_url }}">Blog</a>
+  </div>
+</nav>
+<script src="{{ '/assets/js/site-navigation.js' | relative_url }}" defer></script>

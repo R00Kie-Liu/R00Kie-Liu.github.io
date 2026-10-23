@@ -21,8 +21,19 @@
     flex: 1;
 }
 
-.topnav a.icon {
+.nav-menu-toggle {
     display: none;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.nav-menu-toggle:focus-visible,
+.nav-drawer a:focus-visible,
+.nav-drawer button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
 }
 
 .topnav img {
@@ -119,13 +130,16 @@
     height: 100%;
     background: var(--bg-primary);
     z-index: 1000;
-    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: hidden;
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0.35s;
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
     padding: 0;
     overflow-y: auto;
 }
 .nav-drawer.active {
     right: 0;
+    visibility: visible;
+    transition-delay: 0s;
 }
 
 .nav-drawer-header {
@@ -217,15 +231,22 @@
     .topnav a.normal { display: none !important; }
     .topnav a.right { display: none !important; }
 
-    .topnav a.icon {
-        display: block;
+    .theme-toggle {
+        margin-left: auto;
+        margin-right: 4px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .nav-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
         color: #1a3a5c;
-        padding: 0 16px;
-        font-size: 20px;
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        margin-right: 8px;
     }
 }
 
@@ -241,7 +262,7 @@ html.dark-mode .topnav a.normal:hover {
     color: #8ab4ff;
     background: rgba(91, 141, 239, 0.12);
 }
-html.dark-mode .topnav a.icon {
+html.dark-mode .nav-menu-toggle {
     color: #9ca8bc;
 }
 html.dark-mode .theme-toggle {
@@ -263,7 +284,7 @@ html.dark-mode .theme-toggle:hover {
         color: #8ab4ff;
         background: rgba(91, 141, 239, 0.12);
     }
-    html:not(.light-mode) .topnav a.icon {
+    html:not(.light-mode) .nav-menu-toggle {
         color: #9ca8bc;
     }
     html:not(.light-mode) .theme-toggle {
@@ -272,22 +293,5 @@ html.dark-mode .theme-toggle:hover {
     html:not(.light-mode) .theme-toggle:hover {
         color: #8ab4ff;
         background: rgba(91, 141, 239, 0.12);
-    }
-}
-
-@media print, screen and (max-width: 480px) {
-    .topnav #myLinks { display: none !important; }
-    .topnav a.normal { display: none !important; }
-    .topnav a.right { display: none !important; }
-
-    .topnav a.icon {
-        display: block;
-        color: #1a3a5c;
-        padding: 0 16px;
-        font-size: 20px;
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
     }
 }

@@ -1,3 +1,6 @@
+---
+permalink: /404.html
+---
 <!DOCTYPE HTML>
 <html>
 	<head>
@@ -5,11 +8,11 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 
-        <link rel="icon" media="(prefers-color-scheme:dark)" href="{{ site.favicon_dark }}" type="image/png" />
-        <link rel="icon" media="(prefers-color-scheme:light)" href="{{ site.favicon }}" type="image/png" />
-        <script src="./assets/js/favicon-switcher.js" type="application/javascript"></script>
+        <link rel="icon" media="(prefers-color-scheme:dark)" href="{{ site.favicon_dark | remove_first: './' | relative_url }}" type="image/png" />
+        <link rel="icon" media="(prefers-color-scheme:light)" href="{{ site.favicon | remove_first: './' | relative_url }}" type="image/png" />
+        <script src="{{ '/assets/js/favicon-switcher.js' | relative_url }}" type="application/javascript"></script>
 
-        <link rel="stylesheet" href="./assets/css/style.css">
+        <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
 
 
 
@@ -49,7 +52,7 @@
 		</footer>
 
 		<!-- Scripts -->
-        <script src="javascripts/scale.fix.js"></script>
+        <script src="{{ '/assets/js/scale.fix.js' | relative_url }}"></script>
 
 	</body>
 </html>
