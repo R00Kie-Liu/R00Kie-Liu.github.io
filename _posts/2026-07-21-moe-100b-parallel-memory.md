@@ -1,6 +1,9 @@
 ---
 layout: post
 title: "MoE我们喜欢你（五）：100B 训练配置、并行策略与显存推演"
+series: moe-we-like-you
+series_order: 5
+last_modified_at: 2026-10-26
 date: 2026-07-21
 tags: [MoE, Infra, Scaling]
 description: "给定 100B MoE 规格后，推演并行策略、显存估算、短上下文与长上下文训练配置迁移。"
@@ -14,7 +17,7 @@ description: "给定 100B MoE 规格后，推演并行策略、显存估算、�
 | 符号 | 含义 |
 |---|---|
 | `P_total` | 总参数量，例如 100B |
-| `P_dense` | 非 routed expert 参数：attention、embedding、norm、router、dense warmup layers 等 |
+| `P_dense` | 非 routed expert 参数：attention、embedding、norm、router、前置 dense 层 layers 等 |
 | `P_routed` | routed expert 总参数 |
 | `P_shared` | shared expert 参数，通常 always-on |
 | `E` | 每个 MoE layer 的 routed expert 数 |
@@ -24,7 +27,7 @@ description: "给定 100B MoE 规格后，推演并行策略、显存估算、�
 | `L` | 总层数 |
 | `L_moe` | MoE 层数 |
 | `S` | context length |
-| `mbs` | micro-batch size |
+| `mbs` | 每个数据并行 rank 一次 forward 的序列数 |
 
 一个基本关系是：
 
@@ -34,11 +37,8 @@ description: "给定 100B MoE 规格后，推演并行策略、显存估算、�
 | 每 token active 参数 | `P_active ~= P_dense + P_shared + (k / E) * P_routed` |
 | routed expert 稀疏度 | `1 - k / E` |
 
-需要注意：`k/E` 不是 active parameter ratio。attention、embedding、dense warmup、shared expert 都是 always-on，所以 active params 往往明显高于 `P_total * k/E`。
+需要注意：`k/E` 不是 active parameter ratio。attention、前置 dense 层、shared expert 等不随 routed top-k 稀疏化。这里沿用模型报告对 embedding / LM head 的参数计数口径；它不等于逐 token 实际读取了整张输入 embedding 表。因此 active parameter ratio 通常高于 `k/E`，也不能直接替代 FLOPs 或权重流量。
 
-
-![100B MoE 显存构成](/assets/img/blog/moe-we-like-you/05-100b-moe-memory-breakdown.png)
-*图 1：100B MoE 的显存估算可以拆成四类：weights、gradients/optimizer、activations、MoE dispatch buffers。active params 主要影响 FLOPs，但完整 routed weights 和 MoE buffer 仍要按并行策略估算。*
 
 ## 1. Ling-flash-2.0：100B total params 怎么算出来
 
@@ -118,7 +118,7 @@ attention 这里因为是 GQA，`K/V` 的输出维度是 `num_key_value_heads x 
 
 `31 x 3.22B = 99.86B`
 
-也就是说，Ling-flash-2.0 的 100B total params 几乎都在 routed expert pool 里。attention、embedding、shared experts、dense warmup 和 router 加起来只占几 B。
+也就是说，Ling-flash-2.0 的 100B total params 几乎都在 routed expert pool 里。attention、embedding、shared experts、前置 dense 层 和 router 加起来只占几 B。
 
 ### 1.4 active params：为什么又只有 6.1B
 
@@ -152,267 +152,145 @@ active params 只看一个 token 前向时实际用到哪些参数。对每个 M
 
 一个值得注意的小设计是：`8` 个 routed experts 加 `1` 个 shared expert，一共相当于 9 个 1024 intermediate 的 expert path；`9 x 1024 = 9216`，刚好等于 dense MLP 的 `intermediate_size`。这意味着每个 MoE layer 的 active expert FFN 宽度，和第一层 dense MLP 的 FFN 宽度在数量级上是对齐的，但 total expert pool 被 256 个 routed experts 放大到了 100B 级别。
 
-### 1.5 抽象成一个 100B MoE 配置
+### 1.5 后文继续使用同一个模型
 
-后文为了推演并行和显存，会继续用一个更抽象的 100B total MoE。它不完全等同于 Ling-flash-2.0，而是方便把 dense/shared/routed 三部分拆开讨论：
+后面的并行和显存估算继续沿用这套约 102.89B total / 6.15B active 配置，`E=256`、`k=8`、32 层。按前面的矩阵计数，公共参数（attention、embedding / LM head、前置 dense MLP、router、shared expert）约 3.03B，routed expert 参数约 99.86B。
 
-| 项 | 假设 |
-|---|---:|
-| `P_total` | 100B |
-| `P_dense` | 16B |
-| `P_shared` | 4B |
-| `P_routed` | 80B |
-| `E` | 64 experts/layer |
-| `k` | top-4 |
-| `rho_e` | 6.25% |
+假设 embedding 与 LM head 不绑权，参数为 BF16，采用 Adam 类 distributed optimizer。下文先讨论 TP=ETP=CP=1 的配置；所有 GB 按十进制字节计算，MiB/GiB 另行标注。
 
-那么每 token active params 约为：
+## 2. 并行分组：普通参数与专家参数分别计算
 
-`P_active ~= 16B + 4B + 80B * 4 / 64 = 25B`
+| 符号 | 含义 |
+|---|---|
+| `W` | GPU 总数 |
+| `PP` | pipeline stage 数 |
+| `TP` / `ETP` | 普通矩阵 / expert 矩阵的 tensor parallel 大小 |
+| `CP` | context parallel 大小 |
+| `DP_dense` | 普通参数的数据并行组大小 |
+| `DP_expert` | 同一 expert 参数分片的副本数，即 expert-data-parallel 大小 |
 
-这说明一个容易忽略的问题：即使 routed expert activation ratio 只有 6.25%，active params 也不是 6.25B，而是 25B，因为 dense trunk 和 shared expert 是 always-on。
+Megatron 的 EP 从数据并行维度中划分，不能将普通 `DP` 与 `EP` 当成完全独立的维度重复相乘。对于本篇 TP=ETP=CP=1 的配置：
 
-如果想把 active params 压低，可以调这些旋钮：
+```text
+DP_dense  = W / PP
+DP_expert = W / (PP * EP)
+```
 
-| 方法 | 影响 | 风险 |
-|---|---|---|
-| 增加 `E`，保持 `k` | 降低 routed active ratio | expert 更细，通信/GroupedGEMM 压力上升 |
-| 降低 `k` | 降低 active compute | 路由更硬，质量/稳定性风险上升 |
-| 减小 `P_dense` | 降低 active params 下限 | attention/通用能力可能受损 |
-| 减小 `P_shared` | 降低 always-on compute | routed experts 更容易重复学习通用知识 |
-| 使用 LatentMoE | 降低 expert path compute/bytes | 架构和框架复杂度上升 |
+公共参数在各 EP rank 上复制，routed experts 才按 EP 分片。因此 optimizer states 也要分别按 `DP_dense` 和 `DP_expert` 估算。TP、ETP、CP 不为 1 或使用 Parallel Folding 时，应以框架实际建立的 process groups 为准。
 
-## 2. 并行维度怎么分工
+EP 负责分配专家，PP 切层，distributed optimizer 利用各自的 DP 组分片状态。TP/SP 和 CP 可进一步处理普通矩阵与长序列，但会改变 activation、通信和 expert batch 的形状，需要重新计算。
 
-100B MoE 训练里，各并行维度的职责不同：
+## 3. 短上下文：先选一套可核算的映射
 
-| 并行 | 主要作用 | 对 100B MoE 的建议 |
-|---|---|---|
-| EP | 切 routed experts | MoE 层优先用 EP，避免 expert 权重全落在每张卡 |
-| PP/VPP | 切 layers | 多节点扩展的主力，避免 EP/TP 跨太多节点 |
-| DP | 扩 batch，配合 distributed optimizer | 尽量保留足够 DP，稳定 load balance 统计并 shard optimizer states |
-| TP | 切 attention/dense matmul | expert MLP 上不宜过度 TP，否则 expert GEMM 会被切得过碎 |
-| SP | 配合 TP 降 activation | TP > 1 时通常一起考虑 |
-| CP | 长上下文切 sequence | 短上下文阶段通常不启用；长上下文 midtrain 再加入 |
-| ETP | expert tensor parallel | 只有 expert 太大或 local expert shard 放不下时再考虑 |
+以 256 张标称 80GB GPU、每节点 8 卡高速互联为示例，序列长度先取 8K。下面是一套用于推演的映射，不表示它已经达到最优吞吐：
 
-核心原则：
-
-1. MoE expert MLP 优先 EP，而不是 TP。
-2. `EP x TP` 尽量放在单节点高速互联域内。
-3. 跨节点扩展优先 PP/VPP，而不是盲目扩大跨节点 EP。
-4. 短上下文阶段优先稳定 EP、GroupedGEMM 和 load balance。
-5. 长上下文阶段再引入 CP，主要解决 attention activation，而不是替代 EP。
-
-## 3. 短上下文配置候选
-
-假设硬件是 80GB 级 GPU，短上下文 `S = 4K-8K`，目标为 pretrain bring-up。
-
-### 3.1 256 GPU 起步配置
-
-| 维度 | 建议起点 | 说明 |
+| 维度 | 示例值 | 含义 |
 |---|---:|---|
-| PP | 8 | 每个 pipeline stage 约承担 1/8 层 |
-| EP | 8 | 每个 MoE layer 的 64 experts 分到 8 个 EP ranks，每 rank 约 8 experts |
-| TP | 1 | 保留 expert GEMM 大小 |
-| DP | 4 | `8 x 8 x 1 x 4 = 256 GPUs` |
-| CP | 1 | 短上下文阶段先不加 |
-| SP | 关 | TP=1 时不需要 |
+| `PP` | 8 | 32 层均分，每 stage 4 层 |
+| `EP` | 8 | 每个 MoE layer 的 256 个 experts 分到 8 个 ranks，每 rank 32 个 |
+| `TP` / `ETP` | 1 / 1 | 此轮不切矩阵内部维度 |
+| `CP` | 1 | 先计算短上下文 |
+| `DP_dense` | 32 | `256 / 8` |
+| `DP_expert` | 4 | `256 / (8 * 8)` |
 
-这个配置的分工是：PP 切层，EP 切专家，DP 提供 optimizer sharding 和 batch 统计，TP 暂不切 expert。
+这需要把 EP group 放进节点内，PP 跨节点连接；还应核对框架生成的 rank 映射。因为每个 stage 都有 embedding 或层数差异，显存不能只用全模型参数平均除以 PP。
 
-### 3.2 512 GPU 扩展配置
+同样保持 PP=8、EP=8 时，128 卡对应 `DP_dense=16、DP_expert=2`，512 卡对应 `64、8`。卡数改变了 optimizer 分片和数据并行规模，是否值得扩展仍取决于 global batch、pipeline bubble、网络和实际 step time，不能只由参数量判断。
 
-| 维度 | 建议起点 | 说明 |
-|---|---:|---|
-| PP | 8 |
-| EP | 8 |
-| TP | 1 或 2 |
-| DP | 8 或 4 |
-| CP | 1 |
+## 4. 参数和 optimizer 的显存账
 
-如果 TP=2，需要检查 expert GEMM 是否被切得太碎；如果 attention/dense 部分显存或 compute 压力较高，可以让 TP=2，并用 Parallel Folding 让 MoE path 仍保持较低 ETP。
+### 4.1 按 pipeline stage 分开计算
 
-### 3.3 128 GPU 起步配置
+以下假设首 stage 放 embedding 和第一层 dense MLP，末 stage 放 LM head，每 stage 四层；忽略 norm 等小项。shared expert 放在公共参数中计算。
 
-| 维度 | 起点 | 风险 |
-|---|---:|---|
-| PP | 8 | pipeline bubble 更敏感 |
-| EP | 8 | 每层专家能切开 |
-| TP | 1 | dense 部分可能偏重 |
-| DP | 2 | optimizer sharding 和 global batch 弱一些 |
+| stage | 公共 local params | routed local params（已除 EP=8） | BF16 local weights |
+|---|---:|---:|---:|
+| 首 stage：1 dense + 3 MoE | 0.949B | 1.208B | 4.31GB |
+| 中间 stage：4 MoE | 0.206B | 1.611B | 3.63GB |
+| 末 stage：4 MoE + LM head | 0.849B | 1.611B | 4.92GB |
 
-128 GPU 可以作为小 batch bring-up 配置，但不适合作为长期训练的推荐起点。DP 太小会限制 load balance 统计、optimizer sharding 和吞吐。
+例如中间 stage 的 routed 参数是 `4 × 256 × 12.58M / 8 ≈ 1.611B`。这套分配中，末 stage 的参数与训练状态更重；实际 pipeline layout 可以调整，但必须重新核算。
 
-## 4. 长上下文配置候选
+### 4.2 训练状态分两组分片
 
-当 context 从 4K/8K 扩到 32K/128K，瓶颈会明显转向 activation 和 attention。此时优先引入 CP，尽量保持 MoE 架构和 EP 映射稳定。
+此处假设 BF16 权重、未分片的 FP32 梯度，并把 FP32 master weights、Adam m/v 共 12 bytes/param 按 distributed optimizer 分片。不同实现若连梯度也分片或去掉 master weights，需要替换对应项。
 
-| 阶段 | 配置变化 | 目标 |
-|---|---|---|
-| 4K-8K pretrain | PP=8, EP=8, DP=4, TP=1, CP=1 | 稳定 MoE 路径 |
-| 32K midtrain | CP=2 或 4，适当调低 micro-batch | 控制 attention activation |
-| 128K continued pretrain | CP=4 或 8，配合 selective recompute | 控制 sequence memory 和 attention 通信 |
+设公共 local 参数为 `P_c`，routed local 参数为 `P_e`，则：
 
-长上下文阶段的关键是：CP 主要服务 attention/sequence 侧，MoE expert path 仍然主要依赖 EP。加入 CP 后仍需保持 expert MLP 的本地 GEMM 规模，避免 CP/TP 组合把 expert compute 切得过碎。
+```text
+weights   = 2 * (P_c + P_e)
+gradients = 4 * (P_c + P_e)
+optimizer = 12 * P_c / DP_dense + 12 * P_e / DP_expert
+```
 
-## 5. 显存估算：参数、优化器、activation、buffer
+在 256 卡配置下：
 
-### 5.1 参数显存
+| stage | BF16 weights | FP32 gradients | optimizer（两组分别分片） | 小计 |
+|---|---:|---:|---:|---:|
+| 首 stage | 4.31GB | 8.63GB | 3.98GB | 16.92GB |
+| 中间 stage | 3.63GB | 7.26GB | 4.91GB | 15.81GB |
+| 末 stage | 4.92GB | 9.84GB | 5.15GB | 19.91GB |
 
-每张 GPU 上的参数量近似由三部分组成：
+这些数字尚未包含 activation、通信 staging、参数 gather/bucket、kernel workspace 和 allocator 预留。某些实现会复用表中张量的存储，也可能引入额外副本，应在实际 optimizer 配置下核对。
 
-| 部分 | 粗略分片方式 |
-|---|---|
-| dense/attention/embedding | 通常按 PP、TP 分片 |
-| routed experts | 通常按 PP、EP、ETP 分片 |
-| shared experts | 取决于实现，可按 PP/TP 或 expert path 分片 |
+## 5. Activation 和 MoE buffer：从张量形状预算
 
-对 1.5 里的抽象 100B 示例，如果使用 `PP=8, EP=8, TP=1`：
+### 5.1 一次 forward 的可核算子项
 
-| 部分 | 总量 | 每 GPU 近似 |
-|---|---:|---:|
-| `P_dense` | 16B | `16B / 8 = 2B` |
-| `P_shared` | 4B | `4B / 8 = 0.5B` |
-| `P_routed` | 80B | `80B / 8 / 8 = 1.25B` |
-| 合计 local params | 100B | 约 3.75B |
+取 `mbs=1、S=8192、H=4096、I=1024、k=8、CP=1`，activation 用 BF16。假设各 EP rank 输入 token 数相同、负载大致均衡，则一个 rank 接收并展开后的 expert input 约有 `S × k` 行。
 
-BF16 权重本身约 `3.75B x 2 bytes = 7.5GB`。这只是权重，不包括梯度、optimizer states、activation 和 buffer。
+| 张量 | 形状 | 容量 |
+|---|---|---:|
+| 一层原始 hidden | `[8192, 4096]` | 64MiB |
+| 展开后的 expert input | `[8192 × 8, 4096]` | 512MiB |
+| gate projection 输出 | `[8192 × 8, 1024]` | 128MiB |
+| up projection 输出 | `[8192 × 8, 1024]` | 128MiB |
 
-### 5.2 训练状态显存
+若未融合实现同时保存后三块张量，仅这三项就是每层 768MiB，四个 MoE layer 为 3GiB。实际保存量取决于 activation fusion 和 recompute；还有 attention、SwiGLU 中间值、输出和 autograd 状态，因此 3GiB 不是完整 activation 峰值。
 
-Adam 类优化器的粗略字节估算：
+pipeline 中一个 stage 可能同时保留多个 microbatch 的 activation。应把该 stage 同时存活的 microbatch 数、调度方式和 selective recompute 的保存边界一起列出，不能只用“每 stage 四层”乘一次就结束。
 
-| 项 | 常见字节/参数 |
-|---|---:|
-| BF16 weights | 2 |
-| gradients | 2-4 |
-| FP32 master weights | 4 |
-| Adam m | 4 |
-| Adam v | 4 |
+### 5.2 收发 staging 与 activation 避免重复计数
 
-不分片时，训练状态可能接近 16 bytes/param 甚至更高。Megatron 的 distributed optimizer / ZeRO-1 类策略会把 optimizer states 按 DP 分片，因此 DP 对显存非常重要。
+以同样的逻辑 token 展开量估算，一块 BF16 expert input 大约 512MiB。若 dispatcher 为 dispatch/combine 各保留独立 send/recv staging，四块相同大小 buffer 对应约 2GiB；双缓冲会进一步增加驻留量。真实布局可能复用 buffer、按目的 rank 去重，或使用低精度传输，必须以实际 backend 为准。
 
-以 local params 约 3.75B、DP=4 粗算：
+如果接收 buffer 本身就是前面计算的 expert input，就只能记一次。负载偏斜、capacity padding、索引和 router weights 也需要另算；这些因素使不同 rank 的峰值可能高于均衡估计。
 
-| 项 | 估算 |
-|---|---:|
-| BF16 local weights | 约 7.5GB |
-| local gradients | 约 7.5GB-15GB |
-| optimizer states，按 DP=4 shard | 约 `3.75B x 12 bytes / 4 = 11.25GB` |
-| 小计 | 约 26GB-34GB |
+### 5.3 把预算合回同一张账
 
-这是一个乐观下界，不是可直接落地的显存承诺。真实峰值还要加上 param/grad bucket、param gather buffer、distributed optimizer 的具体实现、expert data parallel 分组、master weight 是否保留、gradient accumulation、通信 overlap staging、CUDA allocator fragmentation 等。这里也尚未计入 activation 和 MoE buffer。80GB GPU 上能否运行，主要取决于 micro-batch、context、recompute、MoE buffer 和 fragmentation。
+末 stage 的训练状态约为 19.91GB，按实际调度估计的 activation 为 `A`，未被 activation 计入的额外通信 buffer 为 `B`，其它 workspace、bucket 和预留为 `C`：
 
-### 5.3 Activation 显存
+```text
+stage peak budget ≈ 19.91GB + A + B + C
+```
 
-Activation 近似与下面这些量成正比：
+在标称 80GB 卡上，先有约 60GB 的空间供后三项分配，随后还要与设备实际可用显存核对。上面的张量账提供了其中几项的量级；只有确认在途 microbatch、recompute、attention kernel 和 buffer 生命周期后，才适合承诺某个 micro-batch 一定放得下。
 
-| 因素 | 影响 |
-|---|---|
-| micro-batch size | 线性增加 |
-| context length | 近似线性增加，attention 相关项更敏感 |
-| hidden size | 线性或平方影响部分 attention kernel |
-| layers per PP stage | 线性增加 |
-| TP/SP/CP | 会切分一部分 activation |
-| recompute | 用额外计算换显存 |
-| MoE top-k | 增加 dispatched token copies 和 expert activation |
+## 6. 长上下文：固定卡数时重新分组
 
-因此 activation 的实用估算不是一个固定公式，而是一个流程：
+从 8K 扩到 32K/128K 时，可以用 CP 分担 sequence activation 和 attention 工作，但 CP 会占用原来的数据并行维度。以 256 卡、PP=8、TP=ETP=1 为例，普通 DP 为：
 
-1. 用目标 `mbs`、`S`、`PP` 算每 stage token 数。
-2. 先不开 full recompute，观察 OOM 或 profiler。
-3. 优先开 selective recompute，而不是 full recompute。
-4. 长上下文时加 CP，再重新估算 activation。
-5. 观察 MoE dispatch buffer 是否成为额外峰值。
+```text
+DP_dense = 256 / (8 * CP)
+```
 
-### 5.4 MoE dispatch / combine buffer
+若 expert 侧的映射把 CP ranks 折入专家计算，`EP=8` 时仍可能保持 `DP_expert=4`；若采用其它映射，则必须读取实际 expert process groups。不要把 CP 额外乘到前面的 256 卡配置上，同时假定所有 DP 组都不变。
 
-MoE 额外 buffer 的核心来自 token copies：
+长上下文的验证顺序是：确定 CP/EP 的映射，重算本地 token 数和 optimizer 分片，检查同时存活的 activation，再比较 selective recompute 和 attention kernel。CP 减少的存储与增加的通信都要进入同一份 step-time 和显存记录。
 
-| 量 | 粗略关系 |
-|---|---|
-| local tokens | 近似为 `mbs_local x S / CP`，其中 `mbs_local` 是当前并行 rank 上的 micro-batch |
-| routed token copies | `local tokens x k` |
-| 每个 token hidden bytes | `hidden_size x dtype_bytes` |
-| dispatch/combine buffer | 与 `local tokens x k x hidden_size` 成正比 |
+## 7. 从估算到实测
 
-这只是最小 payload 下界。真实实现里还可能有 capacity padding、send/recv staging buffer、permute/unpermute index、combine output buffer、router weights、overlap double buffer，以及 TP/SP 对 hidden 或 sequence 的切分影响。如果 top-k 从 4 提到 8，dispatch/combine payload 也会相应上升。DeepEP/Flex Dispatcher 和 EP-A2A overlap 主要优化的就是这部分开销。
+先用单层或小模型验证 dispatcher、GroupedGEMM 和状态分片，再运行目标模型。每个 pipeline stage 至少记录参数/optimizer 驻留、activation 峰值、通信 buffer 和最大 allocated/reserved memory；时间上分别看 pipeline bubble、A2A 和 expert compute。
 
-## 6. 如何判断配置是否合理
+如果 OOM，先判断超出预算的是哪一项：参数与状态需要调整分组或层分配，activation 需要调整 micro-batch、调度或 recompute，buffer 则要检查偏斜和 backend。若显存充足但吞吐不足，沿第四篇的 profiling 路径处理。
 
-### 6.1 显存侧
-
-| 症状 | 优先处理 |
-|---|---|
-| 权重/optimizer 放不下 | 增大 PP/EP/DP sharding，或用 precision-aware optimizer |
-| activation 爆 | selective recompute、SP、CP、降低 micro-batch |
-| MoE buffer 峰值高 | 降 top-k、改善 balance、检查 dispatcher buffer |
-| fragmentation 高 | expandable segments、manual GC、减少动态 shape |
-| full recompute 太慢 | 换 selective recompute，只重算 attention/MoE/MLP 关键模块 |
-
-### 6.2 通信侧
-
-| 症状 | 优先处理 |
-|---|---|
-| EP A2A 时间高 | Flex Dispatcher + DeepEP / HybridEP |
-| 跨节点 EP 慢 | 限制 EP x TP 在节点内，跨节点用 PP/VPP |
-| device load CV 高 | loss-free balance、device-level balance、node/group routing |
-| PP bubble 高 | 调 VPP、micro-batch、pipeline layout |
-| CP 通信拖慢 | 检查 CP overlap 和 attention kernel |
-
-### 6.3 计算侧
-
-| 症状 | 优先处理 |
-|---|---|
-| expert GEMM utilization 低 | GroupedGEMM，降低 expert TP，增大每 expert token 数 |
-| router/permute 小 kernel 多 | router fusion、permute fusion |
-| GPU kernel gap 大 | CUDA Graph scoped capture、减少 CPU launch overhead |
-| FP8 不稳 | router/norm/final projection 保持高精度 |
-
-## 7. 100B MoE 的推荐 bring-up 顺序
-
-| 阶段 | 目标 | 配置倾向 |
-|---|---|---|
-| 单层原型 | 验证 router、GroupedGEMM、dispatch buffer | 少量 GPU 即可 |
-| 小模型等比例 | 验证 loss-free balance、top-k、shared expert | 10B-20B scale |
-| 100B 短上下文 | 跑通 PP+EP+DP，CP=1 | alltoall baseline，再 DeepEP |
-| 100B 性能优化 | 提升 tokens/s | GroupedGEMM、fusion、DeepEP、overlap |
-| 100B 长上下文 | 加 CP 和 selective recompute | 尽量保持 EP 映射不变 |
-| 后训练 | freeze expert bias update，监控 route drift | SFT/RL 阶段减小路由扰动 |
-
-## 8. 配置推演流程
-
-设计 100B MoE 训练配置时，可以按下面的顺序推进：
-
-1. **拆分参数**：多少 dense，多少 shared，多少 routed。
-2. **确定 active params**：`P_active ~= P_dense + P_shared + (k/E) * P_routed`。
-3. **用 EP 切 experts**：让每张卡只持有部分 routed experts。
-4. **用 PP 切 layers**：跨节点扩展优先 PP/VPP。
-5. **保留 DP**：给 global batch 和 optimizer sharding 留空间。
-6. **TP 谨慎使用**：attention 可以使用 TP，expert MLP 不宜切得过碎。
-7. **短上下文 CP=1**：优先稳定 MoE 路径。
-8. **长上下文引入 CP**：解决 attention/activation memory。
-9. **显存不足先评估 recompute/CP/DP shard**：优先调整训练策略和并行切分，再考虑改模型结构。
-10. **tokens/s 不足以 profiler 定位**：通信墙对应 DeepEP，计算墙对应 GroupedGEMM，内存墙对应 recompute/fusion。
-
-## 9. 结论
-
-100B MoE 的训练配置没有单一固定答案。更可复用的方法是拆成四类估算：
-
-- 参数估算：total params 如何分到 dense/shared/routed。
-- 激活估算：active params 和 context/micro-batch 如何决定每步显存。
-- 并行估算：EP、PP、DP、TP、CP 各自解决什么。
-- 系统估算：DeepEP 降低 token movement 成本，GroupedGEMM 提高 expert compute 效率，recompute 降 activation，distributed optimizer 降训练状态。
-
-可以归纳为：
-
-**短上下文使用 PP+EP+DP 稳定 MoE 路径；长上下文阶段加入 CP；显存按 weights、grads、optimizer、activation、MoE buffer 估算；性能按 communication wall、compute wall、memory wall 分别定位。**
+这份算例的作用是让每个数字都能追溯到模型配置、张量形状和 process group。换模型、换 optimizer 或加入 CP 后，从这些定义重新计算，比沿用一个固定的 EP/PP 推荐组合更可靠。
 
 ## 系列导航
 
-上一篇：[第四篇：DeepEP 与 GroupedGEMM，MoE 大规模训练的通信墙和计算墙]({% post_url 2026-07-16-moe-deepep-groupedgemm %})  
-下一篇：[第六篇：端侧/本地小 active MoE 的挑战、推理瓶颈与设计思路]({% post_url 2026-07-26-edge-moe-inference-design %})
+上一篇：[第四篇：DeepEP 与 GroupedGEMM 如何拆解通信和计算瓶颈]({% post_url 2026-07-16-moe-deepep-groupedgemm %})
+
+下一篇：[第六篇：端侧 Active MoE 的推理瓶颈与设计取舍]({% post_url 2026-07-26-edge-moe-inference-design %})
 
 ## 参考资料
 
@@ -424,3 +302,4 @@ MoE 额外 buffer 的核心来自 token copies：
 - [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437)
 - [DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts Language Models](https://arxiv.org/abs/2401.06066)
 - [DeepEP GitHub Repository](https://github.com/deepseek-ai/DeepEP)
+- [Megatron Bridge Parallelisms Guide](https://docs.nvidia.com/nemo/megatron-bridge/latest/parallelisms.html)

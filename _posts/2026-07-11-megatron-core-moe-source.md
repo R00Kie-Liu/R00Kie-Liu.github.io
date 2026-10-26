@@ -1,6 +1,9 @@
 ---
 layout: post
 title: "MoE我们喜欢你（三）：Megatron Core MoE 源码路径解析"
+series: moe-we-like-you
+series_order: 3
+last_modified_at: 2026-10-26
 date: 2026-07-11
 tags: [MoE, Megatron, Pretraining]
 description: "结合 Megatron Core 源码，拆解 MoE layer、router/gating、load-balance loss、expert bias、token dropping、dispatcher 和 experts 的实现路径。"
@@ -13,7 +16,7 @@ MoE 论文和模型报告里常见的词包括 top-k routing、shared expert、l
 
 **hidden states 先经过 router 选专家，再被 token dispatcher 重排和跨 rank 发送，随后进入本地 experts 做 GroupedGEMM，最后再 combine 回原 token 顺序。**
 
-这篇基于 Megatron-LM `bb5647a` 附近的 `megatron/core/transformer/moe/` 源码整理。目的不是逐行讲源码，而是把几个关键部件的实现口径讲清楚：
+这篇基于 Megatron-LM `bb5647a`的 `megatron/core/transformer/moe/` 源码整理。沿着 token 的数据流，下面追踪几个关键部件：
 
 - MoE layer 的主执行路径在哪里；
 - gating 和 top-k routing 如何产生 `routing_map` 和 `probs`；
@@ -30,7 +33,7 @@ MoE 论文和模型报告里常见的词包括 top-k routing、shared expert、l
 
 *图 1：读 Megatron Core MoE 源码时，可以先按 `route -> dispatch -> experts -> combine` 这条主路径定位，再分别展开 router loss、expert bias、token capacity、shared/latent expert 等旁路状态。*
 
-后面的代码块都是按 Megatron-LM `bb5647a` 附近源码做的删节版，只保留关键分支和状态流转。这样比整段源码更容易看出设计意图，也避免把正文变成逐行注释。
+后面的代码块都是按 Megatron-LM `bb5647a`源码做的删节版，只保留关键分支和状态流转。省略了部分配置分支，代码块用于解释流程，不作为可直接替换的实现。
 
 ## 1. 源码地图
 
@@ -94,11 +97,11 @@ probs, routing_map = router(hidden)
 hidden, probs = dispatch_preprocess(hidden, routing_map, probs)
 permuted_hidden, permuted_probs = dispatch(hidden, probs)
 expert_out = experts(permuted_hidden, permuted_probs)
-hidden = combine(expert_out, probs)
+hidden = combine(expert_out)
 hidden = shared_expert(hidden_in) + hidden if use_shared_expert else hidden
 ```
 
-可以先看 `MoELayer` 的删节版主路径。注意：router 只负责产生 `probs` 和 `routing_map`，真正把 token 发到各个 expert rank 的是 dispatcher。
+上面省略了 latent 升维和 overlap 分支。router weight 在 expert 或 combine 路径中应用一次，具体位置由实现决定。下面是 `MoELayer` 的删节版主路径。注意：router 只负责产生 `probs` 和 `routing_map`，真正把 token 发到各个 expert rank 的是 dispatcher。
 
 ```python
 class MoELayer(BaseMoELayer):
@@ -294,7 +297,7 @@ Megatron 同时支持多种 router 相关 loss。它们听起来相近，但目�
 
 `switch_load_balancing_loss_func()` 的核心形式可以理解为 `num_experts * sum(f_i * P_i)`：`f_i` 是 tokens 实际分配到 expert 的比例，`P_i` 是 router 概率质量。它想惩罚“概率给很多但实际不均”或“实际集中到少数专家”的情况。
 
-但从 pretraining recipe 看，aux loss 不应越强越好。它能救 router collapse，也可能干扰主 LM objective。现在更稳的用法是：loss-free expert bias 做主 balance，aux/seq/global loss 做轻量稳定器。
+但从 pretraining recipe 看，aux loss 不应越强越好。它能救 router collapse，也可能干扰主 LM objective。使用 bias-based balance 的模型可以保留轻量 aux 项；是否需要、用哪个统计粒度，应由模型配置和消融决定。
 
 Quantile Balancing 是另一条路：它不用 aux loss 接管主目标，而是在 router 里维护 `qb_beta`。当前 batch routing 用的是 `scores - qb_beta`，随后根据每个 expert 的分位数阈值累计下一轮 `qb_beta`。
 
@@ -343,7 +346,7 @@ probs, routing_map = score_function(scores, precomputed_indices=indices)
 | 欠载 | 提高被选中概率 | 吸引更多 token |
 | 接近均衡 | 小幅或不更新 | 保持稳定 |
 
-这也解释了为什么后训练阶段通常 freeze bias update：SFT/RL 的 batch 分布太窄，继续更新控制器，等于让专家负载按小数据重新定标。
+因此，冻结 bias update 与冻结 router weights 是不同操作。前者停止负载控制器的更新，后者停止主 loss 对 router projection 的更新；第二篇已讨论各自的适用条件。
 
 代码里也能看出它为什么更像 controller state，而不是普通反向传播参数。`_apply_expert_bias()` 只累计 token count；真正的 bias 更新按专家负载和平均负载的符号方向走一步。
 
@@ -478,7 +481,7 @@ LatentMoE 打开后，路径更微妙：
 | `fc1_latent_proj` | hidden dim -> latent dim |
 | `fc2_latent_proj` | latent dim -> hidden dim |
 
-源码里对 inference + NVLS dispatcher + latent MoE 的 shared expert overlap 做了专门处理：shared expert 需要在降维前运行，routed expert 输出需要在升维后再和 shared expert output 相加。这个细节说明，LatentMoE 不是单纯改 expert MLP hidden size，它会影响 shared path、dispatcher、推理 overlap 和 checkpoint 兼容。
+源码里对 inference + NVLS dispatcher + latent MoE 的 shared expert overlap 做了专门处理：shared expert 需要在降维前运行，routed expert 输出需要在升维后再和 shared expert output 相加。这要求 projection、shared path 和 combine 的顺序保持一致。
 
 ## 12. 训练路径和推理路径并不完全一样
 
@@ -518,23 +521,11 @@ Megatron 里有 `router_replay.py` 和 `router_trace.py`。这两个工具类模
 | router trace | 捕获 top-k ids、weights、logits、tokens-per-expert 等 routing 信息 |
 | router replay | 复用或回放某次 routing 决策，用来排查 router 变化造成的训练差异 |
 
-这给 MoE 调试提供了一个直接入口：除了 loss 曲线，还要看 route entropy、top-k overlap、expert load CV、device load CV。很多 MoE 问题在 loss 爆之前，已经会先反映到这些路由指标里。
+这给 MoE 调试提供了一个直接入口：除了 loss 曲线，还要看 route entropy、top-k overlap、expert load CV、device load CV。这些指标有助于区分负载问题、路由变化和主任务优化问题。
 
-对 SFT/RL 阶段尤其如此。固定一套 probe corpus，每个 checkpoint 跑 router trace，比只看 benchmark 更早发现 route drift。
+对 SFT/RL 阶段尤其如此。固定一套 probe corpus，每个 checkpoint 跑 router trace，可以追踪同一输入上的 route drift。
 
-## 14. 读源码时常见的混淆点
-
-| 容易混淆的点 | 更准确的理解 |
-|---|---|
-| expert bias 是普通参数吗 | 更像负载控制器状态，参与 checkpoint，但更新不靠主 loss 反传 |
-| loss-free 是完全不用 aux loss 吗 | 不一定。主平衡靠 bias，轻量 seq/global aux 仍可作为稳定器 |
-| dropless 是没有 capacity 逻辑吗 | 不是。框架通常仍保留 capacity/drop/pad 逻辑，只是默认不丢 |
-| shared expert 是一个普通 expert 吗 | 通常不是 router top-k 选出来的 expert，而是单独 always-on path |
-| EP 只是把 expert 切到不同 GPU 吗 | 还包括 token dispatch/combine、load balance、straggler、buffer 和通信 overlap |
-| LatentMoE 只是 low-rank MLP 吗 | 不是。它改变 routed expert path 的维度、通信 payload、expert 参数和 shared path 交互 |
-| 推理 router 等同训练 router 吗 | 不等同。训练 path 有 loss/bias/drop 统计，推理 path 通常只保留 choice/weights |
-
-## 15. 和下一篇的衔接
+## 14. 和下一篇的衔接
 
 这篇讲的是 Megatron Core 里 MoE 部件怎么实现。下一篇会把其中两个系统瓶颈单独放大：
 
@@ -545,15 +536,16 @@ Megatron 里有 `router_replay.py` 和 `router_trace.py`。这两个工具类模
 
 ## 系列导航
 
-上一篇：[第二篇：如果今天要 scaling MoE，架构和训练策略该怎么选]({% post_url 2026-07-06-moe-scaling-design-training %})  
-下一篇：[第四篇：DeepEP 与 GroupedGEMM，MoE 大规模训练的通信墙和计算墙]({% post_url 2026-07-16-moe-deepep-groupedgemm %})  
+上一篇：[第二篇：Scaling MoE 的架构选择与训练策略]({% post_url 2026-07-06-moe-scaling-design-training %})
+
+下一篇：[第四篇：DeepEP 与 GroupedGEMM 如何拆解通信和计算瓶颈]({% post_url 2026-07-16-moe-deepep-groupedgemm %})
 
 ## 参考资料
 
 - [Megatron Core MoE Documentation](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/moe.html)
-- [Megatron-LM MoE README](https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/moe/README.md)
-- [Megatron-LM `moe_layer.py`](https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/moe/moe_layer.py)
-- [Megatron-LM `router.py`](https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/moe/router.py)
-- [Megatron-LM `moe_utils.py`](https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/moe/moe_utils.py)
-- [Megatron-LM `token_dispatcher.py`](https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/moe/token_dispatcher.py)
-- [Megatron-LM `experts.py`](https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/moe/experts.py)
+- [Megatron-LM MoE README](https://github.com/NVIDIA/Megatron-LM/blob/bb5647a9bdd044af85ca323b1aef5ede02e96a37/megatron/core/transformer/moe/README.md)
+- [Megatron-LM `moe_layer.py`](https://github.com/NVIDIA/Megatron-LM/blob/bb5647a9bdd044af85ca323b1aef5ede02e96a37/megatron/core/transformer/moe/moe_layer.py)
+- [Megatron-LM `router.py`](https://github.com/NVIDIA/Megatron-LM/blob/bb5647a9bdd044af85ca323b1aef5ede02e96a37/megatron/core/transformer/moe/router.py)
+- [Megatron-LM `moe_utils.py`](https://github.com/NVIDIA/Megatron-LM/blob/bb5647a9bdd044af85ca323b1aef5ede02e96a37/megatron/core/transformer/moe/moe_utils.py)
+- [Megatron-LM `token_dispatcher.py`](https://github.com/NVIDIA/Megatron-LM/blob/bb5647a9bdd044af85ca323b1aef5ede02e96a37/megatron/core/transformer/moe/token_dispatcher.py)
+- [Megatron-LM `experts.py`](https://github.com/NVIDIA/Megatron-LM/blob/bb5647a9bdd044af85ca323b1aef5ede02e96a37/megatron/core/transformer/moe/experts.py)

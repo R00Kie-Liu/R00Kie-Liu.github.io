@@ -1,47 +1,35 @@
 ---
 layout: post
 title: "MoE我们喜欢你（七）：RL 训推不一致与路由对齐问题"
+series: moe-we-like-you
+series_order: 7
+last_modified_at: 2026-10-26
 date: 2026-07-31
 tags: [MoE, RL, Megatron, SGLang]
 description: "以 Megatron learner 和 SGLang rollout 为例，解释 MoE RL 为什么不只要对齐 logprob，还要对齐每个 token 背后的 expert path。"
 ---
 
-## 0. 写在前面：路线 A 生成，路线 B 更新
+## 0. 先区分后端偏差与策略更新
 
-Dense 模型做 RL，也会遇到训推不一致：rollout 和 training 的 batch 不同，dtype、sampling kernel、权重同步节奏都可能不一样，最后表现为 logprob 或 policy distribution 对不上。
+MoE RL 通常由 serving engine 生成 response，再由 learner 重算 logprob 并更新参数。两套引擎既可能存在实现偏差，也可能因为权重同步滞后而使用不同版本的策略。这两件事需要分开排查。
 
-MoE 把这个问题再往前推了一层。它不只是生成 token，还会在每一层为每个 token 选择专家。一条 rollout，其实还隐含了一条 expert path：
+本文先比较同一 checkpoint、同一 token 序列在两套引擎中的输出。此时 router dtype、expert bias、归一化或数值扰动可能改变专家选择，放大 token probability 的偏差。随后再讨论新旧策略之间的差异，以及 routing replay 在其中改变了什么。
 
-| token | layer 1 experts | layer 2 experts | ... | layer L experts |
-|---|---|---|---|---|
-| `x_t` | top-k ids / weights | top-k ids / weights | ... | top-k ids / weights |
-
-RL 里的 reward 是根据 rollout 文本算出来的。如果 learner 反向更新时，同一段 prompt/response 在训练引擎里走了另一条专家路径，就会出现一个更隐蔽的问题：
-
-**reward 是路线 A 生成的，梯度却更新了路线 B。**
-
-这才是 MoE RL 里比较麻烦的训推不一致。它不是普通数值误差，而是 policy 的隐含计算路径变了。
+learner 更新权重之后，专家选择发生变化可以是正常学习结果。route overlap 因此是定位问题的线索，不能单独作为“更新错误”的判据。
 
 ![MoE RL train-serving mismatch loop](/assets/img/blog/moe-we-like-you/07-moe-rl-train-serving-mismatch-loop.png)
+*图 1：rollout engine、learner 和 checkpoint sync 共同决定实际使用的策略。诊断时先固定 checkpoint、输入和路由配置，再观察引擎间的偏差。*
 
-*图 1：MoE RL 闭环里，SGLang rollout、reward/verifier、Megatron learner 和 checkpoint sync 之间会反复传递状态。router math、expert bias、token dropping、quantization 和 expert placement 都可能成为 mismatch 注入点。*
+## 1. 同一个 checkpoint，为什么会走出另一条路径
 
-**Dense RL 主要在对齐 token 分布；MoE RL 还要对齐每个 token 背后的 expert path。**
-
-## 1. 一个 token 例子：路径错了，credit 就错了
-
-把上面的判断放到一个 token 上就更清楚了。假设某个 token 在 rollout 时，SGLang 选了 experts `{3, 17, 42, 88}`，这条 response 最后拿到高 reward。
+为了与图中层级对应，先用 top-1 简化：某个 token 在四层分别走专家 `3、17、88、42`。learner 用同一 checkpoint 重算同一段文本，第三层却选中 `91`。真实 top-k 模型也会出现专家集合部分替换的情况。
 
 ![Reward on Path A, Gradient on Path B](/assets/img/blog/moe-we-like-you/07-reward-on-path-a-gradient-on-path-b.png)
+*图 2：固定 checkpoint 后，第三层的 expert 88 与 91 仍因引擎差异发生替换。图示仅突出一条分支；reward 属于整条生成样本，不能直接视为单个 expert 的监督标签。*
 
+如果两个专家输出不同，这个替换可能使 learner 算出的 token probability 偏离实际 rollout policy。RL 使用的概率比值就可能混入后端误差，影响优化的稳定性。反过来，若两个专家输出很接近，一次翻转未必造成显著影响，因此还需要检查 logprob/KL 和路由 margin。
 
-*图 2：同一条样本在 rollout 和 learner 中如果走了不同 expert path，reward 和梯度的归因对象就会错位。图里只表达这个核心问题，具体 expert id 以正文例子为准。*
-
-learner 用 Megatron 重新 forward 同一段 prompt/response，准备计算 logprob 和 policy gradient。只要 router dtype、expert bias、top-k renormalize 或 expert id mapping 有一点偏差，同一个 token 就可能变成 `{3, 17, 42, 91}`。
-
-这个变化看起来很小，credit assignment 已经变了：88 参与了生成却没拿到正向 credit，91 没参与生成却被更新；combine weight 也变了，token logprob 不再对应 rollout path。若这种翻转集中在 math/code 关键 token 上，RL 会把能力更新推向错误专家；若高 reward 样本集中激活少数 experts，还会推高 load imbalance。
-
-所以这里麻烦的不是 serving/training 有一点数值误差，而是行为策略和被更新策略可能在不同 expert path 上解释同一条样本。
+这个例子关注的是同权重条件下不应有的额外偏差。策略更新后的路由变化、异步 rollout 的权重滞后，则要放到新旧策略与 off-policy correction 的问题里分析。
 
 ## 2. 一个 MoE RL 闭环：rollout engine vs learner engine
 
@@ -59,7 +47,7 @@ learner 用 Megatron 重新 forward 同一段 prompt/response，准备计算 log
 - expert bias 是否参与 choice；
 - shared expert 是否 fused 进 top-k；
 - group-limited routing 是否使用相同分组；
-- experts 在物理 GPU 上的 placement 是否一致；
+- logical expert id 是否映射到正确权重，副本是否同步；物理 GPU 位置可以不同；
 - 训练时是否有 token dropping / capacity，推理时是否 dropless；
 - rollout 量化是否改变 router 排序。
 
@@ -85,34 +73,26 @@ Megatron learner 侧的 router 往往不是一个纯 top-k 函数。它可能涉
 
 第三类是 **RL system mismatch**。rollout 系统和 learner 系统本来就不在同一时间、同一 batch、同一请求分布上。RL rollout 往往用 serving engine，是因为它吞吐高；learner batch 则按训练 step 组织。continuous batching、prefix cache、chunked prefill、异步 checkpoint sync、replay buffer、serving quantization lag，都会让 rollout policy 和 training policy 拉开。
 
-R3 论文还补了一刀：即便在同一个 Megatron 训练框架里，对同一批序列做两次 forward，MoE 输出概率也可能出现可测差异。问题不只是“SGLang vs Megatron”两个系统不同，MoE router 本身的敏感性也会放大 runtime 里的小扰动。
+R3 论文还观察到：即便在同一个 Megatron 训练框架里，对同一批序列做两次 forward，MoE 输出概率也可能出现可测差异。问题不只是“SGLang vs Megatron”两个系统不同，路由选择的离散性也可能放大 runtime 里的小扰动。
 
 对应的处理方式也不同：router semantics 要对齐配置和实现；runtime/state 要做 probe 和 route audit；RL system mismatch 要靠 correction、filter、weight sync 和 staleness 控制。
 
-## 4. 主流 RL 框架怎么处理：slime 和 verl
+## 4. 框架与修正方法分别处理哪一层
 
-放到具体框架里看，slime、verl Rollout Correction、VeXact 和 [R3](https://arxiv.org/abs/2510.11370) 处理的是不同层面的 mismatch。
-
-| 方法 | 主要解决 | 对 MoE 的缺口 |
+| 方法或系统 | 处理的问题 | 使用时需确认 |
 |---|---|---|
-| slime | Megatron training、SGLang rollout、Data Buffer、reward/verifier 的系统集成 | 不自动保证每个 token 的 expert path 一致 |
-| verl Rollout Correction | 用 IS / RS 修正 rollout policy 和 training policy 的 logprob 偏差 | 修的是 token 分布，不知道偏差来自哪个 expert path |
-| verl VeXact | 让 actor 和 rollout engine 尽量产生 bitwise-aligned logprob | 覆盖面取决于支持的 backend、模型和 MoE kernel |
-| [R3 / routing replay](https://arxiv.org/abs/2510.11370) | 把 rollout 时的 top-k mask 带回 training 侧审计或回放 | 成本更高，适合诊断、ablation 或重点样本稳定化 |
+| slime | 连接 Megatron training、SGLang rollout、数据与 reward 流水线 | checkpoint、模板、采样配置和路由状态是否正确转换 |
+| verl Rollout Correction | 用 IS / RS 等处理行为策略与训练策略的概率差异 | 实际使用哪两个概率、是否包含 staleness 与后端误差 |
+| VeXact | 在支持的模型和后端上对齐引擎输出 | 当前模型、量化和 MoE kernel 是否覆盖 |
+| R3 / routing replay | 回放 rollout 的 expert selection，减少路由不一致 | mask 的记录、缓存和训练侧使用方式 |
 
-slime 的价值在系统层：把 Megatron 和 SGLang 接成一条更明确的数据流，减少 checkpoint、tokenizer、chat template、sampling config 或 rollout id 被外部 glue code 接错的概率。但 MoE 还要单独问：SGLang 记录了哪些 `topk_ids` / `topk_weights`？Megatron 重算 route 后 overlap 如何？expert bias 和 expert id mapping 是否真的同步？
-
-verl Rollout Correction 是统计层修正，适合处理异步 staleness、replay buffer、backend 精度差异带来的 off-policy 偏差。它能看到概率比值，却不一定知道这个比值为什么变了；在 MoE 里，原因可能是 router dtype，也可能是 expert bias、shared expert、量化或 id mapping。
-
-VeXact 更接近实现层对齐：如果同一模型、同一输入、同一权重下的 rollout logprob 能 bitwise-aligned，很多 TIM 会从源头上变小。只是到 MoE 场景，最终仍要看具体 kernel 和 backend 是否覆盖了 router、dispatcher、expert path 这些细节。
-
-所以，与其说某个框架“已经解决”MoE RL 训推不一致，不如说它们各自压住了一部分误差：slime 降低系统集成误差，verl 降低 token/logprob 层面的偏差，VeXact 提供实现层 baseline；MoE 特有的 expert path mismatch 仍然要单独记录、审计和过滤。
+系统集成、概率修正和路由回放可以组合。比较时应固定各自处理的误差来源，分别观察 token probability 与 expert selection；仅凭用了某个框架，无法判断后端已经对齐。
 
 ## 5. 怎么观测：只看 reward 不够
 
-MoE RL 只看 reward/loss 不够。固定 probe 要先有：同一批 prompts 分别跑 Megatron 和 SGLang，比较 top-k overlap、top-1 flip、expert load、device load、router entropy 和量化前后的 route drift。
+固定 probe 时，先用同一引擎生成一份 token 序列，再让 Megatron 和 SGLang 对这份相同序列计算 logprob 和 routing trace。若分别采样生成不同文本，就不能把逐 token 差异直接归因于后端。诊断项包括 top-k overlap、top-1 flip、expert load、device load、router entropy 和量化前后的变化。
 
-按 R3 论文的口径，还可以同时看 train-inference KL 和 extreme-token ratio：前者看整体 policy 偏移，后者看“少数 token 概率差得离谱”的尾部风险。MoE RL 崩的时候，尾部 token 往往比平均 reward 更早报警。
+按 R3 论文的口径，还可以同时看 train-inference KL 和 extreme-token ratio：前者看整体 policy 偏移，后者看“少数 token 概率差得离谱”的尾部风险。它们分别描述整体偏移和概率比值的尾部，适合与 reward 曲线一起观察。
 
 在线 rollout 也要抽样留一点 route metadata：`topk_ids`、`topk_weights` 或 margin、per-request expert hotness、overflow/drop stats，以及 logical-to-physical expert mapping。这样 reward、expert load 和 p95/p99 latency 才能放到同一张图里看。
 
@@ -120,9 +100,9 @@ MoE RL 只看 reward/loss 不够。固定 probe 要先有：同一批 prompts �
 
 ## 6. R3：把 route path 也当成 rollout 数据
 
-仅靠“训练和推理对齐同一套 MoE 逻辑”还不够。真实 RL 系统里，rollout engine 和 learner engine 往往就是两套 runtime：SGLang 负责高吞吐生成，Megatron 负责反向训练。差异很难完全消掉，所以更实用的做法是把 routing metadata 纳入数据闭环。
+[R3](https://arxiv.org/abs/2510.11370) 提出 Rollout Routing Replay：在 rollout 时记录专家选择，训练时复用该选择，以减少引擎间路由差异。
 
-这里说的 replay 不是泛泛的 data replay，而是 **routing replay**。这里的 R3 指的是 [Stabilizing MoE Reinforcement Learning by Aligning Training and Inference Routers](https://arxiv.org/abs/2510.11370)。它关心的不是简单复用旧样本，而是把 inference 侧的 top-k mask 带回 training 侧，减少训练和推理 router 行为的偏差。
+它记录的是每层 token 的 top-k mask。mask 决定沿哪些 expert 分支计算，combine weight 仍由 training logits 重新计算；下面按论文采用的 softmax gate 说明。若用于 sigmoid 等 router，需要保留对应的打分和归一化语义。
 
 ![R3 rollout routing replay](/assets/img/blog/moe-we-like-you/07-r3-rollout-routing-replay.png)
 
@@ -132,29 +112,31 @@ R3 做的事很具体：rollout 时不仅保存 prompt、response、logprob、re
 
 一个容易写错的细节是：R3 不是把 inference 侧的 gate weight 原样拿来训练。它复用的是 top-k mask；training 侧仍然用自己的 router logits，在这个 mask 内重新 softmax 得到 combine weight。这样 expert selection 对齐了，router 的梯度流也还在。
 
-记录粒度也不用一开始拉满。更现实的起点，是对固定 probe 和抽样 rollout 记录 `topk_ids`、`topk_weights`、margin 或 routing distribution。很多 mismatch 不是所有 token 都翻，而是集中在 router score 很接近的边界 token 上；只记录 top-k ids 能知道翻没翻，记录 margin 才能知道这次翻转是不是本来就在不稳定边界。
+这里要区分诊断与回放：抽样记录 ids、weights 和 margin 可以定位问题；对某条样本执行完整 replay，则需要提供被回放各层、各 token 的 mask，抽样 trace 不能直接替代。
 
 Megatron 里的 `router_replay.py` 已经提供了类似能力：可以 record 某次 forward 的 top-k indices，也可以在 forward/backward recompute 时使用给定 top-k indices。对应到 RL，就是把 rollout engine 记录的 route path 带回 learner，让 learner 在实验中沿着 rollout 路径计算 logprob 和梯度。
 
 R3 论文还提到 multi-turn / agent 场景：如果 serving 侧用了 prefix KV cache，同一段 prefix 的 routing mask 也可以跟着 cache 复用，避免为了补 route metadata 重新 prefill。
 
-但 full router replay 不适合作为第一默认项。长 CoT RL 记录完整 route metadata 成本很高，rollout route 又对应生成时刻的 checkpoint；如果 learner 已经更新了权重，长期强制旧 route 还可能把模型本来应该学习的新 router 边界固定住。R3 最有价值的地方，不是“永远回放旧 path”，而是提醒我们：route path 也是 rollout 数据的一部分。
+回放会约束训练时的专家选择，尤其在多个 update step 复用 rollout 时，需要同时评价这种约束、稳定性和性能。route metadata 的传输、缓存与保存成本也应实测；R3 的实验结果不宜直接外推到所有模型或长 CoT 配置。
 
-## 7. 实际怎么稳定 MoE RL 训练
+## 7. 按误差来源安排实验
 
-实际训练时，不建议一开始就上 full routing replay。先守住路由语义：RL 开始前，freeze 或放慢会直接改变路由的状态，router/gate 保高精度，score function、top-k、renormalize、expert bias、shared expert 和 expert id mapping 逐项对齐。RL 阶段尽量 dropless；如果必须用 capacity 或 drop，overflow/drop stats 要和 reward、expert load 放在一起看。
+先做同 checkpoint 的 backend probe，对齐 score function、top-k、renormalize、bias、shared expert 和 logical-to-physical id mapping，保留 router 精度对照。若有 capacity/drop，单独比较它对同一 token 序列的影响。物理 placement 可以变化，但对应权重和副本状态必须正确。
 
-然后再处理样本。某条 rollout 在 learner 侧重算后 top-k overlap 很低，或者关键 token 的 top-1 flip 很高，就不要让它高权重更新 expert/router。更稳的做法是 route consistency filter、downweight，或者先放进 diagnostics buffer。full router replay 留给 ablation：它适合回答“如果强制沿着 rollout path 学，问题是不是会消失”，但不适合一开始就当成主路径。
+然后记录权重同步时间与 rollout staleness，比较新旧策略的概率差异。冻结 expert bias update 可以减少一个变化源，但是否冻结 router weights，应由训练方案和消融决定。
 
-## 8. 结论
+若问题集中在路由翻转，可在相同训练预算下比较 replay 与非 replay，观察 KL、概率比值尾部、质量和吞吐。对低 overlap 样本做 filter/downweight 只能作为另一组实验：它可能系统性移除小 margin 或特定任务样本，需要报告被过滤比例及样本分布，不能单凭 route overlap 判定数据无效。
 
-MoE RL 麻烦的地方，不只是 router 会不会漂移，而是 rollout 和 learner 可能在不同专家路径上解释同一条样本。SFT/RL 阶段少动 router 相关状态，训练和 rollout 的 MoE 语义逐项对齐，route-level probe 和 reward、load、latency 一起看；出了明显 mismatch，先把样本权重收住。
+## 8. 小结
 
-**MoE RL 里，reward 不能只和 token 对齐，也要和当时走过的专家路径对齐。**
+先回答“同一份策略在两套引擎里是否计算一致”，再回答“策略更新后变化是否受控”。routing trace 能帮助定位概率偏差，R3 则提供了约束专家选择的一种干预方式。二者都需要与 logprob、质量和系统成本联合评价。
 
 ## 系列导航
 
-上一篇：[第六篇：端侧/本地小 active MoE 的挑战、推理瓶颈与设计思路]({% post_url 2026-07-26-edge-moe-inference-design %})  
+上一篇：[第六篇：端侧 Active MoE 的推理瓶颈与设计取舍]({% post_url 2026-07-26-edge-moe-inference-design %})
+
+下一篇：[第八篇：稀疏计算与参数复用的新方向]({% post_url 2026-07-23-moe-future-sparse-architecture %})
 
 ## 参考资料
 

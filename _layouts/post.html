@@ -91,15 +91,30 @@
         </script>
 
         <div class="post-footer">
+          {% assign nav_previous = page.previous %}
+          {% assign nav_next = page.next %}
+          {% if page.series and page.series_order %}
+            {% assign nav_previous = nil %}
+            {% assign nav_next = nil %}
+            {% assign series_posts = site.posts | where: "series", page.series | sort: "series_order" %}
+            {% for series_post in series_posts %}
+              {% if series_post.series_order < page.series_order %}
+                {% assign nav_previous = series_post %}
+              {% elsif series_post.series_order > page.series_order %}
+                {% assign nav_next = series_post %}
+                {% break %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
           <div class="post-nav">
-            {% if page.previous.url %}
-            <a href="{{ page.previous.url | relative_url }}" class="post-nav-prev">
-              <i class="fas fa-chevron-left"></i> {{ page.previous.title }}
+            {% if nav_previous.url %}
+            <a href="{{ nav_previous.url | relative_url }}" class="post-nav-prev">
+              <i class="fas fa-chevron-left"></i> {{ nav_previous.title }}
             </a>
             {% endif %}
-            {% if page.next.url %}
-            <a href="{{ page.next.url | relative_url }}" class="post-nav-next">
-              {{ page.next.title }} <i class="fas fa-chevron-right"></i>
+            {% if nav_next.url %}
+            <a href="{{ nav_next.url | relative_url }}" class="post-nav-next">
+              {{ nav_next.title }} <i class="fas fa-chevron-right"></i>
             </a>
             {% endif %}
           </div>
