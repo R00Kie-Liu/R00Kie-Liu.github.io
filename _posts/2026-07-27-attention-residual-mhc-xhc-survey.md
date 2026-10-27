@@ -15,9 +15,11 @@ description: "梳理多 residual stream、显式深度检索与矩阵记忆，�
 
 ## 0. 两条路线与矩阵记忆
 
-![Residual 连接的方法脉络与关联：多 residual streams、Attention Residuals 与 Depth Memory](/assets/img/blog/attention-residual/method-map.png)
+![Residual 连接的方法脉络与关联：多 residual streams、Attention Residuals 与 Depth Memory](/assets/img/blog/attention-residual/method-map.svg)
 
-*方法关系总览：实线表示设计分支或变体，橙色虚线表示组件借用，点线表示框架统一视角；图按机制组织，不代表严格时间线。*
+*方法关系总览：实线表示设计分支或变体，灰色虚线表示机制关联，橙色虚线表示组件借用；按机制组织，不代表严格时间线。*
+
+[查看 SVG 原图](/assets/img/blog/attention-residual/method-map.svg)
 
 | 路线 | 状态如何变化 | 代表方法 |
 |---|---|---|
