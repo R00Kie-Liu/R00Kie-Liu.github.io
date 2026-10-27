@@ -90,6 +90,24 @@ serving 接入时，SGLang 可以按阶段选择 normal / low_latency；[vLLM][v
 
 训练使用任何动态副本时，都要确认梯度回到正确的原参数，optimizer 状态的归属不因临时复制而改变。建议分别计时 planner、weight sync、dispatch、GEMM 与 grad reduce；仅报告最终 load CV，无法判断整个 step 是否受益。
 
+### 3.4 用同一组负载理解约束与配额
+
+下面是教学用的可行分配，不是某个 planner 的实测输出。设两个 rank 各输入 `T=2` 个 token，top-`K=2`，共八条 expert-token 分配。`e0、e1` 的 home 在 rank 0，`e2、e3` 的 home 在 rank 1；当前 expert load 为 `[4,2,1,1]`，原放置下两边分别计算 6 和 2 条。
+
+将 `e0` 复制到 rank 1，并把它的两条输入交给副本，可以得到：
+
+| logical expert | rank 0 承担 token 数 | rank 1 承担 token 数 | expert 总量 |
+|---|---:|---:|---:|
+| e0 | 2 | 2 | 4 |
+| e1 | 2 | 0 | 2 |
+| e2 | 0 | 1 | 1 |
+| e3 | 0 | 1 | 1 |
+| rank 合计 | 4 | 4 | 8 |
+
+从 MoonEP 的接口约定出发，每个 rank 固定处理 `T×K=4` 条，表格满足该总量约束；从 quota 角度，表格的每个单元就是一个 `u_{e,r}`，同时表达在哪里实例化专家、各实例承担多少 token。这两种描述可以对应同一个可行解。
+
+因此，MoonEP 与 UltraEP 的区别需要结合其执行约定、规划目标和硬件假设理解。实际 planner 是否选择这张表，还取决于可用 slots、复制成本与实现约束。训练时，两个 rank 对 e0 产生的梯度最终仍回到同一个逻辑参数。
+
 ## 4. Serving 调度：已有副本怎样分工作
 
 serving 的短时热点未必适合通过更新 router 来修正。若保持模型语义，可调整 shared work、已有 replicas 或物理放置，但这些动作有不同前提。
@@ -141,7 +159,7 @@ serving 的短时热点未必适合通过更新 router 来修正。若保持模�
 
 ## 延伸阅读
 
-读 DeepEP / MoonEP 时，最好直接对着官方 README 和接口看：[DeepEP README][deepep] 解释 high-throughput / low-latency dispatch-combine kernel，[MoonEP README][moonep] 则把 dynamic redundant experts 和固定 rank 总 token 数的执行约定 写得很清楚。
+读 DeepEP / MoonEP 时，最好直接对着官方 README 和接口看：[DeepEP README][deepep] 解释 high-throughput / low-latency dispatch-combine kernel，[MoonEP README][moonep] 则把 dynamic redundant experts 和固定 rank 总 token 数的执行约定写得很清楚。
 
 如果更关心 serving runtime，[SGLang EP 文档][sglang-ep] 和 [vLLM EP deployment][vllm-ep] 可以放在一起读：前者更贴近 backend 选择和 DeepEP / Mooncake / NIXL-EP 模式切换，后者更贴近 vLLM 里的 EP backend、disaggregated serving 和 DeepEP kernel 依赖。
 

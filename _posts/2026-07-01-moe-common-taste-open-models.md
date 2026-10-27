@@ -33,7 +33,7 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 | 9 | [EP 通信与调度]({% post_url 2026-07-23-moe-ep-communication-optimization %}) | 怎样选择通信路径，何时需要专家副本和物理负载均衡 |
 | 10 | [视觉生成]({% post_url 2026-07-23-moe-visual-generation %}) | timestep、token、head 和控制接口分别怎样组织专家 |
 
-## 2. 先把 common taste 和 frontier experiment 分开
+## 2. 区分常见设计、候选结构与探索方案
 
 讨论 MoE 时，一个常见误区是把“某个新模型用了”直接等同于“应该默认采用”。这在 MoE 里尤其危险，因为 MoE 的收益很依赖系统、并行拓扑、训练数据规模和推理 runtime。
 
@@ -41,31 +41,31 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 
 | 类型 | 判断标准 | 例子 |
 |---|---|---|
-| common taste | 在多个模型中反复采用，且有对应的训练或系统经验 | shared expert、fine-grained experts、前置 dense 层、loss-free balance、router FP32、dropless 优先 |
-| strong candidate | 有清晰动机和大模型证据，但实现/训练/部署成本更高 | LatentMoE、group/node-limited routing、device-level balance、FP8/MXFP8 expert compute |
-| frontier experiment | 少数模型报告中效果突出，但尚未成为通用 recipe | LongCat zero-computation expert、Inkling shared-expert sink、Kimi K3 Stable LatentMoE、quantile/PID controller 变体 |
+| 常见设计 | 在多个模型中反复采用，且有对应的训练或系统经验 | shared expert、fine-grained experts、前置 dense 层、loss-free balance、router FP32、dropless 优先 |
+| 候选结构 | 有清晰动机和大模型证据，但实现/训练/部署成本更高 | LatentMoE、group/node-limited routing、device-level balance、FP8/MXFP8 expert compute |
+| 探索方案 | 少数模型报告中效果突出，但尚未成为通用 recipe | LongCat zero-computation expert、Inkling shared-expert sink、Kimi K3 Stable LatentMoE、quantile/PID controller 变体 |
 
-这个分类用于给 recipe 排优先级。预训练阶段同时修改 router、balance、专家形状和 dispatcher，会显著增加问题归因难度。
+这个分类用于确定实验优先级。预训练阶段同时修改 router、balance、专家形状和 dispatcher，会显著增加问题归因难度。
 
 ## 3. 最新开放模型里的 MoE 地图
 
-下表按“对架构选择的启发”整理。这里会区分完整 technical report、model card、官方 blog/API 文档和 framework day-0 支持材料，避免把证据强度不一样的东西混在一起。
+下表按“对架构选择的启发”整理。模型名旁标出主要来源及材料类型。技术报告可以追踪训练和消融，官方博客、model card 或 API 文档则按其实际披露的范围使用。
 
-| 模型 | 参数/激活 | MoE 设计信号 | 对 common taste 的启发 |
+| 模型 | 参数/激活 | MoE 设计信号 | 对架构选择的启发 |
 |---|---:|---|---|
-| DeepSeek-V3 | 671B / 37B active | DeepSeekMoE、前 3 层 dense、256 routed experts、top-8、shared expert、aux-loss-free balance | loss-free balance 和 shared expert 成为大规模 MoE baseline 的强信号 |
-| Qwen3 | 235B-A22B、30B-A3B | dense + MoE 同步发布，MoE 进入通用开放生态 | MoE 不只服务 500B+ 模型，小 active 版本也值得系统化 |
-| Kimi K2 | 1T / 32B active | 大总参、小 active、agentic data synthesis、MuonClip、joint RL | MoE 和 agentic 后训练开始深度绑定 |
-| Kimi K3 | 2.8T，16/896 experts | Stable LatentMoE、Kimi Delta Attention、Attention Residuals | 极高专家数需要 latent expert 和更强稳定性设计配合；完整训练细节仍要继续核验 |
-| GLM-4.5 | 355B / 32B active | loss-free balance routing、sigmoid gate、agentic/reasoning/coding 统一 | sigmoid + bias balance 已经不再是小众选择 |
-| MiniMax-M2 | 229.9B / 9.8B active | 256 fine-grained experts、很小 active budget、agentic deployment | 10B active 级别也能承载 agent 能力，说明 active budget 可以继续压 |
-| LongCat-Flash | 560B / dynamic active | zero-computation experts、PID expert bias、shortcut-connected MoE | token-dependent compute 有吸引力，但不适合作为初始 baseline |
-| Nemotron 3 Ultra | 550B / 55B active | Hybrid Mamba-Attention、LatentMoE、NVFP4、MTP | 架构、低精度和系统吞吐一起 co-design |
-| Inkling | 975B / 41B active | 256 routed experts、2 shared experts、top-6、sigmoid router、aux-loss-free bias、shared-expert sink | shared expert 开始从 always-on path 走向更细的 mixture 设计 |
-| Meta MobileMoE | 1.3B-5.3B total / 0.3B-0.9B active | on-device scaling law、moderate sparsity、fine-grained + shared experts、QAT、真实手机 profiling | 端侧 MoE 不能只看 active params，必须看真实设备上的访问规则性和 latency |
-| Liquid LFM2.5-8B-A1B | 8B / 1.5B active | on-device / edge MoE、128K context、tool calling | 本地/边缘 MoE 已经有开放权重样本，但不等同手机 SoC 上的严格端侧 |
-| IBM Granite MoE | 1B-A400M、3B-A800M | fine-grained experts、dropless routing、128K context、Apache 2.0 | 企业本地/低资源 MoE 的实用基线 |
-| OLMoE-1B-7B | 约 7B / 1B-1.3B active | 64 experts、top-8、代码/数据/logs 开放 | 适合做可复现路由分析，而不是追 frontier 能力 |
+| DeepSeek-V3 · [报告](https://arxiv.org/abs/2412.19437) | 671B / 37B active | DeepSeekMoE、前 3 层 dense、256 routed experts、top-8、shared expert、aux-loss-free balance | loss-free balance 和 shared expert 成为大规模 MoE baseline 的强信号 |
+| Qwen3 · [报告](https://arxiv.org/abs/2505.09388) | 235B-A22B、30B-A3B | dense + MoE 同步发布，MoE 进入通用开放生态 | MoE 不只服务 500B+ 模型，小 active 版本也值得系统化 |
+| Kimi K2 · [报告](https://arxiv.org/abs/2507.20534) | 1T / 32B active | 大总参、小 active、agentic data synthesis、MuonClip、joint RL | MoE 和 agentic 后训练开始深度绑定 |
+| Kimi K3 · [官方博客](https://www.kimi.com/blog/kimi-k3) | 2.8T，16/896 experts | Stable LatentMoE、Kimi Delta Attention、Attention Residuals | 极高专家数需要 latent expert 和更强稳定性设计配合；完整训练细节仍要继续核验 |
+| GLM-4.5 · [报告](https://arxiv.org/abs/2508.06471) | 355B / 32B active | loss-free balance routing、sigmoid gate、agentic/reasoning/coding 统一 | sigmoid + bias balance 已经不再是小众选择 |
+| MiniMax-M2 · [报告](https://arxiv.org/abs/2605.26494) | 229.9B / 9.8B active | 256 fine-grained experts、很小 active budget、agentic deployment | 10B active 级别也能承载 agent 能力，说明 active budget 可以继续压 |
+| LongCat-Flash · [报告](https://arxiv.org/abs/2509.01322) | 560B / dynamic active | zero-computation experts、PID expert bias、shortcut-connected MoE | token-dependent compute 有吸引力，但不适合作为初始 baseline |
+| Nemotron 3 Ultra · [官方研究页](https://research.nvidia.com/labs/nemotron/Nemotron-3-Ultra/) | 550B / 55B active | Hybrid Mamba-Attention、LatentMoE、NVFP4、MTP | 架构、低精度和系统吞吐一起 co-design |
+| Inkling · [发布说明](https://thinkingmachines.ai/news/introducing-inkling/) | 975B / 41B active | 256 routed experts、2 shared experts、top-6、sigmoid router、aux-loss-free bias、shared-expert sink | shared expert 开始从 always-on path 走向更细的 mixture 设计 |
+| Meta MobileMoE · [论文](https://arxiv.org/abs/2605.27358) | 1.3B-5.3B total / 0.3B-0.9B active | on-device scaling law、moderate sparsity、fine-grained + shared experts、QAT、真实手机 profiling | 端侧 MoE 不能只看 active params，必须看真实设备上的访问规则性和 latency |
+| Liquid LFM2.5-8B-A1B · [模型文档](https://docs.liquid.ai/lfm/models/lfm25-8b-a1b) | 8B / 1.5B active | on-device / edge MoE、128K context、tool calling | 本地/边缘 MoE 已经有开放权重样本，但不等同手机 SoC 上的严格端侧 |
+| IBM Granite MoE · [model card](https://huggingface.co/ibm-granite/granite-3.1-3b-a800m-base) | 1B-A400M、3B-A800M | fine-grained experts、dropless routing、128K context、Apache 2.0 | 企业本地/低资源 MoE 的实用基线 |
+| OLMoE-1B-7B · [项目与训练材料](https://github.com/allenai/OLMoE) | 约 7B / 1B-1.3B active | 64 experts、top-8、代码/数据/logs 开放 | 适合做可复现路由分析，而不是追 frontier 能力 |
 
 这张表的重点不在“谁的 total params 最大”，而在几个重复出现的设计：
 
@@ -77,9 +77,9 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 - 前置 dense 层仍然被很多大 MoE 保留；
 - 推理侧的 communication、memory bandwidth、专家访问规则性越来越像一等约束。
 
-这就是 common taste 的来源。
+这些重复出现的选择构成了后文讨论的起点。
 
-## 4. Common taste 一：前 1-3 层 dense，别太早开始路由
+## 4. 常见设计 一：前 1-3 层 dense，别太早开始路由
 
 很多 MoE 设计会在底部保留 1-2 层，甚至 3 层 dense MLP，再进入 MoE layer。这个设计不显眼，但很实用。
 
@@ -88,11 +88,9 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 - 通用 pattern 被拆到多个专家里重复学习；
 - 早期 layer 的 load 统计噪声大，router 更容易 collapse 或形成脆弱分工。
 
-前置 dense 层让所有 token 共享底层变换，也减少了这些层的专家调度。稳定性是否改善，还需要与相同预算的全 MoE 配置比较。
+前置 dense 层让所有 token 共享底层变换，也减少了这些层的专家调度。这里列出的是结构与设计动机；稳定性收益由逐层负载、质量和相同预算的架构消融判断。
 
-前置 dense 层可以作为架构消融的一个起点。它是否改善训练，要结合逐层负载和质量验证；仅凭模型采用了这个结构，还不能确定收益来自哪一种机制。
-
-## 5. Common taste 二：fine-grained routed experts + shared expert
+## 5. 常见设计 二：fine-grained routed experts + shared expert
 
 DeepSeekMoE 之后，fine-grained experts 和 shared expert 逐渐成为大规模 MoE 的常见起点。
 
@@ -102,14 +100,14 @@ shared expert 为所有 token 提供公共计算路径，设计动机是承接�
 
 这组设计的代价也要记住：
 
-| 设计 | 收益 | 代价 |
+| 设计 | 结构与设计意图 | 代价 |
 |---|---|---|
-| fine-grained experts | 更细组合、更强 specialization、更小 expert GEMM | router/load balance 更敏感，dispatch 更碎 |
-| shared expert | 通用知识不必在专家中重复，router 错选伤害更小 | always-on compute，过大时会削弱 sparse 收益 |
+| fine-grained experts | 更细组合与更小的单个 expert，目标是提高专门化 | router/load balance 更敏感，dispatch 更碎 |
+| shared expert | 所有 token 共用一条计算路径，用于承接通用变换 | always-on compute，过大时会削弱 sparse 收益 |
 
 shared expert 的宽度直接占用 active compute。比较不同 shared 大小时，应固定总计算预算，检查公共路径带来的质量收益是否抵得上减少的 routed capacity。
 
-## 6. Common taste 三：loss-free / bias-based balance 变成主线
+## 6. 常见设计 三：loss-free / bias-based balance 变成主线
 
 MoE load balance 的目标存在张力：系统希望每个专家、每个 EP rank 的负载接近均衡；模型又希望 router 有自由度，让专家保持专门化。
 
@@ -126,7 +124,7 @@ loss-free / bias-based balance 通常把两件事拆开：
 
 后训练阶段是否继续更新 bias，需要结合数据规模和路由偏移判断。第二篇会区分 bias 控制器与 router weights，并讨论冻结或重新校准的条件。
 
-## 7. Common taste 四：sigmoid gating + top-k normalization 值得优先考虑
+## 7. 常见设计 四：sigmoid gating + top-k normalization 值得优先考虑
 
 MoE router 的 score function 过去常从 softmax 开始。softmax 的好处是全专家分数具有概率解释；选出 top-k 后，是否再次归一化仍取决于实现；但它也会让专家之间强耦合，一个 expert 的分数变化会影响所有专家概率。
 
@@ -140,9 +138,9 @@ sigmoid gating 的趋势在于：每个 expert 的 score 更像独立打分，�
 - 推理 runtime 是否和训练 runtime 完全对齐；
 - 低精度或量化是否改变 top-k 排序。
 
-这也是第七篇要重点讲的地方：MoE 的训推不一致很多时候不是 logits 层面的问题，而是 router 选专家这一步细节不一致。
+MoE 的训推偏差可能出现在专家选择、混合权重和最终 token logprob 上。第七篇讨论如何沿这些环节定位差异。
 
-## 8. Common taste 五：稀疏度需要和系统能力一起定
+## 8. 常见设计 五：稀疏度需要和系统能力一起定
 
 MoE 设计常会被推向极高稀疏度：total params 更大、active ratio 更低，理论效率更高。但实际训练里，稀疏度还会影响：
 
@@ -160,7 +158,7 @@ MoE 设计常会被推向极高稀疏度：total params 更大、active ratio �
 | 30B-100B | 1B-10B active | 64-128 experts，top-4/top-8 | 小 active、本地/边缘、高吞吐常见 |
 | 100B-300B | 10B-22B active | 128-256 experts，top-8 左右 | 通用开源 MoE 主战场 |
 | 500B-1T | 27B-55B active | 256-512 experts，top-8 左右 | 需要强 EP、GroupedGEMM、通信优化 |
-| 2T-3T | 16/896 这类极高稀疏度开始出现 | 更依赖 latent expert / 强 balance / supernode 推理 | 仍属于 frontier 设计区 |
+| 2T-3T | 本文未核验 active 参数量 | Kimi K3 披露 896 experts、top-16，即 `k/E ≈ 1.79%` | 专家激活比例与 active 参数量分别记录 |
 
 这不是 scaling law 结论，只是开放模型给出的可训练区间。真正做设计时，active params、top-k、expert granularity 和 EP 拓扑要一起 sweep。
 
@@ -190,7 +188,7 @@ LongCat-Flash 里一个比较特殊的设计是 zero-computation experts。它�
 
 ## 10. 候选结构：LatentMoE / Stable LatentMoE
 
-LatentMoE 的核心不是单纯减少 FLOPs，而是把 routed expert path 放到低维 latent space：
+LatentMoE 把 routed expert path 放到低维 latent space，同时改变计算和数据移动的维度：
 
 | 普通 MoE | LatentMoE |
 |---|---|
@@ -209,7 +207,7 @@ Nemotron 3 Ultra 把 LatentMoE 放进 550B-A55B 的公开模型里，Kimi K3 又
 | Nemotron LatentMoE | 如何让 routed expert path 的 compute、参数 bytes 和 dispatch payload 更便宜 |
 | Kimi-K3 Stable LatentMoE | 在 2.8T、16/896 experts 这种极高稀疏度下，如何让 routing 和训练仍然稳定 |
 
-但 common taste 角度仍要保守一点。LatentMoE 会引入额外的降维/升维 projection、精度保护、shared expert 交互和 checkpoint/runtime 兼容问题。它值得作为 100B+ 或通信/带宽瓶颈明显时的 strong candidate，不一定是所有小 MoE 的默认起点。
+LatentMoE 增加降维/升维 projection，并影响 shared path、精度和 runtime 兼容。通信或参数读取已成为瓶颈时，可优先比较这些额外成本与 latent path 节省的字节量。
 
 ## 11. 探索方向：Inkling 的 shared-expert sink
 
@@ -234,7 +232,7 @@ Inkling 的 shared-expert sink 需要单独讨论，因为它改变了 shared ex
 
 现实会复杂很多。MoE 的完整权重通常仍要存储或可访问；每个 token 的专家集合会变；batch=1 下小 expert GEMM 难以吃满硬件；router、dispatch、权重访问和 cache miss 都会变成显性成本。
 
-Meta MobileMoE 的价值在于，它不是只报 FLOPs，而是把 on-device scaling law、moderate sparsity、fine-grained experts、shared experts、INT4/INT8 QAT 和真实手机 profiling 放进同一个闭环。
+Meta MobileMoE 联合研究 on-device scaling law、moderate sparsity、fine-grained/shared experts、INT4/INT8 QAT，并在真实手机上 profiling。结构、量化和设备测量由此有了对应的实验设置。
 
 除此之外，Liquid LFM2.5-8B-A1B、IBM Granite MoE、gpt-oss-20b、OLMoE 这些开放模型/研究基线也值得关注，但要分层理解：
 

@@ -66,29 +66,13 @@ top-k 越大，每个 token 可以组合更多专家，路由更平滑，专家�
 
 top-4/top-8 可以作为相近开放模型的对照点。改变 top-k 时，要同时注明 expert width 是否调整：固定宽度时，增加 top-k 也增加 active compute，不能把收益全部归因于更丰富的专家组合。
 
-### 2.3 MoE layer placement：前置 dense 层通常值得保留
+### 2.3 MoE layer placement：从公开布局选择消融点
 
-一个常被忽略的架构细节是：很多开放 MoE 并不是从第 1 个 Transformer block 就开始 MoE 化，而是在底部先放若干 dense FFN 层，再进入稀疏 MoE。这个设计可以理解成 进入路由前的公共特征处理。
+先区分已采用的布局和本文的实验选择。公开配置中，[DeepSeek-V3][deepseek-layout] 保留前 3 层 dense FFN，[Ling-flash-2.0][ling-layout] 保留第 1 层；第五篇会继续使用后者推演参数和显存。这两个例子提供可复现的布局，不能据此推出层数与总参数规模的固定关系。
 
-底层 hidden states 更接近局部 token、词形、位置和浅层组合特征。若底层路由缺少稳定分工，可能观察到以下现象；它们是需要检查的假设，不能仅凭层的位置判断：
+前置 dense 层让这些层的所有 token 共用 FFN，也省去相应的专家调度。若希望检验这种公共处理是否改善路由，可围绕选定基线比较前 0、1、2 层 dense，并记录参数量、active FLOPs、逐层负载与质量。本文将这组数值用作消融点；比较预算通过专家宽度或其它明确列出的变量调整。
 
-- 早期专家负载更不稳定，router collapse 更容易发生。
-- 专家会被迫学习过多底层通用模式，削弱后续专家专门化。
-- token dispatch 在所有层都发生，增加不必要的 EP 通信。
-- 底层 MoE 的收益未必抵得过路由和通信成本。
-
-可以用下面的层数范围安排候选实验，具体收益仍需与不保留 dense 层的配置对照：
-
-| 规模/目标 | 前置 dense 层建议 | 说明 |
-|---|---:|---|
-| 小激活/端侧/本地 MoE | 1 层 | 控制 active compute 和实现复杂度 |
-| 100B-300B 通用 MoE | 1-2 层 | 作为默认起点，给 router 更稳定的输入 |
-| 500B+ 或 router 不稳定 | 2-4 层 | 牺牲少量稀疏化比例，换训练稳定性和更少底层通信 |
-| hybrid attention / 多模态 MoE | 视前端 encoder/adapter 而定 | 如果前端已做较强表示抽取，可减少 前置 dense 层 |
-
-从现有开放模型看，这个模式并不少见：有的模型只保留首层 dense，有的保留前 3 层 dense，也有模型把前 4 层或最后一层排除在 MoE 之外。这里不必机械追求“所有 FFN 都 MoE 化”。对 scaling 来说，前置 dense 层减少的是一小部分参数容量，但经常能换来更好的 router 稳定性、底层表示质量和 EP 训练效率。
-
-可比较前 0、1、2 层使用 dense 的配置，同时固定 active compute 和其它训练条件。若 early-layer expert load CV 偏高或 router entropy 过早下降，先检查统计、初始化和 balance 设置，再判断改变层布局能否解决问题。
+早层负载偏斜或 entropy 下降时，先核对初始化、统计和 balance 设置。架构实验随后回答：改变层布局，在排除这些实现因素之后是否仍有收益。
 
 ## 3. Expert granularity：为什么要细专家
 
@@ -101,16 +85,14 @@ DeepSeekMoE 的思路可以拆成两部分：
 
 Scaling-law 视角下，granularity 是一个独立超参。它和训练 token、模型大小、active ratio 一起决定最优点。过粗的专家容易冗余，过细的专家会让每个专家 token 数不足、GEMM 变小、通信更碎。
 
-实操建议：
+对于每层维度相同的 SwiGLU experts，固定 MoE 层数 `L_moe` 和 hidden size `H`，可先用两条近似关系确定候选：
 
-| 总规模 | 专家数起点 | top-k 起点 | 备注 |
-|---:|---:|---:|---|
-| 1B-80B | 32-128 | 2-8 | 面向小激活/端侧/本地时要关注专家驻留、缓存、量化和 kernel 利用率 |
-| 100B-300B | 128-288 | 4-8 | 可用于与相近模型对照的候选范围 |
-| 500B-1T | 256-512 | 8 | 需要强 EP 和通信 overlap |
-| 2T+ | 512-896+ | 8-16+ | 建议同时考虑 LatentMoE 或其他通信压缩结构 |
+```text
+routed 参数量       ≈ 3 * L_moe * H * E * I
+每 token expert 计算 ∝ k * I
+```
 
-这些值不应当机械套用。真正的选择应由目标 active params、每层 MoE 比例、hidden size、FFN expansion、global batch、EP 拓扑和 token budget 一起决定。
+这里 `I` 是单个 expert 的 intermediate size；第二式只比较 routed MLP 的主要矩阵计算。`E` 决定专家池容量，`k` 与 `I` 共同决定 active compute。router、shared expert 和通信另行计入。第 10 节给出匹配这两项预算的具体组合。
 
 ## 4. Shared expert：公共路径的收益和成本
 
@@ -134,7 +116,7 @@ Shared expert 提供所有 token 都会执行的公共路径。其设计动机�
 
 建议做法：
 
-- 第一版使用 1 个 shared expert。
+- 将 1 个 shared expert 作为一组实验，与无 shared path 的配置对照。
 - shared expert intermediate size 可以小于完整 FFN，先从 routed expert 总 active compute 的一小部分起步。
 - 单独监控 shared expert gate/activation 对输出的贡献，避免它变成“第二个 dense FFN”。
 
@@ -214,7 +196,7 @@ Zero-computation expert 可以理解为 MoE 里的 no-op / identity 路径：某
 
 ### 7.1 不建议纯靠 auxiliary loss
 
-Auxiliary loss 的问题不是不能用，而是它直接改变主优化目标。系数太大，专家被迫平均；系数太小，负载还是崩。对大规模 MoE，balance 策略应该尽量减少对 LM objective 的干扰。
+Auxiliary loss 将负载目标加入训练优化。系数太大，专家被迫平均；系数太小，负载还是崩。对大规模 MoE，balance 策略应该尽量减少对 LM objective 的干扰。
 
 对于采用 bias-based balance 的训练，可以从以下组合开始验证：
 
@@ -267,9 +249,9 @@ beta_next = per_expert_quantile(competitiveness, target)
 | 阶段 | expert bias update | 说明 |
 |---|---|---|
 | pretraining 前中期 | 开启，使用较小 update rate | 建立全局专家负载平衡 |
-| pretraining 后期 / long-context midtrain | 逐步降到 0 或直接设为 0 | 固化路由控制器，避免后期震荡 |
-| SFT | 默认 freeze bias update | 保留预训练路由结构，避免小数据偏分布重写负载 |
-| RL | 更应谨慎，默认 freeze | 减少 rollout/learner 路由漂移和 off-policy mismatch |
+| pretraining 后期 / long-context midtrain | 按模型报告或消融决定是否降到 0 | 比较固定控制器与继续适应的效果 |
+| SFT | 先比较保留终态 bias、update rate=0 的配置 | 保留预训练路由结构，避免小数据偏分布重写负载 |
+| RL | 将固定 bias 作为减少状态变化的对照 | 减少 rollout/learner 路由漂移和 off-policy mismatch |
 | domain continued pretrain | 可小幅开启或短期重校准 | 仅当数据规模足够大且确实出现严重 load imbalance |
 
 需要区分两件事：**freeze expert bias update 不等于必须 freeze router weights**。如果做全参数 SFT，router projection 仍可能随主 loss 更新；如果 SFT 数据很小、路由很脆，才进一步考虑冻结 router 或只做 LoRA/adapter。对 loss-free balance 而言，关键是避免负载控制器在小规模 SFT/RL 数据上继续大幅移动。
@@ -336,15 +318,11 @@ y = y + combine(shared_experts(x), sink_weights)
 
 评估指标不能只看 loss，还要看端到端 tokens/s、EP A2A 时间、专家负载 CV 和下游任务。
 
-## 9. 启动实验的候选配置
+## 9. 先选定可复现基线
 
-下表汇总前文的候选方案。除总参数外，还需要匹配训练 token、active compute 和目标设备；每档内部都应保留一个已知可运行的 baseline。
+优先选择设备和训练预算能够运行、且配置已公开的模型。记录 `H、L_moe、E、k、I`、shared width、前置 dense 层和路由设置，再改变其中一组变量。这样每个候选都能说明它增加了哪部分容量、计算或通信。
 
-| 目标 | 架构起点 | 训练起点 | 系统注意点 |
-|---|---|---|---|
-| 1B-80B 小激活/端侧/本地 MoE | 前 1 层 dense；32-128 experts，top-2/top-4/top-8，1 shared expert，可选部分层 MoE | aux/global aux baseline + loss-free 对照，router FP32；MobileMoE/Granite/OLMoE 这类小 active 配置应分层对照 | 关注专家驻留、推理 batch、量化、端侧缓存和小 batch kernel 利用率 |
-| 100B-300B 通用 MoE | 前 1-2 层 dense；128-288 experts，top-8，fine-grained routed + shared expert | loss-free balance + 小 seq/global aux，no token dropping | EP 尽量留在节点内，GroupedGEMM/permute fusion 默认打开 |
-| 500B-3T frontier MoE | 前 2-4 层 dense；256-896+ experts，top-8/top-16，LatentMoE 优先评估，zero-expert 后置 | loss-free/quantile/PID 类 balance，阶段化 router 监控，QAT/FP8/MXFP8 早规划 | DeepEP/Flex/HybridEP、静态 shape、EP overlap、PP/VPP、CP/MLA 联合设计 |
+例如，减少 active compute 的配置用于研究质量与成本的关系；固定总参数和 active compute、只切细专家的配置用于研究 granularity。两类结果分别报告。
 
 ## 10. 最小实验矩阵
 
@@ -352,15 +330,15 @@ y = y + combine(shared_experts(x), sink_weights)
 
 | 维度 | baseline | variant A | variant B |
 |---|---|---|---|
-| expert granularity | 128 experts top-8 | 256 experts top-8 | 256 experts top-4 |
-| MoE layer placement | 前 1 层 dense | 前 2 层 dense | 前 3-4 层 dense |
+| expert granularity | `E=128, k=8, width=I` | `E=256, k=16, width=I/2` | `E=256, k=8, width=I/2` |
+| MoE layer placement | 前 0 层 dense | 前 1 层 dense | 前 2 层 dense |
 | shared expert | none | 1 shared small | 1 shared medium |
 | balance | aux/global aux | loss-free bias | loss-free + small seq aux |
 | router score | softmax | sigmoid | sigmoid + group routing |
 | latent | normal MoE | latent bottleneck small | latent bottleneck medium |
 | adaptive | fixed top-k | zero-expert late stage | layer/token adaptive |
 
-比较时要写清预算约束。例如，把 128 个专家改为 256 个、保持 top-8 和专家宽度不变，会增加总参数；把 top-8 改为 top-4 则会减少 active compute。这些实验回答的问题不同。若要研究“更细专家在相同成本下是否更好”，应相应调整专家宽度，并记录总参数、active FLOPs 和训练 token。
+granularity 行是教学配置，不是实测结果。baseline 与 A 的 `E*I` 和 `k*I` 相同，因而 routed 总参数与主要矩阵 FLOPs 对齐；B 保持同样的 routed 总参数，但将 routed active compute 减半。A 用于比较切细专家，B 用于比较节省计算后的质量。三者的 router 和通信成本仍不同。其它行也应记录改变后的预算，不把所有实验都称作等成本消融。
 
 首轮至少记录质量、tokens/s、逐层 expert/rank 负载，以及 dispatch/combine 时间。只有打开相应结构后，再增加 shared contribution、zero-expert rate 或 latent path 指标。负载变异系数（CV）是标准差除以均值；均值接近零时要同时检查原始 token count，避免单看比值。
 
@@ -391,3 +369,6 @@ y = y + combine(shared_experts(x), sink_weights)
 - [TML Inkling on vLLM: Day-0 Support with Optimized Performance](https://vllm.ai/blog/2026-07-15-inkling)
 - [SGLang and Miles Add Day-0 Support for Inkling](https://www.lmsys.org/blog/2026-07-15-inkling-day0-support)
 - [Megatron Core MoE Documentation](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/moe.html)
+
+[deepseek-layout]: https://arxiv.org/abs/2412.19437
+[ling-layout]: https://huggingface.co/inclusionAI/Ling-flash-2.0/blob/main/config.json

@@ -25,7 +25,7 @@ description: "从 2025-2026 年的研究型架构工作出发，讨论 MoE 之�
 | 资源或执行问题 | 选择 / 复用的对象 | 代表工作 |
 |---|---|---|
 | depth / iteration | 每个 token 是否需要同样深的计算，深层信息如何保留 | Mixture-of-Depths、MoDA、LoopMoE |
-| layer / expert sharing | 每层是否必须维护独立 experts，routing path 能否跨层传递 | MoEUT、ReXMoE、GMoE、UniPool、Expert Tying |
+| layer / expert sharing | 每层是否必须维护独立 experts，routing path 能否跨层传递 | MoEUT、ReXMoE、MoRE、GMoE、UniPool、Expert Tying |
 | attention context | 每个 query 是否需要看完整历史上下文 | MoBA |
 | attention head / scheme | 每个 token 是否需要所有 heads，或同一种 attention 形式 | MoH、MoAS、Attention Sink as native MoE |
 | memory lookup | 静态知识是否应该靠计算重建 | PEER、STEM、Engram / Conditional Memory |
@@ -53,15 +53,21 @@ description: "从 2025-2026 年的研究型架构工作出发，讨论 MoE 之�
 
 ## 3. 参数复用：专家是否必须归单层所有
 
-标准 MoE 为每个 MoE layer 保存一套专家。增加层数也会增加唯一专家参数；跨层复用试图把这两个预算分开。重点比较两种路径：借用邻层的候选专家，或直接共享一个参数池。
+标准 MoE 为每个 MoE layer 保存一套专家。增加层数也会增加唯一专家参数；跨层复用试图把这两个预算分开。重点比较两种路径：开放邻层的候选专家，或将相邻层乃至全模型的专家组织成共享池。共享也有两种预算口径：减少唯一权重，或保留唯一专家预算、扩大每层的候选范围。
 
 [ReXMoE][rexmoe] 保留每层 experts，但允许第 `l` 层 router 访问相邻 `r` 层的 experts。候选池从 `N` 变成 `rN`，不必为了扩大候选数而缩小 expert width。它与 fine-grained 的区别在于：前者借用已经存在的参数，后者把参数切成更小的专家。
 
 ReXMoE 的消融显示，单纯扩大候选池的提升有限，配合 Progressive Scaling Routing 才获得更明显收益。PSR 在训练初期使用较小候选池，再逐步放开跨层复用。reuse group 变大还可能增加欠利用专家和负载偏斜，vLLM 实验中的 prefill 也会变慢。因此候选池大小同时是模型与系统变量。
 
+[MoRE（Mixture of Reused Experts）][more] 将相邻若干层组成 reuse block，共享 expert FFN 权重，保留各层独立的 attention 与 router。默认 reuse factor `R=2`：原来两层各有 `N` 个 experts，现在两层都从同一个 `2N` 专家池中选择 top-k，唯一专家总数仍为 `2N`。它扩展了每层可访问的参数范围，也允许相邻层连续调用同一个 expert；在这一预算口径下，专家权重占用没有减半。
+
+共享专家如何知道自己正在处理哪一层？MoRE 在输入上加可学习的 depth embedding，令 $x'_\ell=x_\ell+d_\ell$，再将它同时传给该层 router 与共享 experts。每层选择不同专家的自由度由独立 router 保留，depth embedding 则给共享计算提供层号信息。router 的输出维度扩大与新增 depth embedding 仍需计入总参数。
+
+以论文的 `N=32, k=4` 为例，每层候选组合从 $\binom{32}{4}=35{,}960$ 增至 $\binom{64}{4}=635{,}376$；每次仍执行 4 个 experts。增加的是路由组合，expert matmul 预算基本不变，但更宽的 router 仍有额外开销。论文在 114M–1.15B 规模、匹配参数与计算预算的实验中报告更低 PPL 和更好的下游表现。[官方代码][more-code]通过权重绑定实现共享。相邻层共用一块权重是否带来 cache 复用，则还取决于执行布局与驻留容量，不能从参数共享直接推出延迟收益。
+
 [UniPool][unipool] 让所有层共享 global expert pool，每层只保留独立 router。论文先将若干生产模型的深层路由随机化，观察到质量下降较小，作为深层专家冗余的诊断；这个结果仍受被测模型、层范围和任务集合限制。
 
-共享池需要重新定义负载均衡。某层不使用一个 expert，不代表这个 expert 在全模型中没有工作。UniPool 在 pool 级别统计使用量，并用 NormRouter 处理层间 logit scale 差异。在 182M–978M 模型、30B Pile tokens 的实验中，reduced-pool 版本以常规 MoE 41.6%–66.7% 的 expert 参数预算达到相近或更好的结果；这个比较针对该实验范围，尚不能外推到更大规模。
+共享池需要重新定义负载均衡。某层不使用一个 expert，不代表这个 expert 在全模型中没有工作。UniPool 在 pool 级别统计使用量，并用 NormRouter 处理层间 logit scale 差异。在 182M–978M 模型、30B Pile tokens 的实验中，reduced-pool 版本以常规 MoE 41.6%–66.7% 的 expert 参数预算达到相近或更好的结果；这些结果对应上述模型、数据量和参数预算。
 
 还有几种共享粒度可作为对照：
 
@@ -76,7 +82,7 @@ ReXMoE 的消融显示，单纯扩大候选池的提升有限，配合 Progressi
 
 这些方法改变专家共享的范围。评估时需要同时记录唯一参数、pool-level 使用量、rank 负载与 prefill/decode 耗时，确认少存的权重没有换来更重的候选检索或调度。
 
-## 4. Attention 轴：让 query 决定看哪些 block、哪些 head、哪种 attention
+## 4. Attention：选择上下文、头与计算形式
 
 MoE 通常绕开 attention，只替换 FFN。但长上下文时代，attention 本身也越来越像需要 routing。
 
@@ -95,7 +101,7 @@ MoBA 把“长上下文注意力”从静态稀疏模式改成动态检索模式
 
 另一条 2026 线索是 [Attention Sink Forges Native MoE in Attention Layers][attention-sink]。它把 Vanilla Attention、Sink Attention、Gated Attention 放在一起分析，认为 attention sink 或 gating factor 会在 head 维度上形成隐式 MoE；一些 heads 长期贡献生成，另一些 heads 接近 inactive，类似 MoE 里的 expert collapse。论文提出 sink-aware load balance loss 来缓解 head collapse。由此可以增加一个诊断维度：attention 里也可能出现 MoE 式的竞争和塌缩。
 
-## 5. Memory 轴：有些知识不该每次靠计算重建
+## 5. Memory：用检索补充参数计算
 
 [PEER][peer] 是这条线的早期坐标。它把 experts 细到 single-neuron MLP，再用 product-key retrieval 从百万级专家里检索。传统 MoE 是“几百个较大的专家”；PEER 更像“一个可检索的参数库”。核心问题也随之改变：如果专家数从几百扩大到百万，router 不能再全量打分，必须用检索结构。
 
@@ -112,7 +118,7 @@ Engram 进一步比较 routed experts 与 memory slots 如何分配参数预算�
 
 这条线的系统含义也不同于 MoE。MoE 的专家选择依赖 hidden state，推理时很难提前知道要读哪些 expert；STEM 和 Engram 的索引更静态，分别来自 token id 和 N-gram，可以预取，可以放到 host memory，甚至做多级 cache。它们把一部分“参数容量”从 GPU HBM 里解耦出来。
 
-## 6. Expert 轴：选中 expert 之后，仍然有结构空间
+## 6. Expert 执行：粒度、宽度与组合
 
 标准 MoE 有一个隐藏假设：router 选中 top-k experts 后，每个 expert 都全量执行，最后按 router weights 加权求和。2025-2026 的一些工作开始动这个假设。
 
@@ -142,11 +148,11 @@ DAG learning module 也增加实现开销。若比较结构化聚合与 weighted
 
 这一组工作都在追问 top-k 之后还能不能继续调：router budget、expert size、expert width、expert 之间的组合结构，都可以变成设计空间。
 
-## 7. 生成范式轴：MoE 不一定只属于 autoregressive LLM
+## 7. 扩散式语言生成：分配去噪过程中的计算
 
 [LLaDA-MoE v2][llada-moe-v2] 把 MoE 放进 diffusion language model。这个工作有意思的地方不在 30B total / 3B active 的规模本身，而在 diffusion LM 的训练/推理语义：masked denoising 会并行预测多个位置，和 AR LLM 的左到右 next-token prediction 不同。这样一来，batch size、learning rate、model-data allocation、activation ratio、expert granularity、shared-expert ratio，都不能直接套 AR MoE 的经验。
 
-正文里，LLaDA-MoE v2 做了 MoE dLLM scaling law：作者发现高 compute 下 batch size 和 learning rate 的缩放趋势需要 dLLM-specific calibration；architecture 上采用 30B total / 3B active，128 routed experts、top-8、一个 shared expert，并训练了 23.5T tokens。这不能证明 diffusion LM 会替代 AR LLM，但它说明 MoE 的稀疏容量机制可以迁移到非 AR 生成范式里。
+正文里，LLaDA-MoE v2 做了 MoE dLLM scaling law：作者发现高 compute 下 batch size 和 learning rate 的缩放趋势需要 dLLM-specific calibration；architecture 上采用 30B total / 3B active，128 routed experts、top-8、一个 shared expert，并训练了 23.5T tokens。这组实验将 MoE 容量扩展与 masked denoising 的训练预算联系起来。
 
 [REFLEX][reflex] 则看 MoE dLLM 的推理分配问题。扩散式生成每个 denoising forward 会反复访问多个 token state，不同 token 距离 commitment 的状态不同，默认固定 top-k 可能把同样 expert budget 浪费在不同 refinement demand 的 token 上。REFLEX 不改 router，而是在推理时按 refinement role 和 confidence progress 重新分配 expert count。论文报告在 LLaDA-MoE 和 LLaDA2.0-mini 上平均减少约 15% selected expert-token pairs，同时多数 benchmark 质量不降或提升。
 
@@ -157,11 +163,11 @@ DAG learning module 也增加实现开销。若比较结构化聚合与 weighted
 
 到这里，MoE inference 的问题已经不只在 top-k kernel。生成范式从 AR 变成 iterative refinement 后，router budget 的组织单位也会改变。
 
-## 8. 部署轴：少加载、少更新、少搬专家
+## 8. 部署：减少驻留、更新与搬运
 
 还有一组工作不直接改变 Transformer block，但会改变 MoE 怎么被训练、部署和压缩。
 
-[EMO][emo] 问的是：标准 MoE 的 expert 能不能按任务/领域拆出来单独用？普通 MoE 往往不行，因为一个文档里的 token 会分散到很多低层语法专家上。EMO 在预训练时让同一文档的 token 先共享一个 document-level expert pool，再在池内做 routing；这样专家子集更容易按语义/领域聚在一起。正文里 14B total / 1B active 的 EMO 在完整模型质量上接近普通 MoE，同时在只保留 25% 或 12.5% experts 时，domain subset 的掉点远小于普通 MoE。
+[EMO][emo] 问的是：标准 MoE 的 expert 能不能按任务/领域拆出来单独用？EMO 作者将常规 MoE 子集部署时的质量损失与专家分工联系起来：一个文档的 token 可能访问分散的、承担低层语言功能的专家，领域子集因此不容易直接抽取。EMO 在预训练时让同一文档的 token 先共享一个 document-level expert pool，再在池内做 routing；这样专家子集更容易按语义/领域聚在一起。正文里 14B total / 1B active 的 EMO 在完整模型质量上接近普通 MoE，同时在只保留 25% 或 12.5% experts 时，domain subset 的掉点远小于普通 MoE。
 
 ![EMO document-level expert pool](/assets/img/blog/moe-we-like-you/08-emo-document-level-expert-pool.png)
 
@@ -190,19 +196,11 @@ Serving 侧还有更系统的 expert working set 复用。[XShare][xshare] 把 b
 
 更有用的组合实验是先固定预算，再改变一种资源组织方式。例如减少部分 routed experts，将参数预算分给 memory；或共享相邻层专家，观察节省的唯一权重是否抵得上 routing 和负载控制成本。这样才能区分结构互补、功能替换和纯部署优化。
 
-## 10. 还要看什么
+## 10. 小结：比较节省的是哪一种资源
 
-判断这些方向是否会进入大模型 recipe，需要过几道比较硬的关。
+这些方法改变了不同的约束。MoBA 减少 attention 读取的上下文；跨层共享可用于压缩唯一专家参数，也可像 MoRE 一样在固定专家预算下扩大候选池，同时把负载统计从单层扩展到共享池；STEM / Engram 的 token 或 N-gram 索引可以提前确定，使部分参数能够预取。相同的“稀疏”标签，背后对应不同的存储、访问与计算方式。
 
-先核对实验范围：模型规模、训练 token、质量基线、active FLOPs 和上下文是否可比。小模型结果可以支持该范围内的结论；迁移到更大规模、长上下文或后训练时，应补对应验证，不设置统一的 active 参数门槛。
-
-再检查 kernel 和通信路径。MoBA / MoDA / STEM / Engram 这类结构如果没有硬件友好实现，很容易只在论文 FLOPs 上漂亮。
-
-然后确认可观测性。无论是 head routing、block routing、memory lookup、expert size/width，还是跨层 expert reuse，都应该能导出稳定的 per-layer / per-token / per-pool 统计，否则出了问题很难定位。
-
-后训练阶段也要单独验证。第七篇讲的是 MoE RL 的 route mismatch；同样的问题会出现在 MoBA、MoSE、MoH、REFLEX 这类动态结构里，只是路由对象从 expert 变成 block/head/width/refinement state。
-
-serving 收益要落到真实指标上。新的稀疏结构不应该只报 active FLOPs，还要报 latency、prefill/decode 分解、KV cache、expert weight movement、batch size sensitivity、candidate pool size 和长尾请求。
+组合它们时，先明确要减少哪种成本，再统一模型、数据与执行预算。例如，shared pool 的价值不仅是少存权重，还包括是否能控制跨层叠加的流量；lookup memory 的价值也取决于索引提前可知之后，预取和融合能否跟上计算。具体机制与各论文的实验范围，决定了哪些组合值得继续验证。
 
 ## 系列导航
 
@@ -218,6 +216,7 @@ serving 收益要落到真实指标上。新的稀疏结构不应该只报 activ
 
 ## 参考资料
 
+- [MoRE: Mixture of Reused Experts][more]；[官方代码][more-code]
 - [Mixture-of-Depths: Dynamically allocating compute in transformer-based language models](https://arxiv.org/abs/2404.02258)
 - [MoEUT: Mixture-of-Experts Universal Transformers](https://arxiv.org/abs/2405.16039)
 - [Mixture of A Million Experts](https://arxiv.org/abs/2407.04153)
@@ -280,3 +279,6 @@ serving 收益要落到真实指标上。新的稀疏结构不应该只报 activ
 [ecospec]: https://arxiv.org/abs/2607.12696
 [reflex]: https://arxiv.org/abs/2608.01784
 [llada-moe-v2]: https://arxiv.org/abs/2608.03457
+
+[more]: https://arxiv.org/abs/2609.18176
+[more-code]: https://github.com/EricQiu6/MoRE

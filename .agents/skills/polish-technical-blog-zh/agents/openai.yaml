@@ -1,0 +1,4 @@
+interface:
+  display_name: "自然写作与反防御润色"
+  short_description: "自动区分博客、论文与专业解释，融合中文去 AI 腔、贡献组织和反防御表达"
+  default_prompt: "Use $polish-technical-blog-zh to draft or polish this text, automatically adapting to its genre while preserving facts, evidence strength, and necessary conditions."

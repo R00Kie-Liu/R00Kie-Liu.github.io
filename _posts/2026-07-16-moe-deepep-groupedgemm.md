@@ -66,6 +66,21 @@ overlap 还需要独立工作。同一组 token 必须先到达，expert 才能�
 
 ## 5. Profiling：由现象缩小排查范围
 
+### 5.1 一段等待为什么会被记在通信里
+
+下面用事件顺序说明判读过程，不包含实测耗时。假设两个 rank 已完成 dispatch，同一批 token 的输出需要在 combine 时互相回传：
+
+```text
+rank 0: dispatch 完成 -> expert GEMM 仍在执行 ---------> 输出就绪 -> combine
+rank 1: dispatch 完成 -> expert GEMM 完成 -> 等待所需输出 -------> combine 完成
+```
+
+如果只统计 rank 1 的 combine 区间，这段等待容易被归入通信。把两个 rank 的 trace 对齐后，先检查 rank 0 的 GEMM 为什么结束得晚：若它收到更多 token，优先定位负载偏斜；若 token 数接近，再比较 expert 形状、padding 和计算竞争。这样才能区分等待数据就绪与链路传输本身耗时。
+
+这个例子也解释了为什么需要同时记录 per-expert token count 和 per-rank kernel 时间。输出就绪之前的等待对应前序计算与负载；输出就绪之后仍持续的数据传输，再比较通信后端和拓扑。overlap 则检查等待期间是否有可穿插的独立工作。
+
+### 5.2 对照其它现象
+
 | 观察到的现象 | 先核对什么 | 可比较的改动 |
 |---|---|---|
 | 跨节点后 dispatch/combine 明显变长 | 实际跨节点流量、互联域、收发计数 | Flex/DeepEP、EP 拓扑、group/node-limited routing |
@@ -98,7 +113,7 @@ overlap 还需要独立工作。同一组 token 必须先到达，expert 才能�
 
 如果固定 active compute 后，更多更细的专家主要增加了小矩阵和重排成本，可以重新比较专家宽度与 top-k。若负担主要来自 expert path 的参数读取或通信维度，再评估 LatentMoE，并把额外 projection 计入成本。这些都是 profiling 后的架构实验，需与原模型做质量对照。
 
-本篇的输出应是一份耗时分解和下一项可验证的改动。第五篇把同样的执行路径放进具体参数与显存账，第九篇再讨论通信后端和物理调度的细分方案。
+定位瓶颈时，将 kernel 耗时、输入工作量和前后依赖对应起来：较长的通信区间可能包含等待，较低的 GEMM 利用率也可能来自矩阵形状。第五篇继续计算这条路径的显存占用，第九篇讨论通信后端与物理调度。
 
 ## 系列导航
 

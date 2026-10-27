@@ -57,7 +57,9 @@ learner 更新权重之后，专家选择发生变化可以是正常学习结果
 
 第一类是 **router semantics mismatch**：同一份 router logits，两个 engine 到底应该怎样选专家。这里最容易错的是 score function、top-k、renormalize、expert bias、shared expert、group-limited routing 和 tie-breaking。
 
-Megatron learner 侧的 router 往往不是一个纯 top-k 函数。它可能涉及 `moe_router_dtype`、`topk_routing_with_score_function()`、`expert_bias`、aux/z-loss、token dropping、router trace/replay 等训练逻辑。SGLang serving 侧则更关心从 router logits 快速得到 `topk_ids` 和 `topk_weights`，再走 fused MoE 或 grouped expert kernel。两个方向都合理，但一旦放进 RL 闭环，就必须确认它们对“同一份 logits”给出同一套 top-k 语义。
+当前 forward 的选择与权重由 score function、choice-only bias、分组、top-k、drop 和归一化决定。把相同 logits 交给两套实现，可以单独测试这层语义。dtype/casting 则属于下一类数值执行问题。
+
+aux/z-loss 对训练梯度的影响另行区分。第三篇采用的 Megatron 版本通过 `MoEAuxLossAutoScaler` 附加这类梯度，forward 原样返回 logits/probs；相同 checkpoint 下，附加 loss 本身不会改写该次 top-k。router weights 或控制器状态更新后引起的变化，归到新旧策略比较。
 
 其中 expert bias 特别容易被低估。loss-free balance 里的 bias 通常存在 checkpoint 中，影响 top-k choice，但不一定参与 combine weight。如果 checkpoint 转换漏掉 bias、bias 符号反了、dtype 降低，或者 serving 把 bias 混进 combine weight，expert path 都会变。
 
@@ -82,7 +84,7 @@ R3 论文还观察到：即便在同一个 Megatron 训练框架里，对同一�
 | 方法或系统 | 处理的问题 | 使用时需确认 |
 |---|---|---|
 | slime | 连接 Megatron training、SGLang rollout、数据与 reward 流水线 | checkpoint、模板、采样配置和路由状态是否正确转换 |
-| verl Rollout Correction | 用 IS / RS 等处理行为策略与训练策略的概率差异 | 实际使用哪两个概率、是否包含 staleness 与后端误差 |
+| verl Rollout Correction | 用重要性采样（IS）/拒绝采样（RS）等处理行为策略与训练策略的概率差异 | 实际使用哪两个概率、是否包含 staleness 与后端误差 |
 | VeXact | 在支持的模型和后端上对齐引擎输出 | 当前模型、量化和 MoE kernel 是否覆盖 |
 | R3 / routing replay | 回放 rollout 的 expert selection，减少路由不一致 | mask 的记录、缓存和训练侧使用方式 |
 
@@ -98,27 +100,25 @@ R3 论文还观察到：即便在同一个 Megatron 训练框架里，对同一�
 
 如果日志成本太高，最低限度也要对采样 batch 或 probe prompts 记录 top-k ids。没有 route metadata，MoE RL 的很多问题只能看到“训练不稳”，看不到到底是哪条 path 变了。
 
-## 6. R3：把 route path 也当成 rollout 数据
+## 6. R3：回放选择，重新计算混合权重
 
-[R3](https://arxiv.org/abs/2510.11370) 提出 Rollout Routing Replay：在 rollout 时记录专家选择，训练时复用该选择，以减少引擎间路由差异。
+[R3](https://arxiv.org/abs/2510.11370) 在 rollout 时保存每层、每个 token 的 top-k mask，训练侧计算 old policy 和 update policy 时复用该 mask。combine weights 仍由训练侧当前 logits 计算。按论文采用的 softmax gate，可以写成：
 
-它记录的是每层 token 的 top-k mask。mask 决定沿哪些 expert 分支计算，combine weight 仍由 training logits 重新计算；下面按论文采用的 softmax gate 说明。若用于 sigmoid 等 router，需要保留对应的打分和归一化语义。
+```text
+mask = rollout_topk_mask
+weights = softmax(train_logits restricted to mask)
+output = sum(weights[e] * expert[e](hidden) for e in mask)
+```
+
+固定的是分支选择，权重与分支内计算仍参与求导。用于 sigmoid 等 router 时，也应沿用该模型的打分与归一化语义。
 
 ![R3 rollout routing replay](/assets/img/blog/moe-we-like-you/07-r3-rollout-routing-replay.png)
 
 *图 3：R3 论文中的 Rollout Routing Replay 示意。左侧展示把 inference engine 的 route selection 回放到 old/update policy 的 training engine；右侧展示 R3 前后的 train/inference probability 对齐和验证分数变化。图源：[Stabilizing MoE Reinforcement Learning by Aligning Training and Inference Routers](https://arxiv.org/abs/2510.11370)。*
 
-R3 做的事很具体：rollout 时不仅保存 prompt、response、logprob、reward，还保存每层 router 选出的 top-k mask。训练侧在 recompute old policy 和 update policy 时复用这个 inference mask，让两次训练 forward 都沿着 rollout 时的专家集合走。
+诊断只需抽样 trace；完整 replay 则需要被回放各层、各 token 的 mask。Megatron 的 `router_replay.py` 提供 record/replay indices 的接口，接入 RL 时还需将 serving 记录的逻辑 expert id 正确传回 learner。多轮对话中，prefix mask 可以与 KV cache 一起复用，减少重复 prefill。
 
-一个容易写错的细节是：R3 不是把 inference 侧的 gate weight 原样拿来训练。它复用的是 top-k mask；training 侧仍然用自己的 router logits，在这个 mask 内重新 softmax 得到 combine weight。这样 expert selection 对齐了，router 的梯度流也还在。
-
-这里要区分诊断与回放：抽样记录 ids、weights 和 margin 可以定位问题；对某条样本执行完整 replay，则需要提供被回放各层、各 token 的 mask，抽样 trace 不能直接替代。
-
-Megatron 里的 `router_replay.py` 已经提供了类似能力：可以 record 某次 forward 的 top-k indices，也可以在 forward/backward recompute 时使用给定 top-k indices。对应到 RL，就是把 rollout engine 记录的 route path 带回 learner，让 learner 在实验中沿着 rollout 路径计算 logprob 和梯度。
-
-R3 论文还提到 multi-turn / agent 场景：如果 serving 侧用了 prefix KV cache，同一段 prefix 的 routing mask 也可以跟着 cache 复用，避免为了补 route metadata 重新 prefill。
-
-回放会约束训练时的专家选择，尤其在多个 update step 复用 rollout 时，需要同时评价这种约束、稳定性和性能。route metadata 的传输、缓存与保存成本也应实测；R3 的实验结果不宜直接外推到所有模型或长 CoT 配置。
+多个 update step 使用同一份 rollout 时，这个 mask 会约束训练中的分支选择。实验应同时记录稳定性、质量以及 metadata 的传输和缓存成本，判断回放是否适合当前训练配置。
 
 ## 7. 按误差来源安排实验
 

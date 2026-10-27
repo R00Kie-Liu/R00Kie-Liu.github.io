@@ -17,7 +17,7 @@ description: "给定 100B MoE 规格后，推演并行策略、显存估算、�
 | 符号 | 含义 |
 |---|---|
 | `P_total` | 总参数量，例如 100B |
-| `P_dense` | 非 routed expert 参数：attention、embedding、norm、router、前置 dense 层 layers 等 |
+| `P_dense` | 除 routed/shared experts 外的参数：attention、embedding、norm、router、前置 dense 层等 |
 | `P_routed` | routed expert 总参数 |
 | `P_shared` | shared expert 参数，通常 always-on |
 | `E` | 每个 MoE layer 的 routed expert 数 |
@@ -29,7 +29,7 @@ description: "给定 100B MoE 规格后，推演并行策略、显存估算、�
 | `S` | context length |
 | `mbs` | 每个数据并行 rank 一次 forward 的序列数 |
 
-一个基本关系是：
+按上述不重叠的分类，一个基本关系是：
 
 | 量 | 粗略公式 |
 |---|---|
@@ -76,7 +76,7 @@ Ling-flash-2.0 的 `config.json` 里，和参数计算最相关的是这些字�
 
 ### 1.2 每个模块先算单元参数量
 
-为了便于手算，先忽略 norm、QK norm、router bias 这类百万级以下的小项，只看主要矩阵。
+为了便于手算，先忽略 norm、QK norm、router bias 等小项，只算主要矩阵。后续乘法用原始整数维度计算，表中的 M/B 值取四舍五入显示。
 
 Ling-flash-2.0 使用 SwiGLU 风格 MLP / expert，可以按三组矩阵估算：gate、up、down。因此一个 FFN 或 expert 的参数量近似是 `3 x hidden_size x intermediate_size`。
 
@@ -118,7 +118,7 @@ attention 这里因为是 GQA，`K/V` 的输出维度是 `num_key_value_heads x 
 
 `31 x 3.22B = 99.86B`
 
-也就是说，Ling-flash-2.0 的 100B total params 几乎都在 routed expert pool 里。attention、embedding、shared experts、前置 dense 层 和 router 加起来只占几 B。
+也就是说，Ling-flash-2.0 的 100B total params 几乎都在 routed expert pool 里。attention、embedding、shared experts、前置 dense 层和 router 加起来只占几 B。
 
 ### 1.4 active params：为什么又只有 6.1B
 
@@ -256,15 +256,32 @@ pipeline 中一个 stage 可能同时保留多个 microbatch 的 activation。�
 
 如果接收 buffer 本身就是前面计算的 expert input，就只能记一次。负载偏斜、capacity padding、索引和 router weights 也需要另算；这些因素使不同 rank 的峰值可能高于均衡估计。
 
-### 5.3 把预算合回同一张账
+### 5.3 固定重算边界，计算在途 microbatch
 
-末 stage 的训练状态约为 19.91GB，按实际调度估计的 activation 为 `A`，未被 activation 计入的额外通信 buffer 为 `B`，其它 workspace、bucket 和预留为 `C`：
+现在选定一个可复算的保存策略：PP=8、无 VPP、非交错 1F1B 调度，microbatch 数足以进入稳态；对每个 Transformer block 做 activation checkpoint，保留 block 输入，反向时逐 block 重算。仍使用前面的 BF16、`mbs=1、S=8192、H=4096`。
+
+一份 block 输入为 64MiB。每 stage 四层，因此每个尚未完成反向的 microbatch 保留 `4 × 64 = 256MiB` 的 block 输入。stage 从 0 编号，1F1B 下 stage `i` 最多同时保留 `PP-i` 个 microbatch：
+
+| stage 示例 | 在途 microbatch 上限 | 保存的 block 输入 |
+|---|---:|---:|
+| 首 stage，i=0 | 8 | 2GiB |
+| 中间 stage，i=3 | 5 | 1.25GiB |
+| 末 stage，i=7 | 1 | 0.25GiB |
+
+反向重算到一个 MoE block 时，若当前实现同时物化第 5.1 节列出的 expert input、gate 和 up 输出，还要加 768MiB。末 stage 的这部分 activation 预算就是 `256MiB + 768MiB = 1GiB`；它包括保存边界与当前重算块的这三项，没有乘上其它已经释放的层。
+
+再采用第 5.2 节的四块 512MiB staging 假设。其中一块接收 buffer 就是已计入的 expert input，额外 staging 为 `2GiB - 0.5GiB = 1.5GiB`。末 stage 已列出的项目合计：
 
 ```text
-stage peak budget ≈ 19.91GB + A + B + C
+训练状态                     19.91GB
+保存的 block 输入 + 当前三项   1GiB
+独占 staging                  1.5GiB
+分项合计                     ≈ 22.59GB
 ```
 
-在标称 80GB 卡上，先有约 60GB 的空间供后三项分配，随后还要与设备实际可用显存核对。上面的张量账提供了其中几项的量级；只有确认在途 microbatch、recompute、attention kernel 和 buffer 生命周期后，才适合承诺某个 micro-batch 一定放得下。
+这是上述保存和 buffer 布局下的分项预算。剩余项目逐项补入：attention 的保存/重算张量、激活反向临时量、pipeline 收发、bucket、kernel workspace 和 allocator 预留。末 stage 还要检查 LM head：若显式物化 BF16 logits `[8192, 157184]`，单块约 2.40GiB；fused/chunked loss 的存储与生命周期会不同。
+
+这样已确定的 activation 和 staging 有具体数值，未知项也有对应张量或实现位置。更换 checkpoint 粒度、调度或 dispatcher 时，重新列同时存活的张量即可；不同阶段不同时存活的缓冲区不重复累加。
 
 ## 6. 长上下文：固定卡数时重新分组
 

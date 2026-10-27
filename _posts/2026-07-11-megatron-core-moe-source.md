@@ -16,7 +16,7 @@ MoE 论文和模型报告里常见的词包括 top-k routing、shared expert、l
 
 **hidden states 先经过 router 选专家，再被 token dispatcher 重排和跨 rank 发送，随后进入本地 experts 做 GroupedGEMM，最后再 combine 回原 token 顺序。**
 
-这篇基于 Megatron-LM `bb5647a`的 `megatron/core/transformer/moe/` 源码整理。沿着 token 的数据流，下面追踪几个关键部件：
+这篇基于 Megatron-LM `bb5647a` 的 `megatron/core/transformer/moe/` 源码整理。沿着 token 的数据流，下面追踪几个关键部件：
 
 - MoE layer 的主执行路径在哪里；
 - gating 和 top-k routing 如何产生 `routing_map` 和 `probs`；
@@ -26,14 +26,14 @@ MoE 论文和模型报告里常见的词包括 top-k routing、shared expert、l
 - allgather / alltoall / flex dispatcher 各自承担什么；
 - latent MoE 和 shared expert 在 Megatron 里怎么接入。
 
-从实现结构看，Megatron Core 里的 MoE 不是一个单独 layer，而是一组 router、dispatcher、expert kernel、balance controller 和并行通信协议拼起来的系统。
+Megatron Core 用 MoELayer 组织 router、dispatcher 与 expert kernel，同时维护负载控制状态并接入并行通信协议。
 
 ![Megatron Core MoE 执行链](/assets/img/blog/moe-we-like-you/03-megatron-core-moe-execution-chain.png)
 
 
 *图 1：读 Megatron Core MoE 源码时，可以先按 `route -> dispatch -> experts -> combine` 这条主路径定位，再分别展开 router loss、expert bias、token capacity、shared/latent expert 等旁路状态。*
 
-后面的代码块都是按 Megatron-LM `bb5647a`源码做的删节版，只保留关键分支和状态流转。省略了部分配置分支，代码块用于解释流程，不作为可直接替换的实现。
+后面的代码块都是按 Megatron-LM `bb5647a` 源码做的删节版，只保留关键分支和状态流转。省略了部分配置分支，代码块用于解释流程，不作为可直接替换的实现。
 
 ## 1. 源码地图
 
@@ -50,17 +50,7 @@ MoE 论文和模型报告里常见的词包括 top-k routing、shared expert、l
 | `router_replay.py` | 记录/回放 routing 决策，用于调试或一致性分析 |
 | `router_trace.py` | 捕获 top-k ids、weights、logits 等 routing trace |
 
-这几个文件的依赖关系大致是：
-
-| 阶段 | 入口 | 产物 |
-|---|---|---|
-| route | `MoELayer.route()` -> `TopKRouter.forward()` | `probs`, `routing_map` |
-| preprocess | `MoELayer.preprocess()` | latent projection、dispatcher metadata |
-| dispatch | `token_dispatcher.token_dispatch()` | expert-major tokens、tokens per expert |
-| expert compute | `TEGroupedMLP.forward()` | local expert outputs |
-| combine | `token_dispatcher.token_combine()` + `combine_postprocess()` | 回到原 token 顺序的 hidden states |
-
-理解 Megatron MoE，建议按这条链读源码，而不是从某一个 flag 开始看。
+下面沿 `MoELayer` 的数据流展开这些文件，先确认 router 的输出，再追踪 dispatcher 如何使用它们。
 
 ## 2. MoE layer 主路径：route -> dispatch -> experts -> combine
 
@@ -132,6 +122,22 @@ class MoELayer(BaseMoELayer):
     def combine(self, output):
         return self.token_dispatcher.token_combine(output)
 ```
+
+### 2.1 两个 token 的路由结果怎样变成专家输入
+
+下面是教学示例，不是模型实测：两个 token `x0、x1` 最初在 rank 0，专家 `e0、e1` 归 rank 0，`e2、e3` 归 rank 1，使用 top-2。router 为 `x0` 选择 `e0、e3`，权重为 `0.7、0.3`；为 `x1` 选择 `e1、e3`，权重为 `0.4、0.6`。
+
+```text
+                 e0   e1   e2   e3
+routing_map x0 = [ 1,   0,   0,   1 ]
+            x1 = [ 0,   1,   0,   1 ]
+probs       x0 = [0.7,  0,   0,  0.3]
+            x1 = [ 0,  0.4,  0,  0.6]
+```
+
+两张矩阵的形状都是 `[num_tokens, num_experts] = [2, 4]`，输入 hidden 则是 `[2, H]`。dispatcher 按分配关系产生四条 expert input：`e0:[x0]、e1:[x1]、e2:[]、e3:[x0,x1]`，token count 为 `[1,1,0,2]`。其中 `e3` 的两条输入需要送到 rank 1；空的 `e2` 不执行这批 token。
+
+combine 根据同一分配关系恢复两个输出：`y0 = 0.7*E0(x0) + 0.3*E3(x0)`，`y1 = 0.4*E1(x1) + 0.6*E3(x1)`。这也解释了 dispatcher 为什么同时需要选择矩阵、权重和 per-expert token count。具体实现可融合复制与重排，逻辑对应关系保持不变。
 
 ## 3. Gating：router logits 从哪里来
 
@@ -240,7 +246,7 @@ def routing(self, logits, padding_mask=None):
 
 ## 5. Score function：softmax、sigmoid、sqrtsoftplus
 
-Megatron 的 `topk_routing_with_score_function()` 支持多种 score function，包括 softmax、sigmoid 和 sqrtsoftplus。这里的关键不是名字，而是“选择专家的分数”和“合并输出的权重”是否一致。
+Megatron 的 `topk_routing_with_score_function()` 支持多种 score function，包括 softmax、sigmoid 和 sqrtsoftplus。需要分别追踪“选择专家的分数”和“合并输出的权重”；expert bias 等分支会区分二者。
 
 常见口径如下：
 
@@ -284,7 +290,7 @@ elif score_function in ("sigmoid", "sqrtsoftplus"):
 
 ## 6. Load balance：aux、seq aux、global aux、z-loss 和 QB
 
-Megatron 同时支持多种 router 相关 loss。它们听起来相近，但目的不同。
+Megatron 将负载正则项、数值正则项和路由分配算法接入同一 router。下表区分各机制的职责。
 
 | 机制 | 源码入口 | 解决什么 |
 |---|---|---|
@@ -297,7 +303,7 @@ Megatron 同时支持多种 router 相关 loss。它们听起来相近，但目�
 
 `switch_load_balancing_loss_func()` 的核心形式可以理解为 `num_experts * sum(f_i * P_i)`：`f_i` 是 tokens 实际分配到 expert 的比例，`P_i` 是 router 概率质量。它想惩罚“概率给很多但实际不均”或“实际集中到少数专家”的情况。
 
-但从 pretraining recipe 看，aux loss 不应越强越好。它能救 router collapse，也可能干扰主 LM objective。使用 bias-based balance 的模型可以保留轻量 aux 项；是否需要、用哪个统计粒度，应由模型配置和消融决定。
+aux loss 的系数控制负载目标对训练梯度的影响。`MoEAuxLossAutoScaler` 在 forward 中原样返回 logits 或 probs，在 backward 时附加对应 loss 的梯度；它本身不改写同一 checkpoint 下的 top-k 数值。bias、capacity/drop 和 score function 则可以直接影响当前路由。
 
 Quantile Balancing 是另一条路：它不用 aux loss 接管主目标，而是在 router 里维护 `qb_beta`。当前 batch routing 用的是 `scores - qb_beta`，随后根据每个 expert 的分位数阈值累计下一轮 `qb_beta`。
 

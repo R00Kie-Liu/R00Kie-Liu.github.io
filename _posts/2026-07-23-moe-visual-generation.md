@@ -38,7 +38,7 @@ $$
 g(t)=i,\quad t\in S_i,\qquad \hat{\epsilon}=D_{\theta_i}(x_t,t,c)
 $$
 
-训练时采样到哪个 $t$，就更新对应的 $D_{\theta_{g(t)}}$；推理时 scheduler 走到哪个 $t$，也只调用对应的 expert。这里没有 token-level top-k，也没有 per-patch all-to-all。每个 denoising step 的计算仍然近似是一次 denoiser forward，只是总 checkpoint/参数量变成多份；显存压力取决于这些 expert 是否同时常驻 GPU，还是在 high/low 阶段之间 offload。
+训练时采样到哪个 $t$，就更新对应的 $D_{\theta_{g(t)}}$；推理时 scheduler 走到哪个 $t$，也只调用对应的 expert。这里没有 token-level top-k，也没有 per-patch all-to-all。每次 denoiser 评估只执行当前区间的一个 expert；一个采样 step 是否包含 CFG 等额外评估，由 pipeline 决定。总 checkpoint/参数量变成多份，显存压力取决于专家是否同时常驻 GPU，或在 high/low 阶段之间 offload。
 
 [eDiff-I][ediffi] 的做法比较典型。它先训练一个覆盖全噪声分布 $p(\sigma)$ 的基线 denoiser，再用这个基线初始化专家，而不是从零训练多套模型。第一层分裂时，把 $p(\sigma)$ 按面积分成 low-noise 和 high-noise 两个区间；继续分裂时，主要保留低噪声、高噪声和中间区间这几类有用 expert。高噪声 expert 更负责从接近纯噪声的输入里定布局、吸收文本条件；低噪声 expert 更负责最后几步的锐化和细节恢复。推理时沿着采样轨迹切换 denoiser，所以容量变大，但每一步仍然只跑一个 expert。
 
@@ -136,7 +136,7 @@ MAGI-2 也提醒我们，fine-grained expert 在视觉生成里会遇到比 LLM 
 ![LingBot-Video architecture](/assets/img/blog/moe-we-like-you/10-lingbot-video-architecture.png)
 
 
-*图 5：LingBot-Video 的 single-stream diffusion transformer。MoE branch 由 shared experts 和 top-k routed experts 组成。图源：[LingBot-Video][lingbot-video-paper] Fig. 2。*
+*图 5：LingBot-Video 的任务统一 single-stream diffusion transformer。图中 Attention 分支包含 QK-Norm 与 multi-modal 3D RoPE，Sparse MoE 分支包含 shared experts 与 top-k routed experts。图源：[原论文 Fig. 2][lingbot-architecture]。*
 
 这里需要把架构与任务证据分开：MoE 提供容量与条件计算，embodied data 和 physical rationality / task completion 评价定义了要学习什么。要判断某类专家是否专门承担物理能力，仍需路由分析或消融。
 
@@ -207,3 +207,4 @@ MOVA 的 active ratio 较高。比较它与其它模型时，需要同时考虑�
 [worldscape]: https://github.com/EmbodiedCity/Worldscape-MoE.code
 [worldscape-paper]: https://arxiv.org/abs/2607.03964
 [worldscape-arch]: https://github.com/EmbodiedCity/Worldscape-MoE.code/blob/main/docs/ARCHITECTURE.md
+[lingbot-architecture]: https://arxiv.org/html/2607.07675v1#S2.F2
