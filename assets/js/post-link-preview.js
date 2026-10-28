@@ -11,8 +11,8 @@
     try {
       var url = new URL(link.href, location.href);
       if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
-      if (url.origin === location.origin && url.pathname === location.pathname &&
-          url.search === location.search && url.hash) return null;
+      // Internal navigation should follow the original link without an extra step.
+      if (url.origin === location.origin) return null;
       return url;
     } catch (error) { return null; }
   }
@@ -85,7 +85,6 @@
     if (url.hostname === 'arxiv.org' && /^\/(abs|html)\//.test(url.pathname)) return 'arXiv 论文';
     if (url.hostname === 'github.com') return 'GitHub 页面';
     if (url.hostname === 'huggingface.co') return 'Hugging Face 页面';
-    if (url.origin === location.origin) return /^\/\d{4}\//.test(url.pathname) ? '本站文章' : '站内资源';
     return '网页';
   }
 
