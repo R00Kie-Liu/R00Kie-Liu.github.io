@@ -3,7 +3,7 @@ layout: post
 title: "Attention Residual 与 Hyper-Connections：从 HC、iHC、mHC、oHC 到 xHC"
 date: 2026-07-27
 last_modified_at: 2026-10-27
-tags: [Pretraining, Transformer, Residual, MoE]
+tags: [Transformer, Residual]
 description: "梳理多 residual stream、显式深度检索与矩阵记忆，解释 HC/iHC/mHC/oHC/xHC、Full/Block/Delta AttnRes，以及 MSAR、低秩路由和 LDM 的机制、公式、shape 与实验结果。"
 ---
 
