@@ -1,0 +1,61 @@
+name: Refresh link previews
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_posts/**'
+      - '_layouts/post.html'
+      - '_config.yml'
+      - 'scripts/update-link-previews.py'
+      - '.github/workflows/link-previews.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: link-preview-metadata
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test metadata extraction
+        run: python -m unittest discover -s tests -p 'test_link_previews.py'
+      - name: Render posts for link discovery
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - name: Refresh cached titles and descriptions
+        run: python scripts/update-link-previews.py
+      - name: Commit cache
+        id: commit
+        run: |
+          git add _data/link-previews.json assets/link-previews
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Refresh cached link previews'
+          git pull --rebase origin main
+          git push origin HEAD:main
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+      # GITHUB_TOKEN commits do not trigger Pages automatically. Request a
+      # branch-based Pages build explicitly, without changing the hosting setup.
+      - name: Rebuild GitHub Pages with refreshed metadata
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"

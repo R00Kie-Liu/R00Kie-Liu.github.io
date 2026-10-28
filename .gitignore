@@ -7,3 +7,4 @@ Gemfile.lock
 .bundle/
 vendor/
 git-update.sh
+__pycache__/

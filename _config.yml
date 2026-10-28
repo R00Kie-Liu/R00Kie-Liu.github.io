@@ -58,3 +58,5 @@ exclude:
   - CNAME
   - .bundle
   - vendor
+  - scripts
+  - tests

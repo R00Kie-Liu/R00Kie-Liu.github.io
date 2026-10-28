@@ -2,6 +2,29 @@
   var content = document.querySelector('.post-content');
   if (!content) return;
   var destinations = new WeakMap();
+  var script = document.currentScript;
+  var metadataBase = script && script.dataset.metadataBase;
+  var metadataVersion = script && script.dataset.metadataVersion;
+  var metadataRequests = new Map();
+
+  async function loadMetadata(url) {
+    if (!metadataBase || !window.crypto || !window.crypto.subtle) return null;
+    try {
+      var key = new URL(url.href);
+      key.hash = '';
+      var digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key.href));
+      var shard = new Uint8Array(digest)[0].toString(16).padStart(2, '0').charAt(0);
+      if (!metadataRequests.has(shard)) {
+        var resource = new URL(shard + '.json', new URL(metadataBase, location.href));
+        if (metadataVersion) resource.searchParams.set('v', metadataVersion);
+        metadataRequests.set(shard, fetch(resource.href, { credentials: 'omit' })
+          .then(function(response) { return response.ok ? response.json() : null; })
+          .catch(function() { return null; }));
+      }
+      var data = await metadataRequests.get(shard);
+      return data && Object.prototype.hasOwnProperty.call(data, key.href) ? data[key.href] : null;
+    } catch (error) { return null; }
+  }
 
   function eligible(link) {
     var href = link.getAttribute('href') || '';
@@ -161,6 +184,19 @@
     if (link.getBoundingClientRect().bottom <= 56) link.scrollIntoView({ block: 'center', behavior: 'instant' });
     position();
     open.focus({ preventScroll: true });
+    loadMetadata(url).then(function(value) {
+      if (active !== link || !value) return;
+      if (!link.dataset.previewTitle && typeof value.title === 'string' && value.title.trim()) {
+        title.textContent = value.title.slice(0, 240);
+        open.setAttribute('aria-label', '在新标签页打开：' + title.textContent);
+      }
+      if (!link.dataset.previewDescription && !link.getAttribute('title') && typeof value.description === 'string') {
+        description.textContent = value.description.slice(0, 600);
+        description.hidden = !description.textContent;
+      }
+      if (frame !== null) cancelAnimationFrame(frame);
+      position();
+    });
   });
 
   close.addEventListener('click', function() { dismiss(true); });
