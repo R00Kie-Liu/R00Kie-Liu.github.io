@@ -10,13 +10,13 @@ description: "从 DeepEP v1/v2、MoonEP、UltraEP、LLEP、SGLang Waterfill/LPLB
 ---
 
 
-## 0. 通信之外，还要决定在哪里执行
+## 0. EP 通信后端与专家执行规划的分工
 
 第四篇讨论如何定位 MoE 的通信、计算和重排瓶颈。这一篇进一步区分两层系统工作：底层后端负责移动 token，上层 planner 决定 logical expert 的工作落到哪个 physical rank 或 replica。
 
 二者可以组合。通信库换得更快，不会自动消除 hot rank；增加副本也可能引入权重同步、额外 GEMM 和 buffer。下面先说明数据量与阶段，再分别讨论通信路径、副本规划和 serving 调度。
 
-## 1. 先固定数据量和阶段
+## 1. EP 数据量口径与训练、推理阶段的开销
 
 设每个 EP rank 输入 `T` 个 token，每个 token 选择 `K` 个 experts，hidden size 为 `H`，每元素 `b` 字节。逐 token–expert 分配展开后的逻辑输入体积是：
 
@@ -62,7 +62,7 @@ combined_x, _, event = buffer.combine(expert_out, handle=handle)
 
 serving 接入时，SGLang 可以按阶段选择 normal / low_latency；[vLLM][vllm-ep] 也区分 high-throughput 与 low-latency EP backend。mode、handle caching 和 CUDA Graph 应一起验证，特别要检查获取收发计数是否引入隐式 CPU/GPU 同步。
 
-## 3. 动态副本：把规划放在 gate 与 dispatch 之间
+## 3. 动态副本：gate 后的专家放置与 token 配额
 
 这类方法保留 logical top-k，但改变物理执行位置。它们需要将 planner、weight movement 和训练梯度回收都计入 critical path。
 
@@ -84,13 +84,13 @@ serving 接入时，SGLang 可以按阶段选择 normal / low_latency；[vLLM][v
 
 它与 MoonEP 都使用当前 batch 的路由信息，侧重点不同：MoonEP 强调固定 rank 总量与静态执行形状，UltraEP 强调 rack-scale node 上副本和配额的联合规划。后者依赖较快的 scale-up fabric，让即时复制和状态通信有机会抵得上减少的尾部等待。
 
-### 3.3 LLEP 与训练时的回收成本
+### 3.3 LLEP：token spill、权重转移与梯度回收
 
 [LLEP][llep] 从过载 GPU 向较空 GPU spill 多余 token 和对应 expert weights。它需要选择 spill 阈值与最小 GEMM 粒度：拆得太细，权重转移和额外小 GEMM 可能超过平衡收益。
 
 训练使用任何动态副本时，都要确认梯度回到正确的原参数，optimizer 状态的归属不因临时复制而改变。建议分别计时 planner、weight sync、dispatch、GEMM 与 grad reduce；仅报告最终 load CV，无法判断整个 step 是否受益。
 
-### 3.4 用同一组负载理解约束与配额
+### 3.4 两 rank 算例：固定总负载与专家配额
 
 下面是教学用的可行分配，不是某个 planner 的实测输出。设两个 rank 各输入 `T=2` 个 token，top-`K=2`，共八条 expert-token 分配。`e0、e1` 的 home 在 rank 0，`e2、e3` 的 home 在 rank 1；当前 expert load 为 `[4,2,1,1]`，原放置下两边分别计算 6 和 2 条。
 
@@ -108,7 +108,7 @@ serving 接入时，SGLang 可以按阶段选择 normal / low_latency；[vLLM][v
 
 因此，MoonEP 与 UltraEP 的区别需要结合其执行约定、规划目标和硬件假设理解。实际 planner 是否选择这张表，还取决于可用 slots、复制成本与实现约束。训练时，两个 rank 对 e0 产生的梯度最终仍回到同一个逻辑参数。
 
-## 4. Serving 调度：已有副本怎样分工作
+## 4. Serving 调度：shared work 与已有副本的负载分配
 
 serving 的短时热点未必适合通过更新 router 来修正。若保持模型语义，可调整 shared work、已有 replicas 或物理放置，但这些动作有不同前提。
 
@@ -123,7 +123,7 @@ serving 的短时热点未必适合通过更新 router 来修正。若保持模�
 
 [EPIC][epic] 的范围更广：在线 placement、migration 和 expert activation 同时考虑计算与网络负载，再结合传输消重和通信/计算 overlap。它提醒我们，负载调度的收益仍受物理拓扑和 transport 约束。
 
-## 5. 后端接口、弹性与特定拓扑
+## 5. EP 后端接口、弹性成员与拓扑适配
 
 下列工作改变的主要是通信接口或执行基础设施，应与上面的 planner 分层比较：
 
@@ -137,7 +137,7 @@ serving 的短时热点未必适合通过更新 router 来修正。若保持模�
 
 其中 megakernel 还融合了通信与专家计算，范围已超过单个 A2A backend。FlashInfer MNNVL 等路径也有明确的互联前提。选择时先确定高速域、RDMA 路径和成员是否动态变化，再判断接口与 kernel 能否接入当前 runtime。
 
-## 6. 由 trace 决定下一项实验
+## 6. 通信瓶颈与负载偏斜的优化方案对照
 
 | 当前现象 | 优先验证 |
 |---|---|

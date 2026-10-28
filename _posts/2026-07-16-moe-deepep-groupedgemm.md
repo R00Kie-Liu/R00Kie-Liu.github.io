@@ -10,7 +10,7 @@ description: "解释 DeepEP/Flex Dispatcher 与 GroupedGEMM/Fused MoE GEMM 如�
 ---
 
 
-## 0. 从执行时间看 MoE
+## 0. MoE 层的重排、通信与专家计算开销
 
 第三篇沿源码追踪了 `route -> dispatch -> experts -> combine`。这一篇换到 profiler 上：当 active FLOPs 已经降下来，tokens/s 仍不理想，时间究竟花在哪里？
 
@@ -19,7 +19,7 @@ description: "解释 DeepEP/Flex Dispatcher 与 GroupedGEMM/Fused MoE GEMM 如�
 ![DeepEP 与 GroupedGEMM 的分工](/assets/img/blog/moe-we-like-you/04-deepep-groupedgemm-division.png)
 *图 1：沿 MoE layer 的执行路径，分别测量数据移动和专家计算。二者优化后，还需重新检查端到端耗时。*
 
-## 1. 先把 trace 对到执行路径
+## 1. Trace 事件与 MoE 执行阶段的对应
 
 | 阶段 | 数据发生什么变化 | 重点测量 |
 |---|---|---|
@@ -45,7 +45,7 @@ down projection 则是 `[T_e, I] @ [I, H]`。SwiGLU 还包括 gate projection。
 
 最值得检查的是本地 expert 数、各自的 `T_e` 和 tile 利用率。全局专家数很大，但每个 rank 只有一个 expert 时，不能仅凭专家总数判断 GroupedGEMM 的收益；某些矩阵已足够大时，收益也会与大量小矩阵的情况不同。
 
-## 3. DeepEP：把通用 A2A 换成 MoE 数据路径
+## 3. DeepEP：面向 MoE 的 dispatch/combine
 
 普通 alltoall dispatcher 可以先作为功能和数值基线。EP 跨节点后，MoE 的不规则收发还会遇到 NVLink 与 RDMA 域之间的带宽差异、布局转换、计数同步和通信 kernel 的 SM 占用。
 
@@ -53,7 +53,7 @@ DeepEP 提供面向 token dispatch/combine 的通信路径，将这些 MoE 特�
 
 如果单节点 alltoall 已满足吞吐目标，或者瓶颈仍在 expert compute，可先保留简单后端。跨节点 A2A 已占据明显 step time 时，再测 DeepEP/Flex 的收益。normal / low-latency 路径、动态专家副本和 serving 调度在第九篇展开。
 
-## 4. 框架边界与 overlap
+## 4. Dispatcher 与 expert kernel 的接口和重叠执行
 
 Flex Dispatcher 消费 routing metadata，组织重排、通信和 buffer；本地 expert 实现再消费按 expert 分组的 activation 与 token count。Megatron 的 TEGroupedMLP / GroupedLinear 和 serving 中的 fused MoE kernel，分别在这条边界的计算侧工作。
 
@@ -64,7 +64,7 @@ SGLang 同样分别选择 A2A backend（`--moe-a2a-backend`）和 MoE runner（`
 
 overlap 还需要独立工作。同一组 token 必须先到达，expert 才能计算；不能仅靠换通信库消除这个依赖。实际调度可利用不同 microbatch、token chunk 或 shared expert path 的工作重叠。要从 timeline 确认等待是否减少，以及通信 kernel 是否挤占了计算资源。
 
-## 5. Profiling：由现象缩小排查范围
+## 5. Profiling：通信等待、负载偏斜与小矩阵开销
 
 ### 5.1 一段等待为什么会被记在通信里
 
@@ -79,7 +79,7 @@ rank 1: dispatch 完成 -> expert GEMM 完成 -> 等待所需输出 -------> com
 
 这个例子也解释了为什么需要同时记录 per-expert token count 和 per-rank kernel 时间。输出就绪之前的等待对应前序计算与负载；输出就绪之后仍持续的数据传输，再比较通信后端和拓扑。overlap 则检查等待期间是否有可穿插的独立工作。
 
-### 5.2 对照其它现象
+### 5.2 常见性能现象与对应的排查项
 
 | 观察到的现象 | 先核对什么 | 可比较的改动 |
 |---|---|---|
@@ -96,7 +96,7 @@ rank 1: dispatch 完成 -> expert GEMM 完成 -> 等待所需输出 -------> com
 
 负载 CV（标准差 / 均值）用于定位分布差异，仍要结合最大 rank 耗时。低 CV 不保证快：所有 rank 都可能受同一个通信或 kernel 瓶颈限制。
 
-## 6. 一次只改变一组实现
+## 6. 系统实现的对照实验与固定条件
 
 | 阶段 | 比较内容 | 保持不变 |
 |---|---|---|
@@ -109,7 +109,7 @@ rank 1: dispatch 完成 -> expert GEMM 完成 -> 等待所需输出 -------> com
 
 每轮记录端到端 tokens/s、峰值显存和数值差异，再用 trace 解释变化。overlap 可能缩短等待，也可能增加 staging buffer 或竞争 SM；局部 kernel 更快并不保证整个 step 更快。
 
-## 7. 系统结果怎样反馈到架构
+## 7. 专家粒度与 LatentMoE 的系统成本
 
 如果固定 active compute 后，更多更细的专家主要增加了小矩阵和重排成本，可以重新比较专家宽度与 top-k。若负担主要来自 expert path 的参数读取或通信维度，再评估 LatentMoE，并把额外 projection 计入成本。这些都是 profiling 后的架构实验，需与原模型做质量对照。
 

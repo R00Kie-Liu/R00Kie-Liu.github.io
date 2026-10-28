@@ -10,13 +10,13 @@ description: "从 Wan2.2、DiT-MoE、HiDream-I1、LingBot-Video、MOVA、MAGI-2 
 ---
 
 
-## 0. 先分清专家在什么层级被选择
+## 0. 视觉生成中的专家选择粒度
 
 视觉生成中的 expert 可以是一整个 denoiser，也可以是 DiT block 内的 MLP、hidden 子空间中的小专家，或接入某种控制信号的分支。它们选择专家的单位、训练方式和系统成本并不相同。
 
 下面先按这些机制展开，再看图像、视频和音视频模型如何使用它们。任务类别用于说明应用，不能直接推出专家究竟按什么分工。
 
-## 1. 反复采样与空间时间结构带来什么约束
+## 1. 去噪迭代、时空 token 与采样开销
 
 视频生成通常在大量空间时间 token 上反复执行 denoiser。因此，专家选择既可能随 token 改变，也可能随 denoising step 改变。应区分显式规则（例如按噪声阈值换模型）与观察到的专门化（例如 learned router 偏好某些位置或 timestep）；后者不等于显式为某种内容设置了专家。
 
@@ -49,7 +49,7 @@ $$
 ![Wan2.2 timestep MoE](/assets/img/blog/moe-we-like-you/10-wan2-2-timestep-moe.png)
 
 
-*图 1：Wan2.2 沿 denoising timestep 划分 high-noise / low-noise experts。图源：[Wan2.2][wan22] README。*
+*图 1：Wan2.2 沿 denoising timestep 划分 high-noise / low-noise experts。*
 
 代码层面，Wan2.2 的 T2V/I2V A14B pipeline 会同时加载 `low_noise_model` 和 `high_noise_model` 两个 DiT checkpoint。采样前先算：
 
@@ -79,7 +79,7 @@ else:
 ![DiT-MoE framework](/assets/img/blog/moe-we-like-you/10-dit-moe-framework.png)
 
 
-*图 2：DiT-MoE 把 sparse MoE 放进 DiT block，并保留 shared expert 路径。图源：[DiT-MoE][dit-moe]。*
+*图 2：DiT-MoE 把 sparse MoE 放进 DiT block，并保留 shared expert 路径。*
 
 与整套 denoiser 切换相比，DiT-MoE 在 block 内选择分支。它在部分 DiT block 内把 MLP 换成 MoE layer；采样轨迹仍由同一个 denoiser 走，变化发生在 token 的 MLP 分支上。对每个 image patch token $x_j$，router 先在 $n$ 个 routed experts 上算概率，选 top-$K$ 个 MLP；同时还有 $n_s$ 个 shared experts 是确定执行的。可以粗略写成：
 
@@ -100,7 +100,7 @@ MAGI-2 和前面几类不太一样。它把 MoE 放进更细的 head-local laten
 ![MAGI-2 Multi-Head LatentMoE](/assets/img/blog/moe-we-like-you/10-magi-2-multi-head-latentmoe.png)
 
 
-*图 3：MAGI-2 将完整 hidden 拆成多个 latent heads，各 head 独立路由到 head-local experts。图源：[MAGI-2 Preview][magi2]。*
+*图 3：MAGI-2 将完整 hidden 拆成多个 latent heads，各 head 独立路由到 head-local experts。*
 
 这条路来自 [Multi-Head LatentMoE and Head Parallel][latentmoe-hp] 的想法：把完整 hidden 拆成多个 latent heads，让不同子空间独立路由。通信也随之变化。普通 EP 的通信量随 top-k 增长，而且每个 batch 的 send/recv shape 由 routing 结果决定；Head Parallel 先按 head 做固定形状分发，再在 head owner 内部完成 routing 和 expert compute。跨设备通信边界更规则，动态 routing 的不规则性被留在本地。
 
@@ -108,7 +108,7 @@ MAGI-2 和前面几类不太一样。它把 MoE 放进更细的 head-local laten
 
 MAGI-2 也提醒我们，fine-grained expert 在视觉生成里会遇到比 LLM 更强的 kernel 压力。专家变窄后，单个 GEMM 可能更小；如果没有 fused routing、compact token layout、grouped expert compute 和稳定通信边界，稀疏化收益很容易被执行开销吃掉。
 
-## 5. 条件分支：由控制接口限制专家候选
+## 5. 控制接口约束下的专家候选与混合权重
 
 世界模型里的 MoE 又多了一层语义：expert 不一定对应视觉区域或噪声阶段，也可能对应 control modality。
 
@@ -117,7 +117,7 @@ MAGI-2 也提醒我们，fine-grained expert 在视觉生成里会遇到比 LLM 
 ![Worldscape-MoE architecture](/assets/img/blog/moe-we-like-you/10-worldscape-moe-architecture.png)
 
 
-*图 4：Worldscape-MoE 用 shared expert 和 control-specific experts 吸收多种控制接口。图源：[Worldscape-MoE][worldscape-paper] Fig. 2。*
+*图 4：Worldscape-MoE 用 shared expert 和 control-specific experts 吸收多种控制接口。*
 
 在这里，已知的 control mask 先限制候选分支，router 再决定混合权重。它与完全开放的 patch-token top-k 不同，也与按 timestep 切换整套模型不同。专家分工的接口含义来自控制信号约束。
 
@@ -136,7 +136,7 @@ MAGI-2 也提醒我们，fine-grained expert 在视觉生成里会遇到比 LLM 
 ![LingBot-Video architecture](/assets/img/blog/moe-we-like-you/10-lingbot-video-architecture.png)
 
 
-*图 5：LingBot-Video 的任务统一 single-stream diffusion transformer。图中 Attention 分支包含 QK-Norm 与 multi-modal 3D RoPE，Sparse MoE 分支包含 shared experts 与 top-k routed experts。图源：[原论文 Fig. 2][lingbot-architecture]。*
+*图 5：LingBot-Video 的任务统一 single-stream diffusion transformer。图中 Attention 分支包含 QK-Norm 与 multi-modal 3D RoPE，Sparse MoE 分支包含 shared experts 与 top-k routed experts。*
 
 这里需要把架构与任务证据分开：MoE 提供容量与条件计算，embodied data 和 physical rationality / task completion 评价定义了要学习什么。要判断某类专家是否专门承担物理能力，仍需路由分析或消融。
 
@@ -147,11 +147,11 @@ LingBot-Video 的工程侧也值得注意。它公开了 diffusers 路径和 SGL
 ![MOVA dual-tower architecture](/assets/img/blog/moe-we-like-you/10-mova-dual-tower-architecture.png)
 
 
-*图 6：MOVA 用 video DiT tower、audio DiT tower 和 bidirectional Bridge 做同步音视频生成。图源：[MOVA][mova-paper] Fig. 2。*
+*图 6：MOVA 用 video DiT tower、audio DiT tower 和 bidirectional Bridge 做同步音视频生成。*
 
 MOVA 的 active ratio 较高。比较它与其它模型时，需要同时考虑音视频输出、质量目标和完整采样成本，不能只按稀疏比例排序。
 
-## 7. 按机制选择评估方式
+## 7. 专家选择粒度对应的质量与性能指标
 
 | 机制 | 选择单位 | 需要验证 |
 |---|---|---|

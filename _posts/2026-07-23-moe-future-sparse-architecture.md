@@ -10,13 +10,13 @@ description: "从 2025-2026 年的研究型架构工作出发，讨论 MoE 之�
 ---
 
 
-## 0. 导读
+## 0. 深度、attention、memory 与跨层共享
 
 前几篇把 MoE 作为 FFN 的条件计算层：每个 token 选一小组专家，以有限 active compute 使用更大的参数池。这一篇扩大讨论范围，看看深度、attention、memory 和跨层参数是否也能按需组织。
 
 这些工作处在不同层级。MoBA 改 attention 的访问范围，Engram 增加 lookup memory，跨层共享改变参数归属，serving 调度则可能完全不改模型。下面按它们改变的资源与执行方式比较，避免把所有方法都当作同一种 MoE 变体。
 
-## 1. 从计算对象到参数和部署组织
+## 1. 稀疏计算、参数复用与部署方法分类
 
 传统 MoE 的稀疏轴很明确：每个 token 从一组 FFN experts 里选 top-k。这个设计主要解决“总参数容量”和“每 token 计算量”之间的矛盾。
 
@@ -35,7 +35,7 @@ description: "从 2025-2026 年的研究型架构工作出发，讨论 MoE 之�
 
 表格用于定位下文，不表示这些方法可以互相替换。尤其要区分减少执行量、共享唯一参数和改变参数存储位置：三者节省的成本不同。
 
-## 2. 深度：跳过、读取历史，还是复用计算
+## 2. 深度：token 跳层、历史表示检索与循环计算
 
 [Mixture-of-Depths][mod] 是这条线的起点。它让每层只处理一部分 token，其它 token 通过 residual 直通。这里不扩参数容量，真正被改掉的是 Transformer 里“每个 token 每层都付同样计算”的默认假设。
 
@@ -43,7 +43,7 @@ description: "从 2025-2026 年的研究型架构工作出发，讨论 MoE 之�
 
 ![MoDA depth attention](/assets/img/blog/moe-we-like-you/08-moda-depth-attention.png)
 
-*图 1：MoDA 把 depth stream 也做成可检索的 KV。图源：Mixture-of-Depths Attention, Fig. 3。*
+*图 1：MoDA 把 depth stream 也做成可检索的 KV。*
 
 这里处理的是现代 Transformer 的老问题：深度增加后，信息不一定按比例变好，反而可能被 residual stream 稀释。MoDA 给模型加了一条跨层读历史的通道。正文实验里，MoDA 在 700M 和 1.5B 语言模型上都做了 400B token 训练；默认变体复用 attention-side depth KV，再给 FFN-side depth KV 加投影，报告了比 OLMo2 baseline 更低的 PPL 和更高的下游平均分。作者还做了硬件实现，说明 fused depth/sequence attention 不能只停在结构图上。
 
@@ -51,7 +51,7 @@ description: "从 2025-2026 年的研究型架构工作出发，讨论 MoE 之�
 
 这里有三种不同动作：Mixture-of-Depths 选择哪些 token 继续计算，MoDA 读取历史层表示，LoopMoE 复用 block 计算多轮。后两者不自动意味着计算更少，应分别比较质量、唯一参数量和执行成本。
 
-## 3. 参数复用：专家是否必须归单层所有
+## 3. 参数复用：邻层候选扩展与共享专家池
 
 标准 MoE 为每个 MoE layer 保存一套专家。增加层数也会增加唯一专家参数；跨层复用试图把这两个预算分开。重点比较两种路径：开放邻层的候选专家，或将相邻层乃至全模型的专家组织成共享池。共享也有两种预算口径：减少唯一权重，或保留唯一专家预算、扩大每层的候选范围。
 
@@ -78,7 +78,7 @@ ReXMoE 的消融显示，单纯扩大候选池的提升有限，配合 Progressi
 | [Expert Tying][expert-tying] | 连续若干层的 expert FFN 权重 | 每层 attention、router 和 norm |
 
 ![GMoE global experts](/assets/img/blog/moe-we-like-you/08-gmoe-global-experts.png)
-*图 2：GMoE 共享 Global Experts，保留每层 Local Expert，并在相邻层传播 routing logits。图源：GMoE, Fig. 1。*
+*图 2：GMoE 共享 Global Experts，保留每层 Local Expert，并在相邻层传播 routing logits。*
 
 这些方法改变专家共享的范围。评估时需要同时记录唯一参数、pool-level 使用量、rank 负载与 prefill/decode 耗时，确认少存的权重没有换来更重的候选检索或调度。
 
@@ -91,7 +91,7 @@ MoE 通常绕开 attention，只替换 FFN。但长上下文时代，attention �
 ![MoBA block attention](/assets/img/blog/moe-we-like-you/08-moba-block-attention.png)
 
 
-*图 3：MoBA 将 MoE 式 top-k routing 从 expert 维度搬到 context block 维度。图源：MoBA, Fig. 1。*
+*图 3：MoBA 将 MoE 式 top-k routing 从 expert 维度搬到 context block 维度。*
 
 MoBA 把“长上下文注意力”从静态稀疏模式改成动态检索模式。论文在多种上下文长度下讨论了 scaling、hybrid full attention 和效率；一个实用结论是，MoBA 可以先用 sparse prefill 降成本，再保留少量 full attention 层或阶段，缓解 SFT 里 prompt token 不参与 loss 带来的梯度问题。
 
@@ -112,7 +112,7 @@ MoBA 把“长上下文注意力”从静态稀疏模式改成动态检索模式
 ![Engram conditional memory](/assets/img/blog/moe-we-like-you/08-engram-conditional-memory.png)
 
 
-*图 4：Engram 用 hashed N-gram lookup 提供 conditional memory，与 Attention/MoE 计算路径并列。图源：Conditional Memory, Fig. 1。*
+*图 4：Engram 用 hashed N-gram lookup 提供 conditional memory，与 Attention/MoE 计算路径并列。*
 
 Engram 进一步比较 routed experts 与 memory slots 如何分配参数预算。正文里有一个 U-shaped allocation：在固定 total params 和 active params 下，纯 MoE 不是最优，把约 20%-25% sparse budget 分给 Engram 反而更好。大规模实验里，Engram-27B 是从 MoE-27B 里减少 routed experts，再把参数 realloc 到 5.7B memory module；作者报告它在知识、推理、代码数学和长上下文上都优于 iso-parameter / iso-FLOPs MoE baseline。
 
@@ -133,7 +133,7 @@ Engram 进一步比较 routed experts 与 memory slots 如何分配参数预算�
 ![MoSE slimmable expert](/assets/img/blog/moe-we-like-you/08-mose-slimmable-expert.png)
 
 
-*图 5：MoSE 不只选择 expert，也调整被选中 expert 的执行宽度。图源：MoSE, Fig. 1。*
+*图 5：MoSE 不只选择 expert，也调整被选中 expert 的执行宽度。*
 
 这和端侧/serving 直接相关。对于 easy token，选中 expert 但只用窄宽度可能足够；对于 hard token，再给更多宽度。正文里 MoSE 做了 from-scratch 训练，也做了对已有 DeepSeek MoE checkpoint 的 continual-pretraining adaptation；还用轻量 test-time training 学 router confidence 到 width 的映射。它给 MoE 加的是一个连续 compute knob。
 
@@ -142,7 +142,7 @@ Engram 进一步比较 routed experts 与 memory slots 如何分配参数预算�
 ![DAG-MoE structural aggregation](/assets/img/blog/moe-we-like-you/08-dag-moe-structural-aggregation.png)
 
 
-*图 6：DAG-MoE 将标准 MoE 的加权求和改成结构化聚合。图源：DAG-MoE, Fig. 1。*
+*图 6：DAG-MoE 将标准 MoE 的加权求和改成结构化聚合。*
 
 DAG learning module 也增加实现开销。若比较结构化聚合与 weighted sum，需要在相近参数和计算预算下，分别报告质量与执行时间。
 
@@ -159,11 +159,11 @@ DAG learning module 也增加实现开销。若比较结构化聚合与 weighted
 ![REFLEX refinement-aware allocation](/assets/img/blog/moe-we-like-you/08-reflex-refinement-aware-allocation.png)
 
 
-*图 7：REFLEX 在扩散式语言模型推理中按 refinement state 重新分配 expert budget。图源：REFLEX, Fig. 1。*
+*图 7：REFLEX 在扩散式语言模型推理中按 refinement state 重新分配 expert budget。*
 
 到这里，MoE inference 的问题已经不只在 top-k kernel。生成范式从 AR 变成 iterative refinement 后，router budget 的组织单位也会改变。
 
-## 8. 部署：减少驻留、更新与搬运
+## 8. 部署：专家子集、模块化后训练与推理复用
 
 还有一组工作不直接改变 Transformer block，但会改变 MoE 怎么被训练、部署和压缩。
 
@@ -172,14 +172,14 @@ DAG learning module 也增加实现开销。若比较结构化聚合与 weighted
 ![EMO document-level expert pool](/assets/img/blog/moe-we-like-you/08-emo-document-level-expert-pool.png)
 
 
-*图 8：EMO 把同一文档的 tokens 约束在共享 expert pool 内路由，让 experts 更容易形成领域级模块。图源：EMO, Fig. 2。*
+*图 8：EMO 把同一文档的 tokens 约束在共享 expert pool 内路由，让 experts 更容易形成领域级模块。*
 
 [BAR][bar] 把 MoE 当成 post-training 的组合机制，而不是预训练里的稀疏容量层。它先为 math、code、tool use、safety 等领域独立训练 domain experts，每个 expert 可以走自己的 mid-training / SFT / RL 流水线，最后合成一个 MoE 并只训练轻量 router。这个方向的价值在于工程组织：新增或升级一个能力时，不必把所有领域重新混在一起跑完整后训练。
 
 ![BAR modular post-training](/assets/img/blog/moe-we-like-you/08-bar-modular-post-training.png)
 
 
-*图 9：BAR 将不同领域的后训练流水线拆成独立 experts，再合并成单一 MoE，并支持单 expert 升级。图源：BAR, Fig. 1。*
+*图 9：BAR 将不同领域的后训练流水线拆成独立 experts，再合并成单一 MoE，并支持单 expert 升级。*
 
 [MoE-to-Dense][moe-to-dense] 则走相反方向：如果部署端根本放不下完整 expert pool，那就把已经训练好的 MoE 转成 dense。它先给 experts 打分、选择和分组，再把专家权重拼成 dense FFN，最后用 MoE teacher 做 distillation。这个方向不替代 MoE 训练，但可能替代一部分 MoE serving：训练时用 MoE 拿容量，交付时导出更小的 dense 学生模型。
 
@@ -188,15 +188,15 @@ Serving 侧还有更系统的 expert working set 复用。[XShare][xshare] 把 b
 ![XShare batch-level expert pruning](/assets/img/blog/moe-we-like-you/08-xshare-batch-level-expert-pruning.png)
 
 
-*图 10：XShare 先按 batch 聚合 expert utility，再限制每个 token 在共享专家池内选择 top-k，减少 batch 级 expert union。图源：XShare, Fig. 2。*
+*图 10：XShare 先按 batch 聚合 expert utility，再限制每个 token 在共享专家池内选择 top-k，减少 batch 级 expert union。*
 
-## 9. 这些方向与 MoE 怎样组合
+## 9. MoE 与 memory、跨层共享的预算分配
 
 前面的工作分别改变执行深度、attention 访问、参数复用、memory lookup 或部署方式，因此“替代 MoE”没有统一的比较对象。若问题是固定 active compute 下扩大 FFN 参数容量，需要比较专家或 lookup 结构；若问题是长上下文 attention 成本，MoE 本身就不直接提供答案。
 
 更有用的组合实验是先固定预算，再改变一种资源组织方式。例如减少部分 routed experts，将参数预算分给 memory；或共享相邻层专家，观察节省的唯一权重是否抵得上 routing 和负载控制成本。这样才能区分结构互补、功能替换和纯部署优化。
 
-## 10. 小结：比较节省的是哪一种资源
+## 10. 不同稀疏机制的存储、访问与计算成本
 
 这些方法改变了不同的约束。MoBA 减少 attention 读取的上下文；跨层共享可用于压缩唯一专家参数，也可像 MoRE 一样在固定专家预算下扩大候选池，同时把负载统计从单层扩展到共享池；STEM / Engram 的 token 或 N-gram 索引可以提前确定，使部分参数能够预取。相同的“稀疏”标签，背后对应不同的存储、访问与计算方式。
 

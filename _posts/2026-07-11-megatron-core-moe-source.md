@@ -10,7 +10,7 @@ description: "结合 Megatron Core 源码，拆解 MoE layer、router/gating、l
 ---
 
 
-## 0. 写在前面
+## 0. MoE 训练中的路由与专家执行链
 
 MoE 论文和模型报告里常见的词包括 top-k routing、shared expert、loss-free balance、dropless、EP、GroupedGEMM、DeepEP。落到训练框架里，这些词会变成一条更具体的执行链：
 
@@ -35,7 +35,7 @@ Megatron Core 用 MoELayer 组织 router、dispatcher 与 expert kernel，同时
 
 后面的代码块都是按 Megatron-LM `bb5647a` 源码做的删节版，只保留关键分支和状态流转。省略了部分配置分支，代码块用于解释流程，不作为可直接替换的实现。
 
-## 1. 源码地图
+## 1. 源码文件与模块职责
 
 先把关键文件放在一张表里。
 
@@ -139,7 +139,7 @@ probs       x0 = [0.7,  0,   0,  0.3]
 
 combine 根据同一分配关系恢复两个输出：`y0 = 0.7*E0(x0) + 0.3*E3(x0)`，`y1 = 0.4*E1(x1) + 0.6*E3(x1)`。这也解释了 dispatcher 为什么同时需要选择矩阵、权重和 per-expert token count。具体实现可融合复制与重排，逻辑对应关系保持不变。
 
-## 3. Gating：router logits 从哪里来
+## 3. Router.gating：从 hidden states 计算 logits
 
 `router.py` 里最基础的抽象是 `Router.gating()`。它做的事情直接：把输入 hidden states 喂给一个 linear gate，得到每个 token 对每个 expert 的 logits。
 
@@ -288,7 +288,7 @@ elif score_function in ("sigmoid", "sqrtsoftplus"):
 
 如果 serving runtime 把 bias 直接混进 combine weights，或者 renormalize 口径不同，就会出现训练-推理不一致。
 
-## 6. Load balance：aux、seq aux、global aux、z-loss 和 QB
+## 6. Router 中的负载均衡与数值正则机制
 
 Megatron 将负载正则项、数值正则项和路由分配算法接入同一 router。下表区分各机制的职责。
 
@@ -327,7 +327,7 @@ probs, routing_map = score_function(scores, precomputed_indices=indices)
 
 这个设计和 choice-only expert bias 的精神类似：负载控制影响“选谁”，但不直接把控制器状态混进 combine weights。区别在于普通 expert bias 往往按实际 load 加减一步，QB 则用每个 expert 的分位数阈值估计下一轮价格。
 
-## 7. Expert bias：loss-free balance 在代码里是什么状态
+## 7. Expert bias：控制器状态与负载统计
 
 `TopKRouter.__init__()` 里如果 `moe_router_enable_expert_bias` 打开，会注册两个状态：
 
@@ -458,7 +458,7 @@ all-to-all 路径可以拆成：
 
 这条路径就是 MoE 通信墙的来源。只要 expert load 不均、跨节点 EP 太多、token permutation 太碎，active FLOPs 再低也会被 all-to-all 和 memory movement 拖住。
 
-## 10. Experts：TEGroupedMLP 为什么重要
+## 10. TEGroupedMLP：本地专家的分组矩阵乘
 
 Megatron 的 routed experts 常走 `TEGroupedMLP`。它用 Transformer Engine 的 `GroupedLinear` 把多个本地 experts 的 MLP 合并成 grouped GEMM。
 
@@ -489,7 +489,7 @@ LatentMoE 打开后，路径更微妙：
 
 源码里对 inference + NVLS dispatcher + latent MoE 的 shared expert overlap 做了专门处理：shared expert 需要在降维前运行，routed expert 输出需要在升维后再和 shared expert output 相加。这要求 projection、shared path 和 combine 的顺序保持一致。
 
-## 12. 训练路径和推理路径并不完全一样
+## 12. TopKRouter 与 InferenceTopKRouter 的执行差异
 
 Megatron 里有 `InferenceTopKRouter`，这一点对训推一致性很关键。
 
@@ -518,7 +518,7 @@ Megatron 里有 `InferenceTopKRouter`，这一点对训推一致性很关键。
 
 第七篇会以 Megatron + SGLang 为例展开这一点。
 
-## 13. Router replay / trace：把路由指标纳入监控
+## 13. Router trace 与 replay：路由记录和回放
 
 Megatron 里有 `router_replay.py` 和 `router_trace.py`。这两个工具类模块常被忽略，但对 MoE 研究有价值。
 
@@ -531,7 +531,7 @@ Megatron 里有 `router_replay.py` 和 `router_trace.py`。这两个工具类模
 
 对 SFT/RL 阶段尤其如此。固定一套 probe corpus，每个 checkpoint 跑 router trace，可以追踪同一输入上的 route drift。
 
-## 14. 和下一篇的衔接
+## 14. Dispatch 通信与专家矩阵乘的性能瓶颈
 
 这篇讲的是 Megatron Core 里 MoE 部件怎么实现。下一篇会把其中两个系统瓶颈单独放大：
 

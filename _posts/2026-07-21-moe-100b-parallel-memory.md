@@ -10,7 +10,7 @@ description: "给定 100B MoE 规格后，推演并行策略、显存估算、�
 ---
 
 
-## 0. 导读：定义“100B MoE”
+## 0. 参数构成、并行维度与显存口径
 
 讨论 100B MoE 训练配置时，不能只给出 EP/TP/PP 的组合。更稳妥的做法是先明确参数构成、active params、并行切分和显存来源。下面定义会反复用到的量：
 
@@ -40,11 +40,11 @@ description: "给定 100B MoE 规格后，推演并行策略、显存估算、�
 需要注意：`k/E` 不是 active parameter ratio。attention、前置 dense 层、shared expert 等不随 routed top-k 稀疏化。这里沿用模型报告对 embedding / LM head 的参数计数口径；它不等于逐 token 实际读取了整张输入 embedding 表。因此 active parameter ratio 通常高于 `k/E`，也不能直接替代 FLOPs 或权重流量。
 
 
-## 1. Ling-flash-2.0：100B total params 怎么算出来
+## 1. Ling-flash-2.0 的总参数与激活参数计算
 
 先用 Ling-flash-2.0 做一个更接近真实配置的参数账。它的公开口径是 100B total parameters、6.1B activated parameters，其中 non-embedding activated parameters 是 4.8B。这个例子适合说明：MoE 的 total params 主要来自“所有 routed experts 的参数池”，active params 则只计算每个 token 实际走到的专家。
 
-### 1.1 先看关键配置
+### 1.1 Ling-flash-2.0 的模型配置
 
 Ling-flash-2.0 的 `config.json` 里，和参数计算最相关的是这些字段：
 
@@ -74,7 +74,7 @@ Ling-flash-2.0 的 `config.json` 里，和参数计算最相关的是这些字�
 
 这里的 routed activation ratio 是 `8 / 256 = 1 / 32`。但这不等于全模型 active parameter ratio，因为 attention、embedding、第一层 dense MLP 和 shared expert 都是 always-on。
 
-### 1.2 每个模块先算单元参数量
+### 1.2 各模块的参数量公式
 
 为了便于手算，先忽略 norm、QK norm、router bias 等小项，只算主要矩阵。后续乘法用原始整数维度计算，表中的 M/B 值取四舍五入显示。
 
@@ -94,7 +94,7 @@ attention 这里因为是 GQA，`K/V` 的输出维度是 `num_key_value_heads x 
 
 `4096 x 4096 + 4096 x 512 + 4096 x 512 + 4096 x 4096 = 37.75M`
 
-### 1.3 total params：为什么接近 103B
+### 1.3 总参数量：逐模块汇总
 
 把上面的单元参数量乘上层数，就能得到 total params 的主要构成：
 
@@ -120,7 +120,7 @@ attention 这里因为是 GQA，`K/V` 的输出维度是 `num_key_value_heads x 
 
 也就是说，Ling-flash-2.0 的 100B total params 几乎都在 routed expert pool 里。attention、embedding、shared experts、前置 dense 层和 router 加起来只占几 B。
 
-### 1.4 active params：为什么又只有 6.1B
+### 1.4 激活参数量：每 token 的专家与公共路径
 
 active params 只看一个 token 前向时实际用到哪些参数。对每个 MoE layer，Ling-flash-2.0 激活：
 
@@ -152,7 +152,7 @@ active params 只看一个 token 前向时实际用到哪些参数。对每个 M
 
 一个值得注意的小设计是：`8` 个 routed experts 加 `1` 个 shared expert，一共相当于 9 个 1024 intermediate 的 expert path；`9 x 1024 = 9216`，刚好等于 dense MLP 的 `intermediate_size`。这意味着每个 MoE layer 的 active expert FFN 宽度，和第一层 dense MLP 的 FFN 宽度在数量级上是对齐的，但 total expert pool 被 256 个 routed experts 放大到了 100B 级别。
 
-### 1.5 后文继续使用同一个模型
+### 1.5 并行与显存估算使用的配置假设
 
 后面的并行和显存估算继续沿用这套约 102.89B total / 6.15B active 配置，`E=256`、`k=8`、32 层。按前面的矩阵计数，公共参数（attention、embedding / LM head、前置 dense MLP、router、shared expert）约 3.03B，routed expert 参数约 99.86B。
 
@@ -180,7 +180,7 @@ DP_expert = W / (PP * EP)
 
 EP 负责分配专家，PP 切层，distributed optimizer 利用各自的 DP 组分片状态。TP/SP 和 CP 可进一步处理普通矩阵与长序列，但会改变 activation、通信和 expert batch 的形状，需要重新计算。
 
-## 3. 短上下文：先选一套可核算的映射
+## 3. 8K 上下文：256 卡的 PP、EP 与 DP 分组
 
 以 256 张标称 80GB GPU、每节点 8 卡高速互联为示例，序列长度先取 8K。下面是一套用于推演的映射，不表示它已经达到最优吞吐：
 
@@ -197,9 +197,9 @@ EP 负责分配专家，PP 切层，distributed optimizer 利用各自的 DP 组
 
 同样保持 PP=8、EP=8 时，128 卡对应 `DP_dense=16、DP_expert=2`，512 卡对应 `64、8`。卡数改变了 optimizer 分片和数据并行规模，是否值得扩展仍取决于 global batch、pipeline bubble、网络和实际 step time，不能只由参数量判断。
 
-## 4. 参数和 optimizer 的显存账
+## 4. 参数、梯度与优化器状态的显存占用
 
-### 4.1 按 pipeline stage 分开计算
+### 4.1 各 pipeline stage 的本地参数与权重占用
 
 以下假设首 stage 放 embedding 和第一层 dense MLP，末 stage 放 LM head，每 stage 四层；忽略 norm 等小项。shared expert 放在公共参数中计算。
 
@@ -211,7 +211,7 @@ EP 负责分配专家，PP 切层，distributed optimizer 利用各自的 DP 组
 
 例如中间 stage 的 routed 参数是 `4 × 256 × 12.58M / 8 ≈ 1.611B`。这套分配中，末 stage 的参数与训练状态更重；实际 pipeline layout 可以调整，但必须重新核算。
 
-### 4.2 训练状态分两组分片
+### 4.2 公共参数与专家参数的训练状态分片
 
 此处假设 BF16 权重、未分片的 FP32 梯度，并把 FP32 master weights、Adam m/v 共 12 bytes/param 按 distributed optimizer 分片。不同实现若连梯度也分片或去掉 master weights，需要替换对应项。
 
@@ -233,9 +233,9 @@ optimizer = 12 * P_c / DP_dense + 12 * P_e / DP_expert
 
 这些数字尚未包含 activation、通信 staging、参数 gather/bucket、kernel workspace 和 allocator 预留。某些实现会复用表中张量的存储，也可能引入额外副本，应在实际 optimizer 配置下核对。
 
-## 5. Activation 和 MoE buffer：从张量形状预算
+## 5. Activation 与通信 buffer 的显存占用
 
-### 5.1 一次 forward 的可核算子项
+### 5.1 单层 forward 的 activation 形状与容量
 
 取 `mbs=1、S=8192、H=4096、I=1024、k=8、CP=1`，activation 用 BF16。假设各 EP rank 输入 token 数相同、负载大致均衡，则一个 rank 接收并展开后的 expert input 约有 `S × k` 行。
 
@@ -250,13 +250,13 @@ optimizer = 12 * P_c / DP_dense + 12 * P_e / DP_expert
 
 pipeline 中一个 stage 可能同时保留多个 microbatch 的 activation。应把该 stage 同时存活的 microbatch 数、调度方式和 selective recompute 的保存边界一起列出，不能只用“每 stage 四层”乘一次就结束。
 
-### 5.2 收发 staging 与 activation 避免重复计数
+### 5.2 通信 staging 与 activation 的复用和计数
 
 以同样的逻辑 token 展开量估算，一块 BF16 expert input 大约 512MiB。若 dispatcher 为 dispatch/combine 各保留独立 send/recv staging，四块相同大小 buffer 对应约 2GiB；双缓冲会进一步增加驻留量。真实布局可能复用 buffer、按目的 rank 去重，或使用低精度传输，必须以实际 backend 为准。
 
 如果接收 buffer 本身就是前面计算的 expert input，就只能记一次。负载偏斜、capacity padding、索引和 router weights 也需要另算；这些因素使不同 rank 的峰值可能高于均衡估计。
 
-### 5.3 固定重算边界，计算在途 microbatch
+### 5.3 1F1B 调度与重算下的 activation 驻留量
 
 现在选定一个可复算的保存策略：PP=8、无 VPP、非交错 1F1B 调度，microbatch 数足以进入稳态；对每个 Transformer block 做 activation checkpoint，保留 block 输入，反向时逐 block 重算。仍使用前面的 BF16、`mbs=1、S=8192、H=4096`。
 
@@ -283,7 +283,7 @@ pipeline 中一个 stage 可能同时保留多个 microbatch 的 activation。�
 
 这样已确定的 activation 和 staging 有具体数值，未知项也有对应张量或实现位置。更换 checkpoint 粒度、调度或 dispatcher 时，重新列同时存活的张量即可；不同阶段不同时存活的缓冲区不重复累加。
 
-## 6. 长上下文：固定卡数时重新分组
+## 6. 长上下文：CP 对 DP 分组与显存的影响
 
 从 8K 扩到 32K/128K 时，可以用 CP 分担 sequence activation 和 attention 工作，但 CP 会占用原来的数据并行维度。以 256 卡、PP=8、TP=ETP=1 为例，普通 DP 为：
 
@@ -295,7 +295,7 @@ DP_dense = 256 / (8 * CP)
 
 长上下文的验证顺序是：确定 CP/EP 的映射，重算本地 token 数和 optimizer 分片，检查同时存活的 activation，再比较 selective recompute 和 attention kernel。CP 减少的存储与增加的通信都要进入同一份 step-time 和显存记录。
 
-## 7. 从估算到实测
+## 7. 显存估算的实测校验与 OOM 归因
 
 先用单层或小模型验证 dispatcher、GroupedGEMM 和状态分片，再运行目标模型。每个 pipeline stage 至少记录参数/optimizer 驻留、activation 峰值、通信 buffer 和最大 allocated/reserved memory；时间上分别看 pipeline bubble、A2A 和 expert compute。
 

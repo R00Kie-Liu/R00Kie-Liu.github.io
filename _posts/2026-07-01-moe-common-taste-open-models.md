@@ -10,13 +10,13 @@ description: "从最新开放模型出发，整理大规模 MoE 已经趋于稳�
 ---
 
 
-## 0. 写在前面
+## 0. 开放 MoE 中的共同设计与差异
 
 DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复选择：细粒度专家、shared expert、负载均衡控制，以及为专家计算和通信配套的系统实现。但不同模型并没有收敛到唯一方案。shared expert 是否保留、router 用什么打分、哪些层使用 MoE，都仍有差异。
 
 这篇先整理这些选择的证据：哪些在多个模型中反复出现，哪些已有大模型验证，哪些仍值得当作实验方向。具体如何给预训练项目定配置，留到第二篇。
 
-## 1. 系列路线
+## 1. 系列主题与阅读顺序
 
 前七篇沿着架构、训练实现和部署展开；后三篇是架构研究、EP 系统和视觉生成专题，可以按问题单独阅读。
 
@@ -33,7 +33,7 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 | 9 | [EP 通信与调度]({% post_url 2026-07-23-moe-ep-communication-optimization %}) | 怎样选择通信路径，何时需要专家副本和物理负载均衡 |
 | 10 | [视觉生成]({% post_url 2026-07-23-moe-visual-generation %}) | timestep、token、head 和控制接口分别怎样组织专家 |
 
-## 2. 区分常见设计、候选结构与探索方案
+## 2. 设计选择的证据分类
 
 讨论 MoE 时，一个常见误区是把“某个新模型用了”直接等同于“应该默认采用”。这在 MoE 里尤其危险，因为 MoE 的收益很依赖系统、并行拓扑、训练数据规模和推理 runtime。
 
@@ -47,7 +47,7 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 
 这个分类用于确定实验优先级。预训练阶段同时修改 router、balance、专家形状和 dispatcher，会显著增加问题归因难度。
 
-## 3. 最新开放模型里的 MoE 地图
+## 3. 开放 MoE 模型的参数与架构对照
 
 下表按“对架构选择的启发”整理。模型名旁标出主要来源及材料类型。技术报告可以追踪训练和消融，官方博客、model card 或 API 文档则按其实际披露的范围使用。
 
@@ -79,7 +79,7 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 
 这些重复出现的选择构成了后文讨论的起点。
 
-## 4. 常见设计 一：前 1-3 层 dense，别太早开始路由
+## 4. 前置 dense 层：共享底层变换与减少专家调度
 
 很多 MoE 设计会在底部保留 1-2 层，甚至 3 层 dense MLP，再进入 MoE layer。这个设计不显眼，但很实用。
 
@@ -90,7 +90,7 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 
 前置 dense 层让所有 token 共享底层变换，也减少了这些层的专家调度。这里列出的是结构与设计动机；稳定性收益由逐层负载、质量和相同预算的架构消融判断。
 
-## 5. 常见设计 二：fine-grained routed experts + shared expert
+## 5. 细粒度专家与 shared expert
 
 DeepSeekMoE 之后，fine-grained experts 和 shared expert 逐渐成为大规模 MoE 的常见起点。
 
@@ -107,7 +107,7 @@ shared expert 为所有 token 提供公共计算路径，设计动机是承接�
 
 shared expert 的宽度直接占用 active compute。比较不同 shared 大小时，应固定总计算预算，检查公共路径带来的质量收益是否抵得上减少的 routed capacity。
 
-## 6. 常见设计 三：loss-free / bias-based balance 变成主线
+## 6. Bias-based balance：用控制器调节专家负载
 
 MoE load balance 的目标存在张力：系统希望每个专家、每个 EP rank 的负载接近均衡；模型又希望 router 有自由度，让专家保持专门化。
 
@@ -124,7 +124,7 @@ loss-free / bias-based balance 通常把两件事拆开：
 
 后训练阶段是否继续更新 bias，需要结合数据规模和路由偏移判断。第二篇会区分 bias 控制器与 router weights，并讨论冻结或重新校准的条件。
 
-## 7. 常见设计 四：sigmoid gating + top-k normalization 值得优先考虑
+## 7. Sigmoid gating 与 top-k 权重归一化
 
 MoE router 的 score function 过去常从 softmax 开始。softmax 的好处是全专家分数具有概率解释；选出 top-k 后，是否再次归一化仍取决于实现；但它也会让专家之间强耦合，一个 expert 的分数变化会影响所有专家概率。
 
@@ -140,7 +140,7 @@ sigmoid gating 的趋势在于：每个 expert 的 score 更像独立打分，�
 
 MoE 的训推偏差可能出现在专家选择、混合权重和最终 token logprob 上。第七篇讨论如何沿这些环节定位差异。
 
-## 8. 常见设计 五：稀疏度需要和系统能力一起定
+## 8. 稀疏度与专家计算、通信的关系
 
 MoE 设计常会被推向极高稀疏度：total params 更大、active ratio 更低，理论效率更高。但实际训练里，稀疏度还会影响：
 
@@ -162,7 +162,7 @@ MoE 设计常会被推向极高稀疏度：total params 更大、active ratio �
 
 这不是 scaling law 结论，只是开放模型给出的可训练区间。真正做设计时，active params、top-k、expert granularity 和 EP 拓扑要一起 sweep。
 
-## 9. 探索方向：LongCat 的 zero-computation expert
+## 9. LongCat：zero-computation expert 与动态计算量
 
 LongCat-Flash 里一个比较特殊的设计是 zero-computation experts。它的基本假设是：不是每个 token 在每一层都需要相同的 FFN compute。对简单 token，可以让它走一个 no-op / identity 风格的专家；对困难 token，再分配更多真实专家计算。
 
@@ -209,7 +209,7 @@ Nemotron 3 Ultra 把 LatentMoE 放进 550B-A55B 的公开模型里，Kimi K3 又
 
 LatentMoE 增加降维/升维 projection，并影响 shared path、精度和 runtime 兼容。通信或参数读取已成为瓶颈时，可优先比较这些额外成本与 latent path 节省的字节量。
 
-## 11. 探索方向：Inkling 的 shared-expert sink
+## 11. Inkling：shared-expert sink 与路由权重归一化
 
 Inkling 的 shared-expert sink 需要单独讨论，因为它改变了 shared expert 的角色。
 
@@ -226,7 +226,7 @@ Inkling 的 shared-expert sink 需要单独讨论，因为它改变了 shared ex
 
 但它还不是广泛验证的默认 recipe。要真正评估，需要看 shared expert weight 分布、route entropy、专家负载、长上下文和多模态 token 上的行为，以及 serving runtime 是否能把这种 mixture 高效实现。
 
-## 12. 端侧/本地 MoE：active 小不等于推理快
+## 12. 端侧 MoE 的权重访问与执行开销
 
 端侧 MoE 常见的误区是：active params 小，所以推理一定快。
 
@@ -244,7 +244,7 @@ Meta MobileMoE 联合研究 on-device scaling law、moderate sparsity、fine-gra
 
 第六篇会专门讲端侧 MoE 的不规则专家访问、active set、量化一致性和真实设备评估。
 
-## 13. 从模型地图到配置选择
+## 13. 架构选择中的容量收益与系统代价
 
 这些开放模型提供了设计起点，也暴露了不同选择的代价。细专家增加组合空间，shared expert 增加公共计算，负载控制影响专门化与系统均衡；LatentMoE 和 zero expert 又会改变参数、通信或执行形状。
 
