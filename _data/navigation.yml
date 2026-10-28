@@ -1,29 +1,9 @@
 main:
-
-  - title: "Blog"
-    url: ./blog/
-
-  - title: "Contact"
-    url: ./#contact
-    right: true
-
-  # - title: "Awards"
-  #   url: ./#awards
-
-  #- title: "Services"
-  #  url: ./#services
-
-  #- title: "Talks"
-  #  url: ./#invited-talks
-
-  #- title: "Teaching"
-  #  url: ./#teaching
-
-  - title: "Publications"
-    url: ./#publications
-
-  #- title: "News"
-  #  url: ./#news
-
-  - title: "Bio"
-    url: ./#about-me
+  - title: Bio
+    url: /#about-me
+  - title: Publications
+    url: /#publications
+  - title: Blog
+    url: /blog/
+  - title: Contact
+    url: /#contact

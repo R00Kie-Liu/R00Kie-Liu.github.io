@@ -1,23 +1,16 @@
 <div class="topnav">
-  {% if page.layout == 'homepage' %}
-  <a href="https://github.com/inclusionAI"><img width="120" src="{{ '/assets/img/inclusionai_logo.png' | relative_url }}" alt="inclusionAI"></a>
-  {% else %}
-  <a href="{{ '/' | relative_url }}"><img width="120" src="{{ '/assets/img/inclusionai_logo.png' | relative_url }}" alt="Home"></a>
-  {% endif %}
-  <div id="myLinks">
-    {% if page.layout == 'homepage' %}
-      {% include navigation.md %}
-    {% else %}
-    <a class="normal" href="{{ '/' | relative_url }}">Home</a>
-    <a class="normal" href="{{ '/blog/' | relative_url }}">Blog</a>
-    {% endif %}
-  </div>
+  <div class="nav-inner">
+  <a class="site-name" href="{{ '/' | relative_url }}"{% if page.layout == 'homepage' %} aria-current="page"{% endif %}>{{ site.title }}</a>
+  <nav id="myLinks" aria-label="Main navigation">
+    {% include navigation.md %}
+  </nav>
   <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
     <i class="fas fa-moon" id="themeIcon"></i>
   </button>
   <button class="nav-menu-toggle" id="navMenuBtn" type="button" aria-label="Open menu" aria-controls="navDrawer" aria-expanded="false">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
   </button>
+  </div>
 </div>
 
 <div class="nav-overlay" id="navOverlay"></div>
