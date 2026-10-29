@@ -1,0 +1,744 @@
+{
+  "assets/dflash-self-spec/dflash-arch-diagram.webp": {
+    "width": 1438,
+    "height": 629
+  },
+  "assets/dflash-self-spec/idlm-decoding-comparison.png": {
+    "width": 7903,
+    "height": 3992
+  },
+  "assets/dflash-self-spec/idlm-overview-teaser.png": {
+    "width": 2699,
+    "height": 1116
+  },
+  "assets/dflash-self-spec/nemotron-recursive-dynamic-compaction-sol.png": {
+    "width": 1492,
+    "height": 470
+  },
+  "assets/img/blog/attention-residual/attnres_figure1_overview.png": {
+    "width": 1575,
+    "height": 845
+  },
+  "assets/img/blog/attention-residual/delta_figure2_comparison.png": {
+    "width": 1445,
+    "height": 850
+  },
+  "assets/img/blog/attention-residual/mhc_figure1_residual_paradigms.png": {
+    "width": 1575,
+    "height": 775
+  },
+  "assets/img/blog/attention-residual/ohc_figure2_constraints.png": {
+    "width": 1230,
+    "height": 485
+  },
+  "assets/img/blog/attention-residual/xhc_figure3_overview.png": {
+    "width": 1440,
+    "height": 678
+  },
+  "assets/img/blog/cross-layer-kv-reuse/gsm-fig1-architecture.png": {
+    "width": 3328,
+    "height": 1046
+  },
+  "assets/img/blog/cross-layer-kv-reuse/kite-fig2-sst-training.png": {
+    "width": 1988,
+    "height": 1192
+  },
+  "assets/img/blog/cross-layer-kv-reuse/latentindex-fig1-sharing.png": {
+    "width": 1427,
+    "height": 545
+  },
+  "assets/img/blog/cross-layer-kv-reuse/yoco-fig2-architecture.png": {
+    "width": 1616,
+    "height": 1832
+  },
+  "assets/img/blog/linear-attention/gated_deltanet_fig1_architecture.png": {
+    "width": 1592,
+    "height": 752
+  },
+  "assets/img/blog/linear-attention/linear_attention_evolution_recipe_gpt_image2_v2.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/linear-attention/linear_variants_kda_lightning_gpt_image2.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/long-context-architecture-watchlist/dosa_execution_fig2.png": {
+    "width": 2000,
+    "height": 1005
+  },
+  "assets/img/blog/long-context-architecture-watchlist/gqla_dual_paths_fig2.png": {
+    "width": 1764,
+    "height": 708
+  },
+  "assets/img/blog/long-context-architecture-watchlist/hisa_indexer_fig1.png": {
+    "width": 1620,
+    "height": 568
+  },
+  "assets/img/blog/long-context-architecture-watchlist/lca_overview_fig1.png": {
+    "width": 754,
+    "height": 433
+  },
+  "assets/img/blog/long-context-architecture-watchlist/sparda_architecture_fig2.png": {
+    "width": 2000,
+    "height": 1125
+  },
+  "assets/img/blog/long-context-architecture-watchlist/spin_memory_manager_fig5.png": {
+    "width": 2000,
+    "height": 1246
+  },
+  "assets/img/blog/long-context-attention/attention_architecture_pseudocode_map_gpt_image2.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/long-context-attention/deepseek_v4_csa_fig3.png": {
+    "width": 3683,
+    "height": 1808
+  },
+  "assets/img/blog/long-context-attention/deepseek_v4_hca_fig4.png": {
+    "width": 2350,
+    "height": 1425
+  },
+  "assets/img/blog/long-context-attention/long_context_attention_methods_gpt_image2_v2.png": {
+    "width": 2048,
+    "height": 1152
+  },
+  "assets/img/blog/long-context-attention/mha_long_context_complexity_gpt_image2_refined.png": {
+    "width": 2048,
+    "height": 1152
+  },
+  "assets/img/blog/long-context-internal-memory/ffn_key_value_memories_fig1_pipeline.png": {
+    "width": 900,
+    "height": 992
+  },
+  "assets/img/blog/long-context-internal-memory/memory_research_threads_overview.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/long-context-training/cad_distca_disaggregation_gpt_image2.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/long-context-training/dcp_dynamic_cp_gpt_image2.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/long-context-training/fa4_kernel_pipeline_gpt_image2.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/long-context-training/flashattention_varlen_dcp_explainer_gpt_image2.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/long-context-training/ring_vs_ulysses_gpt_image2.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/long-context-training/zeppelin_varlen_scheduler_gpt_image2.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/low-precision/precision-format-explainer-gpt-image-2-v2.png": {
+    "width": 2048,
+    "height": 1152
+  },
+  "assets/img/blog/moe-we-like-you/03-megatron-core-moe-execution-chain.png": {
+    "width": 1280,
+    "height": 720
+  },
+  "assets/img/blog/moe-we-like-you/03-megatron-moe-all-to-all-dispatch-combine.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/moe-we-like-you/04-deepep-flex-groupedgemm-boundary.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/moe-we-like-you/04-deepep-groupedgemm-division.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/moe-we-like-you/06-bigmomo-movement-pipeline.png": {
+    "width": 2020,
+    "height": 808
+  },
+  "assets/img/blog/moe-we-like-you/06-bigmomo-system-overview.png": {
+    "width": 1800,
+    "height": 652
+  },
+  "assets/img/blog/moe-we-like-you/06-ecospec-cost-aware-selection.png": {
+    "width": 2048,
+    "height": 780
+  },
+  "assets/img/blog/moe-we-like-you/06-les-lookahead-expert-scheduling.png": {
+    "width": 2800,
+    "height": 1176
+  },
+  "assets/img/blog/moe-we-like-you/06-mobilemoe-expert-architecture.png": {
+    "width": 1236,
+    "height": 582
+  },
+  "assets/img/blog/moe-we-like-you/06-moe-spec-expert-budget.png": {
+    "width": 1416,
+    "height": 672
+  },
+  "assets/img/blog/moe-we-like-you/07-moe-rl-train-serving-mismatch-loop.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/moe-we-like-you/07-r3-rollout-routing-replay.png": {
+    "width": 1544,
+    "height": 735
+  },
+  "assets/img/blog/moe-we-like-you/07-reward-on-path-a-gradient-on-path-b.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/moe-we-like-you/08-bar-modular-post-training.png": {
+    "width": 1000,
+    "height": 335
+  },
+  "assets/img/blog/moe-we-like-you/08-dag-moe-structural-aggregation.png": {
+    "width": 1230,
+    "height": 265
+  },
+  "assets/img/blog/moe-we-like-you/08-emo-document-level-expert-pool.png": {
+    "width": 905,
+    "height": 360
+  },
+  "assets/img/blog/moe-we-like-you/08-engram-conditional-memory.png": {
+    "width": 1035,
+    "height": 580
+  },
+  "assets/img/blog/moe-we-like-you/08-gmoe-global-experts.png": {
+    "width": 918,
+    "height": 350
+  },
+  "assets/img/blog/moe-we-like-you/08-moba-block-attention.png": {
+    "width": 1030,
+    "height": 440
+  },
+  "assets/img/blog/moe-we-like-you/08-moda-depth-attention.png": {
+    "width": 1160,
+    "height": 455
+  },
+  "assets/img/blog/moe-we-like-you/08-mose-slimmable-expert.png": {
+    "width": 1180,
+    "height": 347
+  },
+  "assets/img/blog/moe-we-like-you/08-reflex-refinement-aware-allocation.png": {
+    "width": 1170,
+    "height": 410
+  },
+  "assets/img/blog/moe-we-like-you/08-xshare-batch-level-expert-pruning.png": {
+    "width": 828,
+    "height": 425
+  },
+  "assets/img/blog/moe-we-like-you/09-deepep-v1-v2-ep.png": {
+    "width": 1280,
+    "height": 768
+  },
+  "assets/img/blog/moe-we-like-you/09-moonep-static-shape.png": {
+    "width": 1280,
+    "height": 768
+  },
+  "assets/img/blog/moe-we-like-you/09-tempo-makespan-aware-dispatch.png": {
+    "width": 1280,
+    "height": 768
+  },
+  "assets/img/blog/moe-we-like-you/09-ultraep-quota-driven-exact-load-balancing.png": {
+    "width": 1280,
+    "height": 768
+  },
+  "assets/img/blog/moe-we-like-you/10-dit-moe-framework.png": {
+    "width": 1800,
+    "height": 689
+  },
+  "assets/img/blog/moe-we-like-you/10-lingbot-video-architecture.png": {
+    "width": 649,
+    "height": 547
+  },
+  "assets/img/blog/moe-we-like-you/10-magi-2-multi-head-latentmoe.png": {
+    "width": 1280,
+    "height": 728
+  },
+  "assets/img/blog/moe-we-like-you/10-mova-dual-tower-architecture.png": {
+    "width": 1170,
+    "height": 715
+  },
+  "assets/img/blog/moe-we-like-you/10-wan2-2-timestep-moe.png": {
+    "width": 1440,
+    "height": 270
+  },
+  "assets/img/blog/moe-we-like-you/10-worldscape-moe-architecture.png": {
+    "width": 1225,
+    "height": 1185
+  },
+  "assets/img/blog/mtp-survey/dflash-system.png": {
+    "width": 3978,
+    "height": 1888
+  },
+  "assets/img/blog/mtp-survey/mtp-design-paradigms.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/mtp-survey/sps-attention-masks.png": {
+    "width": 2452,
+    "height": 1710
+  },
+  "assets/img/blog/mtp-survey/sps-gradient-analysis.png": {
+    "width": 3079,
+    "height": 876
+  },
+  "assets/img/blog/tokenizer-series/blip2-qformer.png": {
+    "width": 996,
+    "height": 450
+  },
+  "assets/img/blog/tokenizer-series/blt-architecture.png": {
+    "width": 897,
+    "height": 597
+  },
+  "assets/img/blog/tokenizer-series/infotok-method.jpg": {
+    "width": 1600,
+    "height": 910
+  },
+  "assets/img/blog/tokenizer-series/x-omni-architecture.png": {
+    "width": 897,
+    "height": 602
+  },
+  "assets/img/huabin_mini.jpg": {
+    "width": 756,
+    "height": 1004
+  },
+  "assets/scaling-book/gpu/blackwell-sm.png": {
+    "width": 625,
+    "height": 869
+  },
+  "assets/scaling-book/gpu/gpu-diagram.png": {
+    "width": 1910,
+    "height": 888
+  },
+  "assets/scaling-book/gpu/h100-superpod.png": {
+    "width": 1999,
+    "height": 944
+  },
+  "assets/scaling-book/gpu/nvlink-nodes.png": {
+    "width": 1999,
+    "height": 1090
+  },
+  "assets/scaling-book/img/ag_matmul.gif": {
+    "width": 800,
+    "height": 300,
+    "poster": "/assets/optimized/4ce2b33cc5fe0681-poster.webp",
+    "full": "/assets/scaling-book/img/ag_matmul.gif"
+  },
+  "assets/scaling-book/img/all-collectives.png": {
+    "width": 810,
+    "height": 268
+  },
+  "assets/scaling-book/img/all-gather.gif": {
+    "width": 1152,
+    "height": 648,
+    "poster": "/assets/optimized/f93a66798eae87f9-poster.webp",
+    "full": "/assets/scaling-book/img/all-gather.gif"
+  },
+  "assets/scaling-book/img/all-to-all.gif": {
+    "width": 850,
+    "height": 300,
+    "poster": "/assets/optimized/b3e73382fdb21f06-poster.webp",
+    "full": "/assets/scaling-book/img/all-to-all.gif"
+  },
+  "assets/scaling-book/img/cached-inference.png": {
+    "width": 1600,
+    "height": 805
+  },
+  "assets/scaling-book/img/continuous-batching.gif": {
+    "width": 1600,
+    "height": 309,
+    "poster": "/assets/optimized/b8866a1920a58573-poster.webp",
+    "full": "/assets/scaling-book/img/continuous-batching.gif"
+  },
+  "assets/scaling-book/img/data-parallelism.png": {
+    "width": 1998,
+    "height": 1182
+  },
+  "assets/scaling-book/img/flash-algo.png": {
+    "width": 1400,
+    "height": 820
+  },
+  "assets/scaling-book/img/fsdp.png": {
+    "width": 2088,
+    "height": 1022
+  },
+  "assets/scaling-book/img/gmqa.png": {
+    "width": 1258,
+    "height": 498
+  },
+  "assets/scaling-book/img/graph-viewer.png": {
+    "width": 2540,
+    "height": 1460
+  },
+  "assets/scaling-book/img/ici-wraparound.png": {
+    "width": 1406,
+    "height": 1038
+  },
+  "assets/scaling-book/img/kv-sharing.png": {
+    "width": 1600,
+    "height": 874
+  },
+  "assets/scaling-book/img/llama-json.png": {
+    "width": 2012,
+    "height": 956
+  },
+  "assets/scaling-book/img/math-comms-time.png": {
+    "width": 2400,
+    "height": 1800
+  },
+  "assets/scaling-book/img/memory-viewer.png": {
+    "width": 1600,
+    "height": 522
+  },
+  "assets/scaling-book/img/mixed-fsdp-comms-2.png": {
+    "width": 1135,
+    "height": 844
+  },
+  "assets/scaling-book/img/mixed-fsdp-model-parallelism.png": {
+    "width": 1280,
+    "height": 724
+  },
+  "assets/scaling-book/img/model-parallelism.png": {
+    "width": 1986,
+    "height": 1044
+  },
+  "assets/scaling-book/img/moe.png": {
+    "width": 1600,
+    "height": 1438
+  },
+  "assets/scaling-book/img/naive-inference.png": {
+    "width": 1600,
+    "height": 687
+  },
+  "assets/scaling-book/img/not-overlapped.png": {
+    "width": 1280,
+    "height": 712
+  },
+  "assets/scaling-book/img/overlapped.png": {
+    "width": 1600,
+    "height": 1195
+  },
+  "assets/scaling-book/img/paged-attention.png": {
+    "width": 1384,
+    "height": 786
+  },
+  "assets/scaling-book/img/pcie.png": {
+    "width": 1484,
+    "height": 582
+  },
+  "assets/scaling-book/img/pointwise-product.gif": {
+    "width": 1478,
+    "height": 1600,
+    "poster": "/assets/optimized/b41d536dfb7a89bc-poster.webp",
+    "full": "/assets/scaling-book/img/pointwise-product.gif"
+  },
+  "assets/scaling-book/img/prefix-caching-trie.png": {
+    "width": 706,
+    "height": 243
+  },
+  "assets/scaling-book/img/reduce-scatter.gif": {
+    "width": 1152,
+    "height": 648,
+    "poster": "/assets/optimized/6bb77315cd404050-poster.webp",
+    "full": "/assets/scaling-book/img/reduce-scatter.gif"
+  },
+  "assets/scaling-book/img/roofline-improved.png": {
+    "width": 2162,
+    "height": 1802
+  },
+  "assets/scaling-book/img/sharding-colored1.png": {
+    "width": 1757,
+    "height": 1058
+  },
+  "assets/scaling-book/img/sharding-colored2.png": {
+    "width": 1207,
+    "height": 1173
+  },
+  "assets/scaling-book/img/sharding-colored3.png": {
+    "width": 1207,
+    "height": 1173
+  },
+  "assets/scaling-book/img/sharding-colored4.png": {
+    "width": 1207,
+    "height": 1173
+  },
+  "assets/scaling-book/img/sharding-example.png": {
+    "width": 1932,
+    "height": 998
+  },
+  "assets/scaling-book/img/spec-sampling1.png": {
+    "width": 1390,
+    "height": 380
+  },
+  "assets/scaling-book/img/spec-sampling2.png": {
+    "width": 1374,
+    "height": 370
+  },
+  "assets/scaling-book/img/spec-sampling3.png": {
+    "width": 1568,
+    "height": 1000
+  },
+  "assets/scaling-book/img/subslices.png": {
+    "width": 1208,
+    "height": 574
+  },
+  "assets/scaling-book/img/systolic-array.gif": {
+    "width": 782,
+    "height": 864,
+    "poster": "/assets/optimized/f3390bb39ae2c969-poster.webp",
+    "full": "/assets/scaling-book/img/systolic-array.gif"
+  },
+  "assets/scaling-book/img/tpu-bandwidth.png": {
+    "width": 1600,
+    "height": 620
+  },
+  "assets/scaling-book/img/tpu-chip.png": {
+    "width": 1600,
+    "height": 802
+  },
+  "assets/scaling-book/img/tpu-rack.png": {
+    "width": 1516,
+    "height": 754
+  },
+  "assets/scaling-book/img/trace-viewer.png": {
+    "width": 2860,
+    "height": 1298
+  },
+  "assets/scaling-book/img/transformer-diagram.png": {
+    "width": 1600,
+    "height": 1516
+  },
+  "assets/scaling-book/img/transformer-ffw.png": {
+    "width": 1818,
+    "height": 928
+  },
+  "assets/scaling-book/img/xprof-overview.png": {
+    "width": 1728,
+    "height": 1150
+  },
+  "https://arxiv.org/html/2404.19737v1/img/main_fig_col.png": {
+    "width": 2908,
+    "height": 3640,
+    "local": "/assets/optimized/5fc3a6b36df6afb6.png",
+    "source": "https://arxiv.org/html/2404.19737v1/img/main_fig_col.png"
+  },
+  "pub_img/CSTA.png": {
+    "width": 927,
+    "height": 342,
+    "src200": "/assets/optimized/1c80319dd6b1d384-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/eeabad5d00fb305e-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/4be6429b6776c01c-800.webp",
+    "w800": 800
+  },
+  "pub_img/bmvc.png": {
+    "width": 963,
+    "height": 702,
+    "src200": "/assets/optimized/8e2e53c9bb950ec8-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/e8bff672147c986f-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/7e3c96c12af9f805-800.webp",
+    "w800": 800
+  },
+  "pub_img/cogstream.png": {
+    "width": 1077,
+    "height": 533,
+    "src200": "/assets/optimized/fc11263f9df1aa98-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/a78c792b1b234003-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/842b09930b01229f-800.webp",
+    "w800": 800
+  },
+  "pub_img/cpa.png": {
+    "width": 1016,
+    "height": 415,
+    "src200": "/assets/optimized/45ee964ea35744a9-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/db3f50771d31bae9-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/4f43ddb23a41067b-800.webp",
+    "w800": 800
+  },
+  "pub_img/cpa_ijcv.png": {
+    "width": 1012,
+    "height": 259,
+    "src200": "/assets/optimized/8bfe9010f14461a7-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/2fe84488532d93bb-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/0dd9f5cb43603b6f-800.webp",
+    "w800": 800
+  },
+  "pub_img/dibs.png": {
+    "width": 700,
+    "height": 648,
+    "src200": "/assets/optimized/e9073425a54d5bf5-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/c4e07e68de11a905-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/83a5bd4a31cf57cb-800.webp",
+    "w800": 700
+  },
+  "pub_img/entailment.png": {
+    "width": 1031,
+    "height": 850,
+    "src200": "/assets/optimized/62abaea4539c9208-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/7cfada1a308150f6-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/e3ade549692372a7-800.webp",
+    "w800": 800
+  },
+  "pub_img/giga.png": {
+    "width": 917,
+    "height": 328,
+    "src200": "/assets/optimized/63dbe98c5fefd5af-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/974255bd75ff3d96-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/b14ec86c1eee3ad7-800.webp",
+    "w800": 800
+  },
+  "pub_img/hieve.png": {
+    "width": 975,
+    "height": 623,
+    "src200": "/assets/optimized/93f6f3b08ccc4234-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/7bb98b4a0584fdbe-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/c7309497823fa5c9-800.webp",
+    "w800": 800
+  },
+  "pub_img/iccv.png": {
+    "width": 943,
+    "height": 353,
+    "src200": "/assets/optimized/42b3216960aa1d7b-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/9a8b68098ac20d71-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/301da90a0fbeda49-800.webp",
+    "w800": 800
+  },
+  "pub_img/llada2.png": {
+    "width": 988,
+    "height": 493,
+    "src200": "/assets/optimized/dbe2f46b8f55c938-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/39847d9e966945f6-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/a0ea86ea8d707899-800.webp",
+    "w800": 800
+  },
+  "pub_img/llada21.png": {
+    "width": 1088,
+    "height": 454,
+    "src200": "/assets/optimized/2895821a7751a3a1-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/b6d88e8d28f5ff7a-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/107da1a89d18ec0f-800.webp",
+    "w800": 800
+  },
+  "pub_img/llada22.png": {
+    "width": 1088,
+    "height": 466,
+    "src200": "/assets/optimized/00414f84726d5bf0-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/8b37c2778646250d-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/c1f7d3dabdac1022-800.webp",
+    "w800": 800
+  },
+  "pub_img/mecd+.png": {
+    "width": 1132,
+    "height": 410,
+    "src200": "/assets/optimized/8d121a12d7c16b29-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/47312a37540af39b-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/1101f93212976b6e-800.webp",
+    "w800": 800
+  },
+  "pub_img/mecd.png": {
+    "width": 1060,
+    "height": 473,
+    "src200": "/assets/optimized/97fa4a356b09b833-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/340d482060fcd97e-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/ae38ce2c36b1ea8d-800.webp",
+    "w800": 800
+  },
+  "pub_img/sampler.png": {
+    "width": 1017,
+    "height": 395,
+    "src200": "/assets/optimized/8524b214fc380bda-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/0459f8177a21da8a-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/2c0ce27850c0b0a8-800.webp",
+    "w800": 800
+  },
+  "pub_img/ta2n.png": {
+    "width": 462,
+    "height": 263,
+    "src200": "/assets/optimized/8378bca51bcfd540-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/c81a84028429ceb9-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/87893979c8d1cc2d-800.webp",
+    "w800": 462
+  },
+  "pub_img/timecraft.png": {
+    "width": 880,
+    "height": 309,
+    "src200": "/assets/optimized/fda7fb96e058688b-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/8b285f421e004d63-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/d988792eefc81aaf-800.webp",
+    "w800": 800
+  },
+  "pub_img/tmm.png": {
+    "width": 922,
+    "height": 454,
+    "src200": "/assets/optimized/492a9ec4f93321f2-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/518d1777adfe473e-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/36d064d90c5c5b2b-800.webp",
+    "w800": 800
+  },
+  "pub_img/tomm.png": {
+    "width": 859,
+    "height": 573,
+    "src200": "/assets/optimized/5cfdb762b21d7bc4-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/7817b7c70f532793-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/4aa4985dbede1226-800.webp",
+    "w800": 800
+  },
+  "pub_img/vim.png": {
+    "width": 610,
+    "height": 464,
+    "src200": "/assets/optimized/d37fac05a500f5a7-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/e9b1761f8d24e19b-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/9f09d563f737f3d1-800.webp",
+    "w800": 610
+  }
+}

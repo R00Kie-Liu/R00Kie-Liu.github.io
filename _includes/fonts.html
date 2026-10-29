@@ -1,3 +1,4 @@
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&amp;family=Noto+Serif+SC:wght@400;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+{% if site.data.font_assets.serif_latin %}
+<link rel="preload" href="{{ site.data.font_assets.serif_latin | relative_url }}" as="font" type="font/woff2" crossorigin>
+{% endif %}
+<link rel="stylesheet" href="{{ '/assets/css/fonts.css' | relative_url }}">

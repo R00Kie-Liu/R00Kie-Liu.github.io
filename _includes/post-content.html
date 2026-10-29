@@ -1,0 +1,47 @@
+{%- assign fragments = include.html | split: '<img ' -%}
+{%- assign lead_size = fragments.first | size -%}
+{%- for fragment in fragments -%}
+  {%- if forloop.first -%}
+    {{- fragment -}}
+  {%- else -%}
+    {%- assign original_tag = fragment | split: '>' | first -%}
+    {%- assign tag = original_tag -%}
+    {%- assign remainder = fragment | remove_first: original_tag | remove_first: '>' -%}
+    {%- assign src = tag | split: 'src="' | last | split: '"' | first -%}
+    {%- assign key = src | remove_first: '../' | remove_first: './' -%}
+    {%- assign initial = key | slice: 0 -%}
+    {%- if initial == '/' -%}{%- assign key = key | remove_first: '/' -%}{%- endif -%}
+    {%- assign image = site.data.image_assets[key] -%}
+    {%- unless tag contains 'loading=' -%}
+      {%- if forloop.index == 2 and lead_size < 1000 and image.poster == nil -%}
+        {%- assign tag = tag | prepend: 'loading="eager" ' -%}
+        {%- unless tag contains 'fetchpriority=' -%}{%- assign tag = tag | prepend: 'fetchpriority="high" ' -%}{%- endunless -%}
+      {%- else -%}
+        {%- assign tag = tag | prepend: 'loading="lazy" ' -%}
+      {%- endif -%}
+    {%- endunless -%}
+    {%- unless tag contains 'decoding=' -%}{%- assign tag = tag | prepend: 'decoding="async" ' -%}{%- endunless -%}
+    {%- if image -%}
+      {%- unless tag contains 'width=' -%}
+        {%- capture width -%}width="{{ image.width }}" {% endcapture -%}
+        {%- assign tag = tag | prepend: width -%}
+      {%- endunless -%}
+      {%- unless tag contains 'height=' -%}
+        {%- capture height -%}height="{{ image.height }}" {% endcapture -%}
+        {%- assign tag = tag | prepend: height -%}
+      {%- endunless -%}
+    {%- endif -%}
+    {%- if image.local -%}
+      {%- capture original_src -%}src="{{ src }}"{%- endcapture -%}
+      {%- capture local_src -%}src="{{ image.local | relative_url }}"{%- endcapture -%}
+      <img {{ tag | replace_first: original_src, local_src }}>
+    {%- elsif image.poster -%}
+      {%- capture original_src -%}src="{{ src }}"{%- endcapture -%}
+      {%- capture poster_src -%}src="{{ image.poster | relative_url }}" data-deferred-src="{{ image.full | relative_url }}" data-full-src="{{ image.full | relative_url }}"{%- endcapture -%}
+      <img {{ tag | replace_first: original_src, poster_src }}><noscript><img {{ tag }}></noscript>
+    {%- else -%}
+      <img {{ tag }}>
+    {%- endif -%}
+    {{- remainder -}}
+  {%- endif -%}
+{%- endfor -%}

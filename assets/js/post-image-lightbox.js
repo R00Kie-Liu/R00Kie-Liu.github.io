@@ -37,7 +37,7 @@
   function openLightbox(img, button) {
     var captionText = img.getAttribute('alt') || '';
     activeButton = button;
-    previewImage.src = img.currentSrc || img.src;
+    previewImage.src = img.dataset.fullSrc || img.currentSrc || img.src;
     previewImage.alt = captionText || '放大图片';
     caption.textContent = captionText;
     caption.hidden = !captionText;

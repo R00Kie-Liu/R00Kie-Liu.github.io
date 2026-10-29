@@ -1,0 +1,8 @@
+{% assign image_key = include.item.image | remove_first: './' %}
+{% assign initial = image_key | slice: 0 %}{% if initial == '/' %}{% assign image_key = image_key | remove_first: '/' %}{% endif %}
+{% assign thumbnail = site.data.image_assets[image_key] %}
+{% if thumbnail.src400 %}
+<img src="{{ thumbnail.src400 | relative_url }}" srcset="{{ thumbnail.src200 | relative_url }} {{ thumbnail.w200 }}w, {{ thumbnail.src400 | relative_url }} {{ thumbnail.w400 }}w{% if thumbnail.w800 > thumbnail.w400 %}, {{ thumbnail.src800 | relative_url }} {{ thumbnail.w800 }}w{% endif %}" sizes="(max-width: 480px) calc(100vw - 64px), 180px" width="{{ thumbnail.width }}" height="{{ thumbnail.height }}" loading="lazy" decoding="async" alt="{{ include.item.title | strip_html | escape }}" class="teaser img-fluid z-depth-1">
+{% else %}
+<img src="{{ include.item.image }}" loading="lazy" decoding="async" alt="{{ include.item.title | strip_html | escape }}" class="teaser img-fluid z-depth-1">
+{% endif %}

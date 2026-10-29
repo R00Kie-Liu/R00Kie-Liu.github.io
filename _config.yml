@@ -32,8 +32,8 @@ cv_link: ./CV_huabin.pdf
 
 # Images 
 avatar: ./assets/img/huabin_mini.jpg
-favicon: ./assets/img/favicon-sjtu.png
-favicon_dark: ./assets/img/favicon-sjtu-dark.png
+favicon: ./assets/optimized/favicon-sjtu-48.png
+favicon_dark: ./assets/optimized/favicon-sjtu-dark-48.png
 
 # Footnotes
 # footnote: Feel free to use my website's source code.

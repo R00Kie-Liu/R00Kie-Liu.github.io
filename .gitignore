@@ -8,3 +8,4 @@ Gemfile.lock
 vendor/
 git-update.sh
 __pycache__/
+.cache/
