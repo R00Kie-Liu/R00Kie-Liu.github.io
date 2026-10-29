@@ -65,6 +65,18 @@
     "description": "Deep autoregressive sequence-to-sequence models have demonstrated impressive performance across a wide variety of tasks in recent years. While common architecture classes such as recurrent, convolutional, and self-attention networks make different trade-offs between the amount of computation needed per layer and the length of the critical path at training time, generation still remains an inherently sequential process. To overcome this limitation, we propose a novel blockwise parallel decoding scheme in which we make predictions for multiple time steps in parallel then back off to the longest…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/1907.05242": {
+    "checked_at": 1793252215,
+    "title": "Large Memory Layers with Product Keys",
+    "description": "This paper introduces a structured memory which can be easily integrated into a neural network. The memory is very large by design and significantly increases the capacity of the architecture, by up to a billion parameters with a negligible computational overhead. Its design and access pattern is based on product keys, which enable fast and exact nearest neighbor search. The ability to increase the number of parameters while keeping the same computational budget lets the overall system strike a better trade-off between prediction accuracy and computation efficiency both at training and test t…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/1909.01066": {
+    "checked_at": 1793252215,
+    "title": "Language Models as Knowledge Bases?",
+    "description": "Recent progress in pretraining language models on large textual corpora led to a surge of improvements for downstream NLP tasks. Whilst learning linguistic knowledge, these models may also be storing relational knowledge present in the training data, and may be able to answer queries structured as \"fill-in-the-blank\" cloze statements. Language models have many advantages over structured knowledge bases: they require no schema engineering, allow practitioners to query about an open class of relations, are easy to extend to more data, and require no human supervision to train. We present an in-…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/1909.08053": {
     "checked_at": 1793212629,
     "title": "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism",
@@ -76,6 +88,60 @@
     "title": "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models",
     "description": "Large deep learning models offer significant accuracy gains, but training billions to trillions of parameters is challenging. Existing solutions such as data and model parallelisms exhibit fundamental limitations to fit these models into limited device memory, while obtaining computation, communication and development efficiency. We develop a novel solution, Zero Redundancy Optimizer (ZeRO), to optimize memory, vastly improving training speed while increasing the model size that can be efficiently trained. ZeRO eliminates memory redundancies in data- and model-parallel training while retainin…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/1911.00172": {
+    "checked_at": 1793252215,
+    "title": "Generalization through Memorization: Nearest Neighbor Language Models",
+    "description": "We introduce $k$NN-LMs, which extend a pre-trained neural language model (LM) by linearly interpolating it with a $k$-nearest neighbors ($k$NN) model. The nearest neighbors are computed according to distance in the pre-trained LM embedding space, and can be drawn from any text collection, including the original LM training data. Applying this augmentation to a strong Wikitext-103 LM, with neighbors drawn from the original training set, our $k$NN-LM achieves a new state-of-the-art perplexity of 15.79 - a 2.9 point improvement with no additional training. We also show that this approach has imp…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/1911.02150": {
+    "checked_at": 1793252215,
+    "title": "Fast Transformer Decoding: One Write-Head is All You Need",
+    "description": "Multi-head attention layers, as used in the Transformer neural sequence model, are a powerful alternative to RNNs for moving information across and between sequences. While training these layers is generally fast and simple, due to parallelizability across the length of the sequence, incremental inference (where such paralleization is impossible) is often slow, due to the memory-bandwidth cost of repeatedly loading the large \"keys\" and \"values\" tensors. We propose a variant called multi-query attention, where the keys and values are shared across all of the different attention \"heads\", greatl…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2002.08909": {
+    "checked_at": 1793252215,
+    "title": "REALM: Retrieval-Augmented Language Model Pre-Training",
+    "description": "Language model pre-training has been shown to capture a surprising amount of world knowledge, crucial for NLP tasks such as question answering. However, this knowledge is stored implicitly in the parameters of a neural network, requiring ever-larger networks to cover more facts. To capture knowledge in a more modular and interpretable way, we augment language model pre-training with a latent knowledge retriever, which allows the model to retrieve and attend over documents from a large corpus such as Wikipedia, used during pre-training, fine-tuning and inference. For the first time, we show ho…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2002.08910": {
+    "checked_at": 1793252215,
+    "title": "How Much Knowledge Can You Pack Into the Parameters of a Language Model?",
+    "description": "It has recently been observed that neural language models trained on unstructured text can implicitly store and retrieve knowledge using natural language queries. In this short paper, we measure the practical utility of this approach by fine-tuning pre-trained models to answer questions without access to any external context or knowledge. We show that this approach scales with model size and performs competitively with open-domain systems that explicitly retrieve answers from an external knowledge source when answering questions. To facilitate reproducibility and future work, we release our c…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2004.05150": {
+    "checked_at": 1793252215,
+    "title": "Longformer: The Long-Document Transformer",
+    "description": "Transformer-based models are unable to process long sequences due to their self-attention operation, which scales quadratically with the sequence length. To address this limitation, we introduce the Longformer with an attention mechanism that scales linearly with sequence length, making it easy to process documents of thousands of tokens or longer. Longformer's attention mechanism is a drop-in replacement for the standard self-attention and combines a local windowed attention with a task motivated global attention. Following prior work on long-sequence transformers, we evaluate Longformer on…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2005.11401": {
+    "checked_at": 1793252215,
+    "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+    "description": "Large pre-trained language models have been shown to store factual knowledge in their parameters, and achieve state-of-the-art results when fine-tuned on downstream NLP tasks. However, their ability to access and precisely manipulate knowledge is still limited, and hence on knowledge-intensive tasks, their performance lags behind task-specific architectures. Additionally, providing provenance for their decisions and updating their world knowledge remain open research problems. Pre-trained models with a differentiable access mechanism to explicit non-parametric memory can overcome this issue,…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2006.16236": {
+    "checked_at": 1793252215,
+    "title": "Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention",
+    "description": "Transformers achieve remarkable performance in several tasks but due to their quadratic complexity, with respect to the input's length, they are prohibitively slow for very long sequences. To address this limitation, we express the self-attention as a linear dot-product of kernel feature maps and make use of the associativity property of matrix products to reduce the complexity from $\\mathcal{O}\\left(N^2\\right)$ to $\\mathcal{O}\\left(N\\right)$, where $N$ is the sequence length. We show that this formulation permits an iterative implementation that dramatically accelerates autoregressive transf…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2009.14794": {
+    "checked_at": 1793252215,
+    "title": "Rethinking Attention with Performers",
+    "description": "We introduce Performers, Transformer architectures which can estimate regular (softmax) full-rank-attention Transformers with provable accuracy, but using only linear (as opposed to quadratic) space and time complexity, without relying on any priors such as sparsity or low-rankness. To approximate softmax attention-kernels, Performers use a novel Fast Attention Via positive Orthogonal Random features approach (FAVOR+), which may be of independent interest for scalable kernel methods. FAVOR+ can be also used to efficiently model kernelizable attention mechanisms beyond softmax. This representa…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2012.14913": {
+    "checked_at": 1793252215,
+    "title": "Transformer Feed-Forward Layers Are Key-Value Memories",
+    "description": "Feed-forward layers constitute two-thirds of a transformer model's parameters, yet their role in the network remains under-explored. We show that feed-forward layers in transformer-based language models operate as key-value memories, where each key correlates with textual patterns in the training examples, and each value induces a distribution over the output vocabulary. Our experiments show that the learned patterns are human-interpretable, and that lower layers tend to capture shallow patterns, while upper layers learn more semantic ones. The values complement the keys' input patterns by in…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2103.00020": {
     "checked_at": 1793212629,
@@ -89,11 +155,41 @@
     "description": "Large language models have led to state-of-the-art accuracies across a range of tasks. However, training these models efficiently is challenging for two reasons: a) GPU memory capacity is limited, making it impossible to fit large models on even a multi-GPU server, and b) the number of compute operations required to train these models can result in unrealistically long training times. Consequently, new methods of model parallelism such as tensor and pipeline parallelism have been proposed. Unfortunately, naive usage of these methods leads to fundamental scaling issues at thousands of GPUs, e.…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2104.08696": {
+    "checked_at": 1793252215,
+    "title": "Knowledge Neurons in Pretrained Transformers",
+    "description": "Large-scale pretrained language models are surprisingly good at recalling factual knowledge presented in the training corpus. In this paper, we present preliminary studies on how factual knowledge is stored in pretrained Transformers by introducing the concept of knowledge neurons. Specifically, we examine the fill-in-the-blank cloze task for BERT. Given a relational fact, we propose a knowledge attribution method to identify the neurons that express the fact. We find that the activation of such knowledge neurons is positively correlated to the expression of their corresponding facts. In our…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2110.11309": {
+    "checked_at": 1793252215,
+    "title": "Fast Model Editing at Scale",
+    "description": "While large pre-trained models have enabled impressive results on a variety of downstream tasks, the largest existing models still make errors, and even accurate predictions may become outdated over time. Because detecting all such failures at training time is impossible, enabling both developers and end users of such models to correct inaccurate outputs while leaving the model otherwise intact is desirable. However, the distributed, black-box nature of the representations learned by large neural networks makes producing such targeted edits difficult. If presented with only a single problemat…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2112.04426": {
+    "checked_at": 1793252215,
+    "title": "Improving language models by retrieving from trillions of tokens",
+    "description": "We enhance auto-regressive language models by conditioning on document chunks retrieved from a large corpus, based on local similarity with preceding tokens. With a $2$ trillion token database, our Retrieval-Enhanced Transformer (RETRO) obtains comparable performance to GPT-3 and Jurassic-1 on the Pile, despite using 25$\\times$ fewer parameters. After fine-tuning, RETRO performance translates to downstream knowledge-intensive tasks such as question answering. RETRO combines a frozen Bert retriever, a differentiable encoder and a chunked cross-attention mechanism to predict tokens based on an…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2112.05682": {
     "checked_at": 1793212629,
     "title": "Self-attention Does Not Need $O(n^2)$ Memory",
     "description": "We present a very simple algorithm for attention that requires $O(1)$ memory with respect to sequence length and an extension to self-attention that requires $O(\\log n)$ memory. This is in contrast with the frequently stated belief that self-attention requires $O(n^2)$ memory. While the time complexity is still $O(n^2)$, device memory rather than compute capability is often the limiting factor on modern accelerators. Thus, reducing the memory requirements of attention allows processing of longer sequences than might otherwise be feasible. We provide a practical implementation for accelerators…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2202.05262": {
+    "checked_at": 1793252215,
+    "title": "Locating and Editing Factual Associations in GPT",
+    "description": "We analyze the storage and recall of factual associations in autoregressive transformer language models, finding evidence that these associations correspond to localized, directly-editable computations. We first develop a causal intervention for identifying neuron activations that are decisive in a model's factual predictions. This reveals a distinct set of steps in middle-layer feed-forward modules that mediate factual predictions while processing subject tokens. To test our hypothesis that these computations correspond to factual association recall, we modify feed-forward weights to update…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2203.08913": {
+    "checked_at": 1793252215,
+    "title": "Memorizing Transformers",
+    "description": "Language models typically need to be trained or finetuned in order to acquire new knowledge, which involves updating their weights. We instead envision language models that can simply read and memorize new data at inference time, thus acquiring new knowledge immediately. In this work, we extend language models with the ability to memorize the internal representations of past inputs. We demonstrate that an approximate kNN lookup into a non-differentiable memory of recent (key, value) pairs improves language modeling across various benchmarks and tasks, including generic webtext (C4), math pape…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2204.14198": {
     "checked_at": 1793212629,
@@ -113,11 +209,23 @@
     "description": "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IO-aware -- accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between G…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2207.06881": {
+    "checked_at": 1793252215,
+    "title": "Recurrent Memory Transformer",
+    "description": "Transformer-based models show their effectiveness across multiple domains and tasks. The self-attention allows to combine information from all sequence elements into context-aware representations. However, global and local information has to be stored mostly in the same element-wise representations. Moreover, the length of an input sequence is limited by quadratic computational complexity of self-attention. In this work, we propose and study a memory-augmented segment-level recurrent Transformer (RMT). Memory allows to store and process local and global information as well as to pass informat…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2209.05433": {
     "checked_at": 1793212629,
     "title": "FP8 Formats for Deep Learning",
     "description": "FP8 is a natural progression for accelerating deep learning training inference beyond the 16-bit formats common in modern processors. In this paper we propose an 8-bit floating point (FP8) binary interchange format consisting of two encodings - E4M3 (4-bit exponent and 3-bit mantissa) and E5M2 (5-bit exponent and 2-bit mantissa). While E5M2 follows IEEE 754 conventions for representatio of special values, E4M3's dynamic range is extended by not representing infinities and having only one mantissa bit-pattern for NaNs. We demonstrate the efficacy of the FP8 format on a variety of image and lan…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2210.07229": {
+    "checked_at": 1793252215,
+    "title": "Mass-Editing Memory in a Transformer",
+    "description": "Recent work has shown exciting promise in updating large language models with new memories, so as to replace obsolete information or add specialized knowledge. However, this line of work is predominantly limited to updating single associations. We develop MEMIT, a method for directly updating a language model with many memories, demonstrating experimentally that it can scale up to thousands of associations for GPT-J (6B) and GPT-NeoX (20B), exceeding prior work by orders of magnitude. Our code and data are at https://memit.baulab.info.",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2210.15257": {
     "checked_at": 1793212629,
@@ -173,17 +281,53 @@
     "description": "Instruction tuning large language models (LLMs) using machine-generated instruction-following data has improved zero-shot capabilities on new tasks, but the idea is less explored in the multimodal field. In this paper, we present the first attempt to use language-only GPT-4 to generate multimodal language-image instruction-following data. By instruction tuning on such generated data, we introduce LLaVA: Large Language and Vision Assistant, an end-to-end trained large multimodal model that connects a vision encoder and LLM for general-purpose visual and language understanding.Our early experim…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2304.11062": {
+    "checked_at": 1793252215,
+    "title": "Scaling Transformer to 1M tokens and beyond with RMT",
+    "description": "A major limitation for the broader scope of problems solvable by transformers is the quadratic scaling of computational complexity with input size. In this study, we investigate the recurrent memory augmentation of pre-trained transformer models to extend input context length while linearly scaling compute. Our approach demonstrates the capability to store information in memory for sequences of up to an unprecedented two million tokens while maintaining high retrieval accuracy. Experiments with language modeling tasks show perplexity improvement as the number of processed input segments incre…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2305.13048": {
+    "checked_at": 1793252215,
+    "title": "RWKV: Reinventing RNNs for the Transformer Era",
+    "description": "Transformers have revolutionized almost all natural language processing (NLP) tasks but suffer from memory and computational complexity that scales quadratically with sequence length. In contrast, recurrent neural networks (RNNs) exhibit linear scaling in memory and computational requirements but struggle to match the same performance as Transformers due to limitations in parallelization and scalability. We propose a novel model architecture, Receptance Weighted Key Value (RWKV), that combines the efficient parallelizable training of transformers with the efficient inference of RNNs. Our appr…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2305.13245": {
     "checked_at": 1793212629,
     "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
     "description": "Multi-query attention (MQA), which only uses a single key-value head, drastically speeds up decoder inference. However, MQA can lead to quality degradation, and moreover it may not be desirable to train a separate model just for faster inference. We (1) propose a recipe for uptraining existing multi-head language model checkpoints into models with MQA using 5% of original pre-training compute, and (2) introduce grouped-query attention (GQA), a generalization of multi-query attention which uses an intermediate (more than one, less than number of query heads) number of key-value heads. We show…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2305.14788": {
+    "checked_at": 1793252215,
+    "title": "Adapting Language Models to Compress Contexts",
+    "description": "Transformer-based language models (LMs) are powerful and widely-applicable tools, but their usefulness is constrained by a finite context window and the expensive computational cost of processing long text documents. We propose to adapt pre-trained LMs into AutoCompressors. These language models are capable of compressing long contexts into compact summary vectors, which are then accessible to the model as soft prompts. Summary vectors are trained with an unsupervised objective, whereby long documents are processed in segments, and summary vectors from all previous segments are used in langua…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2305.18295": {
     "checked_at": 1793212629,
     "title": "RAPHAEL: Text-to-Image Generation via Large Mixture of Diffusion Paths",
     "description": "Text-to-image generation has recently witnessed remarkable achievements. We introduce a text-conditional image diffusion model, termed RAPHAEL, to generate highly artistic images, which accurately portray the text prompts, encompassing multiple nouns, adjectives, and verbs. This is achieved by stacking tens of mixture-of-experts (MoEs) layers, i.e., space-MoE and time-MoE layers, enabling billions of diffusion paths (routes) from the network input to the output. Each path intuitively functions as a \"painter\" for depicting a particular textual concept onto a specified image region at a diffusi…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2306.07174": {
+    "checked_at": 1793252215,
+    "title": "Augmenting Language Models with Long-Term Memory",
+    "description": "Existing large language models (LLMs) can only afford fix-sized inputs due to the input length limit, preventing them from utilizing rich long-context information from past inputs. To address this, we propose a framework, Language Models Augmented with Long-Term Memory (LongMem), which enables LLMs to memorize long history. We design a novel decoupled network architecture with the original backbone LLM frozen as a memory encoder and an adaptive residual side-network as a memory retriever and reader. Such a decoupled memory design can easily cache and update long-term past contexts for memory…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2307.06945": {
+    "checked_at": 1793252215,
+    "title": "In-context Autoencoder for Context Compression in a Large Language Model",
+    "description": "We propose the In-context Autoencoder (ICAE), leveraging the power of a large language model (LLM) to compress a long context into short compact memory slots that can be directly conditioned on by the LLM for various purposes. ICAE is first pretrained using both autoencoding and language modeling objectives on massive text data, enabling it to generate memory slots that accurately and comprehensively represent the original context. Then, it is fine-tuned on instruction data for producing desirable responses to various prompts. Experiments demonstrate that our lightweight ICAE, introducing abo…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2307.08621": {
+    "checked_at": 1793252215,
+    "title": "Retentive Network: A Successor to Transformer for Large Language Models",
+    "description": "In this work, we propose Retentive Network (RetNet) as a foundation architecture for large language models, simultaneously achieving training parallelism, low-cost inference, and good performance. We theoretically derive the connection between recurrence and attention. Then we propose the retention mechanism for sequence modeling, which supports three computation paradigms, i.e., parallel, recurrent, and chunkwise recurrent. Specifically, the parallel representation allows for training parallelism. The recurrent representation enables low-cost $O(1)$ inference, which improves decoding through…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2307.08691": {
     "checked_at": 1793212629,
@@ -197,11 +341,41 @@
     "description": "High throughput serving of large language models (LLMs) requires batching sufficiently many requests at a time. However, existing systems struggle because the key-value cache (KV cache) memory for each request is huge and grows and shrinks dynamically. When managed inefficiently, this memory can be significantly wasted by fragmentation and redundant duplication, limiting the batch size. To address this problem, we propose PagedAttention, an attention algorithm inspired by the classical virtual memory and paging techniques in operating systems. On top of it, we build vLLM, an LLM serving syste…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2309.14509": {
+    "checked_at": 1793252215,
+    "title": "DeepSpeed Ulysses: System Optimizations for Enabling Training of Extreme Long Sequence Transformer Models",
+    "description": "Computation in a typical Transformer-based large language model (LLM) can be characterized by batch size, hidden dimension, number of layers, and sequence length. Until now, system works for accelerating LLM training have focused on the first three dimensions: data parallelism for batch size, tensor parallelism for hidden size and pipeline parallelism for model depth or layers. These widely studied forms of parallelism are not targeted or optimized for long sequence Transformer models. Given practical application needs for long sequence LLM, renewed attentions are being drawn to sequence para…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2310.01889": {
+    "checked_at": 1793252215,
+    "title": "Ring Attention with Blockwise Transformers for Near-Infinite Context",
+    "description": "Transformers have emerged as the architecture of choice for many state-of-the-art AI models, showcasing exceptional performance across a wide range of AI applications. However, the memory demands imposed by Transformers limit their ability to handle long sequences, thereby posing challenges in utilizing videos, actions, and other long-form sequences and modalities in complex environments. We present a novel approach, Ring Attention with Blockwise Transformers (Ring Attention), which leverages blockwise computation of self-attention and feedforward to distribute long sequences across multiple…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2310.03294": {
+    "checked_at": 1793252215,
+    "title": "DISTFLASHATTN: Distributed Memory-efficient Attention for Long-context LLMs Training",
+    "description": "FlashAttention (Dao, 2023) effectively reduces the quadratic peak memory usage to linear in training transformer-based large language models (LLMs) on a single GPU. In this paper, we introduce DISTFLASHATTN, a distributed memory-efficient attention mechanism optimized for long-context LLMs training. We propose three key techniques: token-level workload balancing, overlapping key-value communication, and a rematerialization-aware gradient checkpointing algorithm. We evaluate DISTFLASHATTN on Llama-7B and variants with sequence lengths from 32K to 512K. DISTFLASHATTN achieves 8x longer sequence…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2310.03744": {
     "checked_at": 1793212629,
     "title": "Improved Baselines with Visual Instruction Tuning",
     "description": "Large multimodal models (LMM) have recently shown encouraging progress with visual instruction tuning. In this note, we show that the fully-connected vision-language cross-modal connector in LLaVA is surprisingly powerful and data-efficient. With simple modifications to LLaVA, namely, using CLIP-ViT-L-336px with an MLP projection and adding academic-task-oriented VQA data with simple response formatting prompts, we establish stronger baselines that achieve state-of-the-art across 11 benchmarks. Our final 13B checkpoint uses merely 1.2M publicly available data, and finishes full training in ~1…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2310.06825": {
+    "checked_at": 1793252215,
+    "title": "Mistral 7B",
+    "description": "We introduce Mistral 7B v0.1, a 7-billion-parameter language model engineered for superior performance and efficiency. Mistral 7B outperforms Llama 2 13B across all evaluated benchmarks, and Llama 1 34B in reasoning, mathematics, and code generation. Our model leverages grouped-query attention (GQA) for faster inference, coupled with sliding window attention (SWA) to effectively handle sequences of arbitrary length with a reduced inference cost. We also provide a model fine-tuned to follow instructions, Mistral 7B -- Instruct, that surpasses the Llama 2 13B -- Chat model both on human and aut…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2311.09431": {
+    "checked_at": 1793252215,
+    "title": "Striped Attention: Faster Ring Attention for Causal Transformers",
+    "description": "To help address the growing demand for ever-longer sequence lengths in transformer models, Liu et al. recently proposed Ring Attention, an exact attention algorithm capable of overcoming per-device memory bottle- necks by distributing self-attention across multiple devices. In this paper, we study the performance characteristics of Ring Attention in the important special case of causal transformer models, and identify a key workload imbal- ance due to triangular structure of causal attention computations. We propose a simple extension to Ring Attention, which we call Striped Attention to fix…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2311.18677": {
     "checked_at": 1793212629,
@@ -214,6 +388,18 @@
     "title": "SGLang: Efficient Execution of Structured Language Model Programs",
     "description": "Large language models (LLMs) are increasingly used for complex tasks that require multiple generation calls, advanced prompting techniques, control flow, and structured inputs/outputs. However, efficient systems are lacking for programming and executing these applications. We introduce SGLang, a system for efficient execution of complex language model programs. SGLang consists of a frontend language and a runtime. The frontend simplifies programming with primitives for generation and parallelism control. The runtime accelerates execution with novel optimizations like RadixAttention for KV cac…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2401.03462": {
+    "checked_at": 1793252215,
+    "title": "Long Context Compression with Activation Beacon",
+    "description": "Long context compression is a critical research problem due to its significance in reducing the high computational and memory costs associated with LLMs. In this paper, we propose Activation Beacon, a plug-in module for transformer-based LLMs that targets effective, efficient, and flexible compression of long contexts. To achieve this, our method introduces the following technical designs. 1) We directly compress the activations (i.e. keys and values at every layer), rather than leveraging soft prompts to relay information (which constitute a major bottleneck to encapsulate the complex inform…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2401.04658": {
+    "checked_at": 1793252215,
+    "title": "Lightning Attention-2: A Free Lunch for Handling Unlimited Sequence Lengths in Large Language Models",
+    "description": "Linear attention is an efficient attention mechanism that has recently emerged as a promising alternative to conventional softmax attention. With its ability to process tokens in linear computational complexities, linear attention, in theory, can handle sequences of unlimited length without sacrificing speed, i.e., maintaining a constant training speed for various sequence lengths with a fixed memory consumption. However, due to the issue with cumulative summation (cumsum), current linear attention algorithms cannot demonstrate their theoretical advantage in a causal setting. In this paper, w…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2401.06066": {
     "checked_at": 1793212629,
@@ -233,6 +419,12 @@
     "description": "Autoregressive decoding makes the inference of Large Language Models (LLMs) time-consuming. In this paper, we reconsider speculative sampling and derive two key observations. Firstly, autoregression at the feature (second-to-top-layer) level is more straightforward than at the token level. Secondly, the inherent uncertainty in feature (second-to-top-layer) level autoregression constrains its performance. Based on these insights, we introduce EAGLE (Extrapolation Algorithm for Greater Language-model Efficiency), a simple yet highly efficient speculative sampling framework. By incorporating a t…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2402.04624": {
+    "checked_at": 1793252215,
+    "title": "MEMORYLLM: Towards Self-Updatable Large Language Models",
+    "description": "Existing Large Language Models (LLMs) usually remain static after deployment, which might make it hard to inject new knowledge into the model. We aim to build models containing a considerable portion of self-updatable parameters, enabling the model to integrate new knowledge effectively and efficiently. To this end, we introduce MEMORYLLM, a model that comprises a transformer and a fixed-size memory pool within the latent space of the transformer. MEMORYLLM can self-update with text knowledge and memorize the knowledge injected earlier. Our evaluations demonstrate the ability of MEMORYLLM to…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2402.07871": {
     "checked_at": 1793212629,
     "title": "Scaling Laws for Fine-Grained Mixture of Experts",
@@ -251,17 +443,59 @@
     "description": "Large language models such as GPT and Llama are trained with a next-token prediction loss. In this work, we suggest that training language models to predict multiple future tokens at once results in higher sample efficiency. More specifically, at each position in the training corpus, we ask the model to predict the following n tokens using n independent output heads, operating on top of a shared model trunk. Considering multi-token prediction as an auxiliary training task, we measure improved downstream capabilities with no overhead in training time for both code and natural language models.…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2405.04434": {
+    "checked_at": 1793252215,
+    "title": "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model",
+    "description": "We present DeepSeek-V2, a strong Mixture-of-Experts (MoE) language model characterized by economical training and efficient inference. It comprises 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens. DeepSeek-V2 adopts innovative architectures including Multi-head Latent Attention (MLA) and DeepSeekMoE. MLA guarantees efficient inference through significantly compressing the Key-Value (KV) cache into a latent vector, while DeepSeekMoE enables training strong models at an economical cost through sparse computation. Compared with DeepS…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2405.05254": {
     "checked_at": 1793212629,
     "title": "You Only Cache Once: Decoder-Decoder Architectures for Language Models",
     "description": "We introduce a decoder-decoder architecture, YOCO, for large language models, which only caches key-value pairs once. It consists of two components, i.e., a cross-decoder stacked upon a self-decoder. The self-decoder efficiently encodes global key-value (KV) caches that are reused by the cross-decoder via cross-attention. The overall model behaves like a decoder-only Transformer, although YOCO only caches once. The design substantially reduces GPU memory demands, yet retains global attention capability. Additionally, the computation flow enables prefilling to early exit without changing the f…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2405.07719": {
+    "checked_at": 1793252215,
+    "title": "USP: A Unified Sequence Parallelism Approach for Long Context Generative AI",
+    "description": "Sequence parallelism (SP), which divides the sequence dimension of input tensors across multiple computational devices, is becoming key to unlocking the long-context capabilities of generative AI models. This paper investigates the state-of-the-art SP approaches, i.e. DeepSpeed-Ulysses and Ring-Attention, and proposes a unified SP approach, which is more robust to transformer model architectures and network hardware topology. This paper compares the communication and memory cost of SP and existing parallelism, including data/tensor/zero/pipeline parallelism, and discusses the best practices f…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2405.10637": {
+    "checked_at": 1793252215,
+    "title": "Layer-Condensed KV Cache for Efficient Inference of Large Language Models",
+    "description": "Huge memory consumption has been a major bottleneck for deploying high-throughput large language models in real-world applications. In addition to the large number of parameters, the key-value (KV) cache for the attention mechanism in the transformer architecture consumes a significant amount of memory, especially when the number of layers is large for deep language models. In this paper, we propose a novel method that only computes and caches the KVs of a small number of layers, thus significantly saving memory consumption and improving inference throughput. Our experiments on large language…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2405.12981": {
+    "checked_at": 1793252215,
+    "title": "Reducing Transformer Key-Value Cache Size with Cross-Layer Attention",
+    "description": "Key-value (KV) caching plays an essential role in accelerating decoding for transformer-based autoregressive large language models (LLMs). However, the amount of memory required to store the KV cache can become prohibitive at long sequence lengths and large batch sizes. Since the invention of the transformer, two of the most effective interventions discovered for reducing the size of the KV cache have been Multi-Query Attention (MQA) and its generalization, Grouped-Query Attention (GQA). MQA and GQA both modify the design of the attention block so that multiple query heads can share a single…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2405.16039": {
     "checked_at": 1793212629,
     "title": "MoEUT: Mixture-of-Experts Universal Transformers",
     "description": "Previous work on Universal Transformers (UTs) has demonstrated the importance of parameter sharing across layers. By allowing recurrence in depth, UTs have advantages over standard Transformers in learning compositional generalizations, but layer-sharing comes with a practical limitation of parameter-compute ratio: it drastically reduces the parameter count compared to the non-shared model with the same dimensionality. Naively scaling up the layer size to compensate for the loss of parameters makes its computational resource requirements prohibitive. In practice, no previous work has succeede…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2406.03488": {
+    "checked_at": 1793252215,
+    "title": "Seq1F1B: Efficient Sequence-Level Pipeline Parallelism for Large Language Model Training",
+    "description": "The emergence of large language models (LLMs) relies heavily on distributed training strategies, among which pipeline parallelism plays a crucial role. As LLMs' training sequence length extends to 32k or even 128k, the current pipeline parallel methods face severe bottlenecks, including high memory footprints and substantial pipeline bubbles, greatly hindering model scalability and training throughput. To enhance memory efficiency and training throughput, in this work, we introduce an efficient sequence-level one-forward-one-backward (1F1B) pipeline scheduling method tailored for training LLM…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2406.09297": {
+    "checked_at": 1793252215,
+    "title": "MLKV: Multi-Layer Key-Value Heads for Memory Efficient Transformer Decoding",
+    "description": "Auto-regressive inference of transformers benefit greatly from Key-Value (KV) caching, but can lead to major memory bottlenecks as model size, batch size, and sequence length grow at scale. We introduce Multi-Layer Key-Value (MLKV) sharing, a novel approach extending KV sharing across transformer layers to reduce memory usage beyond what was possible with Multi-Query Attention (MQA) and Grouped-Query Attention (GQA). Evaluations on various NLP benchmarks and inference metrics using uptrained Pythia-160M variants demonstrate that MLKV significantly reduces memory usage with minimal performance…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2406.18485": {
+    "checked_at": 1793252215,
+    "title": "LoongTrain: Efficient Training of Long-Sequence LLMs with Head-Context Parallelism",
+    "description": "Efficiently training LLMs with long sequences is important yet challenged by the massive computation and memory requirements. Sequence parallelism has been proposed to tackle these problems, but existing methods suffer from scalability or efficiency issues. We propose LoongTrain, a novel system to efficiently train LLMs with long sequences at scale. The core of LoongTrain is the 2D-Attention mechanism, which combines both head-parallel and context-parallel techniques to break the scalability constraints while maintaining efficiency. We introduce Double-Ring-Attention and analyze the performan…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2406.19223": {
     "checked_at": 1793212629,
@@ -274,6 +508,12 @@
     "title": "Mixture of A Million Experts",
     "description": "The feedforward (FFW) layers in standard transformer architectures incur a linear increase in computational costs and activation memory as the hidden layer width grows. Sparse mixture-of-experts (MoE) architectures have emerged as a viable approach to address this issue by decoupling model size from computational cost. The recent discovery of the fine-grained MoE scaling law shows that higher granularity leads to better performance. However, existing MoE models are limited to a small number of experts due to computational and optimization challenges. This paper introduces PEER (parameter effi…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2407.08608": {
+    "checked_at": 1793252215,
+    "title": "FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision",
+    "description": "Attention, as a core layer of the ubiquitous Transformer architecture, is the bottleneck for large language models and long-context applications. FlashAttention elaborated an approach to speed up attention on GPUs through minimizing memory reads/writes. However, it has yet to take advantage of new capabilities present in recent hardware, with FlashAttention-2 achieving only 35% utilization on the H100 GPU. We develop three main techniques to speed up attention on Hopper GPUs: exploiting asynchrony of the Tensor Cores and TMA to (1) overlap overall computation and data movement via warp-specia…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2407.11633": {
     "checked_at": 1793212629,
@@ -323,11 +563,35 @@
     "description": "In this work, we upgrade the multi-head attention mechanism, the core of the Transformer model, to improve efficiency while maintaining or surpassing the previous accuracy level. We show that multi-head attention can be expressed in the summation form. Drawing on the insight that not all attention heads hold equal significance, we propose Mixture-of-Head attention (MoH), a new architecture that treats attention heads as experts in the Mixture-of-Experts (MoE) mechanism. MoH has two significant advantages: First, MoH enables each token to select the appropriate attention heads, enhancing infer…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2410.14442": {
+    "checked_at": 1793252215,
+    "title": "A Systematic Study of Cross-Layer KV Sharing for Efficient LLM Inference",
+    "description": "Recently, sharing key-value (KV) cache across layers has been found effective in efficient inference of large language models (LLMs). To systematically investigate different techniques of cross-layer KV sharing, we propose a unified framework that covers several recent methods and their novel variants. We conduct comprehensive experiments on all the configurations of the framework, evaluating their generation throughput and performance in language modeling and downstream tasks. We find that when reducing the size of the KV cache by 2$\\times$, most configurations can achieve higher throughput…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2410.18517": {
+    "checked_at": 1793252215,
+    "title": "KVSharer: Efficient Inference via Layer-Wise Dissimilar KV Cache Sharing",
+    "description": "The development of large language models (LLMs) has significantly expanded model sizes, resulting in substantial GPU memory requirements during inference. The key and value storage of the attention map in the KV (key-value) cache accounts for more than 80\\% of this memory consumption. Nowadays, most existing KV cache compression methods focus on intra-layer compression within a single Transformer layer but few works consider layer-wise compression. In this paper, we propose a plug-and-play method called \\textit{KVSharer}, which shares the KV cache between layers to achieve layer-wise compress…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2411.04996": {
     "checked_at": 1793212629,
     "title": "Mixture-of-Transformers: A Sparse and Scalable Architecture for Multi-Modal Foundation Models",
     "description": "The development of large language models (LLMs) has expanded to multi-modal systems capable of processing text, images, and speech within a unified framework. Training these models demands significantly larger datasets and computational resources compared to text-only LLMs. To address the scaling challenges, we introduce Mixture-of-Transformers (MoT), a sparse multi-modal transformer architecture that significantly reduces pretraining computational costs. MoT decouples non-embedding parameters of the model by modality -- including feed-forward networks, attention matrices, and layer normaliza…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2412.06464": {
+    "checked_at": 1793252215,
+    "title": "Gated Delta Networks: Improving Mamba2 with Delta Rule",
+    "description": "Linear Transformers have gained attention as efficient alternatives to standard Transformers, but their performance in retrieval and long-context tasks has been limited. To address these limitations, recent work has explored two distinct mechanisms: gating for adaptive memory control and the delta update rule for precise memory modifications. We observe that these mechanisms are complementary: gating enables rapid memory erasure while the delta rule facilitates targeted updates. Building on this insight, we introduce the gated delta rule and develop a parallel training algorithm optimized for…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2412.09764": {
+    "checked_at": 1793252215,
+    "title": "Memory Layers at Scale",
+    "description": "Memory layers use a trainable key-value lookup mechanism to add extra parameters to a model without increasing FLOPs. Conceptually, sparsely activated memory layers complement compute-heavy dense feed-forward layers, providing dedicated capacity to store and retrieve information cheaply. This work takes memory layers beyond proof-of-concept, proving their utility at contemporary scale. On downstream tasks, language models augmented with our improved memory layer outperform dense models with more than twice the computation budget, as well as mixture-of-expert models when matched for both compu…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2412.09871": {
     "checked_at": 1793212629,
@@ -341,11 +605,41 @@
     "description": "We present DeepSeek-V3, a strong Mixture-of-Experts (MoE) language model with 671B total parameters with 37B activated for each token. To achieve efficient inference and cost-effective training, DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and DeepSeekMoE architectures, which were thoroughly validated in DeepSeek-V2. Furthermore, DeepSeek-V3 pioneers an auxiliary-loss-free strategy for load balancing and sets a multi-token prediction training objective for stronger performance. We pre-train DeepSeek-V3 on 14.8 trillion diverse and high-quality tokens, followed by Supervised Fine-Tunin…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2501.00663": {
+    "checked_at": 1793252215,
+    "title": "Titans: Learning to Memorize at Test Time",
+    "description": "Over more than a decade there has been an extensive research effort on how to effectively utilize recurrent models and attention. While recurrent models aim to compress the data into a fixed-size memory (called hidden state), attention allows attending to the entire context window, capturing the direct dependencies of all tokens. This more accurate modeling of dependencies, however, comes with a quadratic cost, limiting the model to a fixed-length context. We present a new neural long-term memory module that learns to memorize historical context and helps attention to attend to the current co…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2501.08313": {
+    "checked_at": 1793252215,
+    "title": "MiniMax-01: Scaling Foundation Models with Lightning Attention",
+    "description": "We introduce MiniMax-01 series, including MiniMax-Text-01 and MiniMax-VL-01, which are comparable to top-tier models while offering superior capabilities in processing longer contexts. The core lies in lightning attention and its efficient scaling. To maximize computational capacity, we integrate it with Mixture of Experts (MoE), creating a model with 32 experts and 456 billion total parameters, of which 45.9 billion are activated for each token. We develop an optimized parallel strategy and highly efficient computation-communication overlap techniques for MoE and lightning attention. This ap…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2502.00592": {
+    "checked_at": 1793252215,
+    "title": "M+: Extending MemoryLLM with Scalable Long-Term Memory",
+    "description": "Equipping large language models (LLMs) with latent-space memory has attracted increasing attention as they can extend the context window of existing language models. However, retaining information from the distant past remains a challenge. For example, MemoryLLM (Wang et al., 2024a), as a representative work with latent-space memory, compresses past information into hidden states across all layers, forming a memory pool of 1B parameters. While effective for sequence lengths up to 16k tokens, it struggles to retain knowledge beyond 20k tokens. In this work, we address this limitation by introd…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2502.02900": {
     "checked_at": 1793212629,
     "title": "A Note on the Convergence of Muon",
     "description": "In this note, we inspect the convergence of a new optimizer for pretraining LLMs, namely the Muon optimizer. Such an optimizer is closely related to a specialized steepest descent method where the update direction is the minimizer of the quadratic approximation of the objective function under spectral norm. We provide the convergence analysis on both versions of the optimizer and discuss its implications.",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2502.11089": {
+    "checked_at": 1793252215,
+    "title": "Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention",
+    "description": "Long-context modeling is crucial for next-generation language models, yet the high computational cost of standard attention mechanisms poses significant computational challenges. Sparse attention offers a promising direction for improving efficiency while maintaining model capabilities. We present NSA, a Natively trainable Sparse Attention mechanism that integrates algorithmic innovations with hardware-aligned optimizations to achieve efficient long-context modeling. NSA employs a dynamic hierarchical sparse strategy, combining coarse-grained token compression with fine-grained token selectio…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2502.12216": {
+    "checked_at": 1793252215,
+    "title": "Tactic: Adaptive Sparse Attention with Clustering and Distribution Fitting for Long-Context LLMs",
+    "description": "Long-context models are essential for many applications but face inefficiencies in loading large KV caches during decoding. Prior methods enforce fixed token budgets for sparse attention, assuming a set number of tokens can approximate full attention. However, these methods overlook variations in the importance of attention across heads, layers, and contexts. To address these limitations, we propose Tactic, a sparsity-adaptive and calibration-free sparse attention mechanism that dynamically selects tokens based on their cumulative attention scores rather than a fixed token budget. By setting…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2502.13189": {
     "checked_at": 1793212629,
@@ -370,6 +664,12 @@
     "title": "Understanding Gradient Orthogonalization for Deep Learning via Non-Euclidean Trust-Region Optimization",
     "description": "Optimization with matrix gradient orthogonalization has recently demonstrated impressive results in the training of deep neural networks (Jordan et al., 2024; Liu et al., 2025). In this paper, we provide a theoretical analysis of this approach. In particular, we show that the orthogonalized gradient method can be seen as a first-order trust-region optimization method, where the trust-region is defined in terms of the matrix spectral norm. Motivated by this observation, we develop the stochastic non-Euclidean trust-region gradient method with momentum, which recovers the Muon optimizer (Jordan…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2503.16071": {
+    "checked_at": 1793252215,
+    "title": "Tuning LLMs by RAG Principles: Towards LLM-native Memory",
+    "description": "Memory, additional information beyond the training of large language models (LLMs), is crucial to various real-world applications, such as personal assistant. The two mainstream solutions to incorporate memory into the generation process are long-context LLMs and retrieval-augmented generation (RAG). In this paper, we first systematically compare these two types of solutions on three renovated/new datasets and show that (1) long-context solutions, although more expensive, shall be easier to capture the big picture and better answer queries which require considering the memory as a whole; and…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2504.10479": {
     "checked_at": 1793212629,
@@ -424,6 +724,12 @@
     "title": "Muon Optimizes Under Spectral Norm Constraints",
     "description": "The pursuit of faster optimization algorithms remains an active and important research direction in deep learning. Recently, the Muon optimizer [JJB+24] has demonstrated promising empirical performance, but its theoretical foundation remains less understood. In this paper, we bridge this gap and provide a theoretical analysis of Muon by placing it within the Lion-$\\mathcal{K}$ family of optimizers [CLLL24]. Specifically, we show that Muon corresponds to Lion-$\\mathcal{K}$ when equipped with the nuclear norm, and we leverage the theoretical results of Lion-$\\mathcal{K}$ to establish that Muon…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2506.15841": {
+    "checked_at": 1793252215,
+    "title": "MEM1: Learning to Synergize Memory and Reasoning for Efficient Long-Horizon Agents",
+    "description": "Modern language agents must operate over long-horizon, multi-turn interactions, where they retrieve external information, adapt to observations, and answer interdependent queries. Yet, most LLM systems rely on full-context prompting, appending all past turns regardless of their relevance. This leads to unbounded memory growth, increased computational costs, and degraded reasoning performance on out-of-distribution input lengths. We introduce MEM1, an end-to-end reinforcement learning framework that enables agents to operate with constant memory across long multi-turn tasks. At each turn, MEM1…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2506.20675": {
     "checked_at": 1793212629,
@@ -497,6 +803,18 @@
     "description": "Computer-Aided Design (CAD) is a foundational component of industrial prototyping, where models are defined not by raw coordinates but by construction sequences such as sketches and extrusions. This sequential structure enables both efficient prototype initialization and subsequent editing. Text-guided CAD prototyping, which unifies Text-to-CAD generation and CAD editing, has the potential to streamline the entire design pipeline. However, prior work has not explored this setting, largely because standard large language model (LLM) tokenizers decompose CAD sequences into natural-language word…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2509.21275": {
+    "checked_at": 1793252215,
+    "title": "Concertina: Data-Centric Adaptive Pipeline Parallelism for Efficient Heterogeneous Long-Context LLM Training",
+    "description": "Long context training is crucial for extending LLM context windows. Existing schemes, such as sequence parallelism, incur substantial communication overhead. Pipeline parallelism (PP) reduces this cost, but its effectiveness hinges on partitioning granularity. Batch-level PP employing sequence packing exhibits high memory consumption in long-context scenarios, whereas token-level PP splitting sequences into slices alleviates memory overhead but may introduce performance degradation. Moreover, the skewed sequence-length distribution in real-world datasets defeats any monolithic, static choice…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2509.21841": {
+    "checked_at": 1793252215,
+    "title": "Zeppelin: Balancing Variable-length Workloads in Data Parallel Large Model Training",
+    "description": "Training large language models (LLMs) with increasingly long and varying sequence lengths introduces severe load imbalance challenges in large-scale data-parallel training. Recent frameworks attempt to mitigate these issues through data reorganization or hybrid parallel strategies. However, they often overlook how computational and communication costs scale with sequence length, resulting in suboptimal performance. We identify three critical challenges: (1) varying computation-to-communication ratios across sequences of different lengths in distributed attention, (2) mismatch between static N…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2509.23106": {
     "checked_at": 1793212629,
     "title": "Effective Quantization of Muon Optimizer States",
@@ -509,6 +827,12 @@
     "description": "We present HunyuanImage 3.0, a native multimodal model that unifies multimodal understanding and generation within an autoregressive framework, with its image generation module publicly available. The achievement of HunyuanImage 3.0 relies on several key components, including meticulous data curation, advanced architecture design, a native Chain-of-Thoughts schema, progressive model pre-training, aggressive model post-training, and an efficient infrastructure that enables large-scale training and inference. With these advancements, we successfully trained a Mixture-of-Experts (MoE) model comp…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2509.24704": {
+    "checked_at": 1793252215,
+    "title": "MemGen: Weaving Generative Latent Memory for Self-Evolving Agents",
+    "description": "Agent memory shapes how Large Language Model (LLM)-powered agents, akin to the human brain, progressively refine themselves through environment interactions. Existing paradigms remain constrained: parametric memory forcibly adjusts model parameters, and retrieval-based memory externalizes experience into structured databases, yet neither captures the fluid interweaving of reasoning and memory that underlies human cognition. To address this gap, we propose MemGen, a dynamic generative memory framework that equips agents with a human-esque cognitive faculty. It consists of a \\textit{memory trig…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2509.25149": {
     "checked_at": 1793212629,
     "title": "Pretraining Large Language Models with NVFP4",
@@ -520,6 +844,12 @@
     "title": "Vocabulary Customization for Efficient Domain-Specific LLM Deployment",
     "description": "When using an LLM to process text outside the training domain(s), an often overlooked factor is vocabulary mismatch, where the general-domain tokenizer fails to capture frequent domain-specific terms, leading to higher token fertility and thus a decrease in processing speed due to suboptimal sub-word splits. We address this limitation by augmenting the pretrained vocabulary with a set of domain-specific tokens. To this end, we design an algorithm that extends an existing tokenizer while guaranteeing it never decreases tokenization efficiency: every input sequence is segmented into at most the…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2510.10620": {
+    "checked_at": 1793252215,
+    "title": "DCP: Addressing Input Dynamism In Long-Context Training via Dynamic Context Parallelism",
+    "description": "Context parallelism has emerged as a key technique to support long-context training, a growing trend in generative AI for modern large models. However, existing context parallel methods rely on static parallelization configurations that overlook the dynamic nature of training data, specifically, the variability in sequence lengths and token relationships (i.e., attention patterns) across samples. As a result, these methods often suffer from unnecessary communication overhead and imbalanced computation. In this paper, we present DCP, a dynamic context parallel training framework that introduce…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2510.11370": {
     "checked_at": 1793212629,
@@ -539,6 +869,18 @@
     "description": "Mixture-of-Experts (MoE) architectures have emerged as a promising approach to scale Large Language Models (LLMs). MoE boosts the efficiency by activating a subset of experts per token. Recent works show that fine-grained experts substantially enriches the combinatorial flexibility of active experts and enhances model expressiveness. However, such a design is fundamentally limited by the layer-local routing mechanism: each layer is restricted to its own expert pool. This requires a careful trade-off between expert dimensionality and routing diversity given fixed parameter budgets. We describe…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2510.17896": {
+    "checked_at": 1793252215,
+    "title": "Long-Context Attention Benchmark: From Kernel Efficiency to Distributed Context Parallelism",
+    "description": "Transformer-based large language models (LLMs) have achieved remarkable success, yet their standard attention mechanism incurs quadratic computation and memory costs with respect to sequence length, posing a major bottleneck for long-context training. Prior work tackles this challenge along two directions: (1) kernel-level optimizations, which accelerate dense and sparse attention operators; and (2) module-level strategies, often referred to as distributed attention or context parallel training, which scale attention across multiple devices. However, systematic evaluation still remains limite…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2510.18121": {
+    "checked_at": 1793252215,
+    "title": "Efficient Long-context Language Model Training by Core Attention Disaggregation",
+    "description": "We present core attention disaggregation (CAD), a technique that improves long-context large language model training by decoupling the core attention computation, softmax(QK^T)V, from the rest of the model and executing it on a separate pool of devices. In existing systems, core attention is colocated with other layers; at long context lengths, its quadratic compute growth compared to the near-linear growth of other components causes load imbalance and stragglers across data and pipeline parallel groups. CAD is enabled by two observations. First, core attention is stateless: it has no trainab…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2510.18234": {
     "checked_at": 1793212629,
     "title": "DeepSeek-OCR: Contexts Optical Compression",
@@ -557,6 +899,12 @@
     "description": "We introduce Emu3.5, a large-scale multimodal world model that natively predicts the next state across vision and language. Emu3.5 is pre-trained end-to-end with a unified next-token prediction objective on a corpus of vision-language interleaved data containing over 10 trillion tokens, primarily derived from sequential frames and transcripts of internet videos. The model naturally accepts interleaved vision-language inputs and generates interleaved vision-language outputs. Emu3.5 is further post-trained with large-scale reinforcement learning to enhance multimodal reasoning and generation. T…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2510.26692": {
+    "checked_at": 1793252215,
+    "title": "Kimi Linear: An Expressive, Efficient Attention Architecture",
+    "description": "We introduce Kimi Linear, a hybrid linear attention architecture that, for the first time, outperforms full attention under fair comparisons across various scenarios -- including short-context, long-context, and reinforcement learning (RL) scaling regimes. At its core lies Kimi Delta Attention (KDA), an expressive linear attention module that extends Gated DeltaNet with a finer-grained gating mechanism, enabling more effective use of limited finite-state RNN memory. Our bespoke chunkwise algorithm achieves high hardware efficiency through a specialized variant of the Diagonal-Plus-Low-Rank (D…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2511.00674": {
     "checked_at": 1793212629,
     "title": "Isotropic Curvature Model for Understanding Deep Learning Optimization: Is Gradient Orthogonalization Optimal?",
@@ -569,6 +917,12 @@
     "description": "Transformers replace recurrence with a memory that grows with sequence length and self-attention that enables ad-hoc lookups over past tokens. Consequently, they lack an inherent incentive to compress history into compact latent states with consistent transition rules. This often leads to learning solutions that generalize poorly. We introduce Next-Latent Prediction (NextLat), which extends standard next-token training with self-supervised predictions in the latent space. Specifically, NextLat trains a transformer to learn latent representations that are predictive of its next latent state gi…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2511.11571": {
+    "checked_at": 1793252215,
+    "title": "Optimizing Mixture of Block Attention",
+    "description": "Mixture of Block Attention (MoBA) (Lu et al., 2025) is a promising building block for efficiently processing long contexts in LLMs by enabling queries to sparsely attend to a small subset of key-value blocks, drastically reducing computational cost. However, the design principles governing MoBA's performance are poorly understood, and it lacks an efficient GPU implementation, hindering its practical adoption. In this paper, we first develop a statistical model to analyze MoBA's underlying mechanics. Our model reveals that performance critically depends on the router's ability to accurately di…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2511.14582": {
     "checked_at": 1793212629,
     "title": "OmniZip: Audio-Guided Dynamic Token Compression for Fast Omnimodal Large Language Models",
@@ -580,6 +934,12 @@
     "title": "Turbo-Muon: Almost-Orthogonal Pre-Conditioning for Fast Muon Updates",
     "description": "Orthogonality-based optimizers, such as Muon, have recently shown strong performance across large-scale training and community-driven efficiency challenges. However, these methods rely on a costly gradient orthogonalization step. Even efficient iterative approximations such as Newton-Schulz remain expensive, typically requiring dozens of matrix multiplications to converge. We introduce a pre-conditioning procedure that improves the initialization of the Newton--Schulz iterations while incurring negligible overhead. Furthermore, our pre-conditioning reduces the initial polar error and enables…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2512.12087": {
+    "checked_at": 1793252215,
+    "title": "BLASST: Dynamic BLocked Attention Sparsity via Softmax Thresholding",
+    "description": "The growing demand for long-context inference capabilities in Large Language Models (LLMs) has intensified the computational and memory bottlenecks inherent to the self-attention mechanism. To address this challenge, we introduce BLASST, a drop-in, dynamic sparse attention mechanism that accelerates inference by using only a fixed scalar threshold to skip attention blocks. Our method targets practical inference deployment by removing the barriers to adoption present in existing works. As such, BLASST eliminates training requirements, avoids expensive pre-computation passes, accelerates both p…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2512.19849": {
     "checked_at": 1793212629,
@@ -610,6 +970,18 @@
     "title": "mHC: Manifold-Constrained Hyper-Connections",
     "description": "Recently, studies exemplified by Hyper-Connections (HC) have extended the ubiquitous residual connection paradigm established over the past decade by expanding the residual stream width and diversifying connectivity patterns. While yielding substantial performance gains, this diversification fundamentally compromises the identity mapping property intrinsic to the residual connection, which causes severe training instability and restricted scalability, and additionally incurs notable memory access overhead. To address these challenges, we propose Manifold-Constrained Hyper-Connections (mHC), a…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2601.02780": {
+    "checked_at": 1793252215,
+    "title": "MiMo-V2-Flash Technical Report",
+    "description": "We present MiMo-V2-Flash, a Mixture-of-Experts (MoE) model with 309B total parameters and 15B active parameters, designed for fast, strong reasoning and agentic capabilities. MiMo-V2-Flash adopts a hybrid attention architecture that interleaves Sliding Window Attention (SWA) with global attention, with a 128-token sliding window under a 5:1 hybrid ratio. The model is pre-trained on 27 trillion tokens with Multi-Token Prediction (MTP), employing a native 32k context length and subsequently extended to 256k. To efficiently scale post-training compute, MiMo-V2-Flash introduces a novel Multi-Teac…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2601.05505": {
+    "checked_at": 1793252215,
+    "title": "FlashMem: Distilling Intrinsic Latent Memory via Computation Reuse",
+    "description": "The stateless architecture of Large Language Models inherently lacks the mechanism to preserve dynamic context, compelling agents to redundantly reprocess history to maintain long-horizon autonomy. While latent memory offers a solution, current approaches are hindered by architectural segregation, relying on auxiliary encoders that decouple memory from the reasoning backbone. We propose FlashMem, a framework that distills intrinsic memory directly from transient reasoning states via computation reuse. Leveraging the property that internal representations uniquely encode input trajectories, Fl…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2601.07372": {
     "checked_at": 1793212629,
@@ -671,6 +1043,12 @@
     "description": "We introduce Kimi K2.5, an open-source multimodal agentic model designed to advance general agentic intelligence. K2.5 emphasizes the joint optimization of text and vision so that two modalities enhance each other. This includes a series of techniques such as joint text-vision pre-training, zero-vision SFT, and joint text-vision reinforcement learning. Building on this multimodal foundation, K2.5 introduces Agent Swarm, a self-directed parallel agent orchestration framework that dynamically decomposes complex tasks into heterogeneous sub-problems and executes them concurrently. Extensive eval…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2602.03560": {
+    "checked_at": 1793252215,
+    "title": "HySparse: A Hybrid Sparse Attention Architecture with Oracle Token Selection and KV Cache Sharing",
+    "description": "This work introduces Hybrid Sparse Attention (HySparse), a new architecture that interleaves each full attention layer with several sparse attention layers. While conceptually simple, HySparse strategically derives each sparse layer's token selection and KV caches directly from the preceding full attention layer. This architecture resolves two fundamental limitations of prior sparse attention methods. First, conventional approaches typically rely on additional proxies to predict token importance, introducing extra complexity and potentially suboptimal performance. In contrast, HySparse uses t…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2602.04683": {
     "checked_at": 1793212629,
     "title": "UniAudio 2.0: A Unified Audio Language Model with Text-Aligned Factorized Audio Tokenization",
@@ -719,6 +1097,18 @@
     "description": "Discrete audio tokenizers are fundamental to empowering large language models with native audio processing and generation capabilities. Despite recent progress, existing approaches often rely on pretrained encoders, semantic distillation, or heterogeneous CNN-based architectures. These designs introduce fixed inductive biases that limit reconstruction fidelity and hinder effective scaling. In this paper, we argue that discrete audio tokenization should be learned fully end-to-end using a homogeneous and scalable architecture. To this end, we first propose CAT (Causal Audio Tokenizer with Tran…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2602.11686": {
+    "checked_at": 1793252215,
+    "title": "LAER-MoE: Load-Adaptive Expert Re-layout for Efficient Mixture-of-Experts Training",
+    "description": "Expert parallelism is vital for effectively training Mixture-of-Experts (MoE) models, enabling different devices to host distinct experts, with each device processing different input data. However, during expert parallel training, dynamic routing results in significant load imbalance among experts: a handful of overloaded experts hinder overall iteration, emerging as a training bottleneck. In this paper, we introduce LAER-MoE, an efficient MoE training framework. The core of LAER-MoE is a novel parallel paradigm, Fully Sharded Expert Parallel (FSEP), which fully partitions each expert paramet…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2602.11761": {
+    "checked_at": 1793252215,
+    "title": "MiniCPM-SALA: Hybridizing Sparse and Linear Attention for Efficient Long-Context Modeling",
+    "description": "The evolution of large language models (LLMs) towards applications with ultra-long contexts faces challenges posed by the high computational and memory costs of the Transformer architecture. While existing sparse and linear attention mechanisms attempt to mitigate these issues, they typically involve a trade-off between memory efficiency and model performance. This paper introduces MiniCPM-SALA, a 9B-parameter hybrid architecture that integrates the high-fidelity long-context modeling of sparse attention (InfLLM-V2) with the global efficiency of linear attention (Lightning Attention). By empl…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2602.15763": {
     "checked_at": 1793212629,
     "title": "GLM-5: from Vibe Coding to Agentic Engineering",
@@ -743,11 +1133,23 @@
     "description": "Modern language models still rely on fixed, pre-defined subword tokenizations. Once a tokenizer is trained, the LM can only operate at this fixed level of granularity, which often leads to brittle and counterintuitive behaviors even in otherwise strong reasoning models. We introduce \\textbf{ByteFlow Net}, a new hierarchical architecture that removes tokenizers entirely and instead enables models to learn their own segmentation of raw byte streams into semantically meaningful units. ByteFlow Net performs compression-driven segmentation based on the coding rate of latent representations, yieldi…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2603.05451": {
+    "checked_at": 1793252215,
+    "title": "FlashAttention-4: Algorithm and Kernel Pipelining Co-Design for Asymmetric Hardware Scaling",
+    "description": "Attention, as a core layer of the ubiquitous Transformer architecture, is the bottleneck for large language models and long-context applications. While FlashAttention-3 optimized attention for Hopper GPUs through asynchronous execution and warp specialization, it primarily targets the H100 architecture. The AI industry has rapidly transitioned to deploying Blackwell-based systems such as the B200 and GB200, which exhibit fundamentally different performance characteristics due to asymmetric hardware scaling: tensor core throughput doubles while other functional units (shared memory bandwidth,…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2603.11099": {
     "checked_at": 1793212629,
     "title": "Graph Tokenization for Bridging Graphs and Transformers",
     "description": "The success of large pretrained Transformers is closely tied to tokenizers, which convert raw input into discrete symbols. Extending these models to graph-structured data remains a significant challenge. In this work, we introduce a graph tokenization framework that generates sequential representations of graphs by combining reversible graph serialization, which preserves graph information, with Byte Pair Encoding (BPE), a widely adopted tokenizer in large language models (LLMs). To better capture structural information, the graph serialization process is guided by global statistics of graph…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2603.12201": {
+    "checked_at": 1793252215,
+    "title": "IndexCache: Accelerating Sparse Attention via Cross-Layer Index Reuse",
+    "description": "Long-context agentic workflows have emerged as a defining use case for large language models, making attention efficiency critical for both inference speed and serving cost. Sparse attention addresses this challenge effectively, and DeepSeek Sparse Attention (DSA) is a representative production-grade solution: a lightweight lightning indexer selects the top-k most relevant tokens per query, reducing core attention from $O(L^2)$ to $O(Lk)$. However, the indexer itself retains $O(L^2)$ complexity and must run independently at every layer, despite the fact that the resulting top-k selections are…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2603.13606": {
     "checked_at": 1793212629,
@@ -767,6 +1169,12 @@
     "description": "Scaling depth is a key driver for large language models (LLMs). Yet, as LLMs become deeper, they often suffer from signal degradation: informative features formed in shallow layers are gradually diluted by repeated residual updates, making them harder to recover in deeper layers. We introduce mixture-of-depths attention (MoDA), a mechanism that allows each attention head to attend to sequence KV pairs at the current layer and depth KV pairs from preceding layers. We further describe a hardware-efficient algorithm for MoDA that resolves non-contiguous memory-access patterns, achieving 97.3% of…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2603.15634": {
+    "checked_at": 1793252215,
+    "title": "NextMem: Towards Latent Factual Memory for LLM-based Agents",
+    "description": "Memory is critical for LLM-based agents to preserve past observations for future decision-making, where factual memory serves as its foundational part. However, existing approaches to constructing factual memory face several limitations. Textual methods impose heavy context and indexing burdens, while parametric methods suffer from catastrophic forgetting and high costs. To address these challenges, we introduce NextMem, a latent factual memory framework that utilizes an autoregressive autoencoder to efficiently construct latent memory while ensuring accurate reconstruction. For better optimi…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2603.17942": {
     "checked_at": 1793212629,
     "title": "Efficient Training-Free Multi-Token Prediction via Embedding-Space Probing",
@@ -779,11 +1187,29 @@
     "description": "Due to the great saving of computation and memory overhead, token compression has become a research hot-spot for MLLMs and achieved remarkable progress in image-language tasks. However, for the video, existing methods still fall short of high-ratio token compression. We attribute this shortcoming to the insufficient modeling of temporal and continual video content, and propose a novel and training-free token pruning method for video MLLMs, termed ForestPrune, which achieves effective and high-ratio pruning via Spatial-temporal Forest Modeling. In practice, ForestPrune construct token forests…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2603.28458": {
+    "checked_at": 1793252215,
+    "title": "HISA: Efficient Hierarchical Indexing for Fine-Grained Sparse Attention",
+    "description": "Token-level sparse attention mechanisms, exemplified by DeepSeek Sparse Attention (DSA), achieve fine-grained key selection by scoring every historical key for each query through a lightweight indexer, then computing attention only on the selected subset. While the downstream sparse attention itself scales favorably, the indexer must still scan the entire prefix for every query, introducing an per-layer bottleneck that grows prohibitively with context length. We propose HISA (Hierarchical Indexed Sparse Attention), a plug-and-play replacement for the indexer that rewrites the search path from…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2604.07815": {
+    "checked_at": 1793252215,
+    "title": "AsyncTLS: Efficient Generative LLM Inference with Asynchronous Two-level Sparse Attention",
+    "description": "Long-context inference in LLMs faces the dual challenges of quadratic attention complexity and prohibitive KV cache memory. While token-level sparse attention offers superior accuracy, its indexing overhead is costly; block-level methods improve efficiency but sacrifice precision. We propose AsyncTLS, a hierarchical sparse attention system that combines coarse-grained block filtering with fine-grained token selection to balance accuracy and efficiency, coupled with an asynchronous offloading engine that overlaps KV cache transfers with computation via temporal locality exploitation. Evaluated…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2604.11035": {
     "checked_at": 1793212629,
     "title": "Introspective Diffusion Language Models",
     "description": "Diffusion language models promise parallel generation, yet still lag behind autoregressive (AR) models in quality. We stem this gap to a failure of introspective consistency: AR models agree with their own generations, while DLMs often do not. We define the introspective acceptance rate, which measures whether a model accepts its previously generated tokens. This reveals why AR training has a structural advantage: causal masking and logit shifting implicitly enforce introspective consistency. Motivated by this observation, we introduce Introspective Diffusion Language Model (I-DLM), a paradig…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2604.12452": {
+    "checked_at": 1793252215,
+    "title": "Latent-Condensed Transformer for Efficient Long Context Modeling",
+    "description": "Large language models (LLMs) face significant challenges in processing long contexts due to the linear growth of the key-value (KV) cache and quadratic complexity of self-attention. Existing approaches address these bottlenecks separately: Multi-head Latent Attention (MLA) reduces the KV cache by projecting tokens into a low-dimensional latent space, while sparse attention reduces computation. However, sparse methods cannot operate natively on MLA's compressed latent structure, missing opportunities for joint optimization. In this paper, we propose Latent-Condensed Attention (LCA), which dire…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2604.18473": {
     "checked_at": 1793212629,
@@ -791,11 +1217,35 @@
     "description": "Extending a fully post-trained language model with new domain capabilities is fundamentally limited by monolithic training paradigms: retraining from scratch is expensive and scales poorly, while continued training often degrades existing capabilities. We present BAR (Branch-Adapt-Route), which trains independent domain experts, each through its own mid-training, supervised finetuning, and reinforcement learning pipeline, and composes them via a Mixture-of-Experts architecture with lightweight router training. Unlike retraining approaches that mix all domains and require full reprocessing for…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2604.19654": {
+    "checked_at": 1793252215,
+    "title": "FEPLB: Exploiting Copy Engines for Nearly Free MoE Load Balancing in Distributed Training",
+    "description": "Fine-grained, per-micro-batch load balancing is essential for efficient Mixture-of-Experts (MoE) training, yet every prior dynamic scheduling scheme pays for it with extra communication that is hard to hide. Especially on modern bulk-transfer backends such as DeepEP. We make a simple but consequential observation: on the NVIDIA Hopper architecture the NVLink Copy Engine can move data between intra-node GPUs without consuming any SM cycles, effectively providing a nearly free communication channel that runs in parallel with compute kernels. FEPLB turns this idle hardware into a new parallel di…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2604.22782": {
+    "checked_at": 1793252215,
+    "title": "Stochastic KV Routing: Enabling Adaptive Depth-Wise Cache Sharing",
+    "description": "Serving transformer language models with high throughput requires caching Key-Values (KVs) to avoid redundant computation during autoregressive generation. The memory footprint of KV caching is significant and heavily impacts serving costs. This work proposes to lessen these memory requirements. While recent work has largely addressed KV cache reduction via compression and eviction along the temporal axis, we argue that the \\emph{depth} dimension offers an orthogonal and robust avenue for optimization. Although prior research suggests that a full cache for every layer is redundant, implementi…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2604.23108": {
     "checked_at": 1793212629,
     "title": "Mixture of Heterogeneous Grouped Experts for Language Modeling",
     "description": "Large Language Models (LLMs) based on Mixture-of-Experts (MoE) are pivotal in industrial applications for their ability to scale performance efficiently. However, standard MoEs enforce uniform expert sizes,creating a rigidity that fails to align computational costs with varying token-level complexity. While heterogeneous expert architectures attempt to address this by diversifying expert sizes, they often suffer from significant system-level challenges, specifically unbalanced GPU utilization and inefficient parameter utilization, which hinder practical deployment. To bridge the gap between t…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2604.26837": {
+    "checked_at": 1793252215,
+    "title": "Unifying Sparse Attention with Hierarchical Memory for Scalable Long-Context LLM Serving",
+    "description": "Long-context LLM serving is bottlenecked by the cost of attending over ever-growing KV caches. Dynamic sparse attention promises relief by accessing only a small, query-dependent subset of the KV state per decoding step and extending the KV storage to CPU memory. In practice, however, these algorithmic savings rarely translate into end-to-end system-level gains because sparse methods typically operate at different granularities and thus rely on ad hoc, per-algorithm implementations. At the same time, hierarchical KV storage introduces a new systems bottleneck: retrieving fine-grained, irregul…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2604.27089": {
+    "checked_at": 1793252215,
+    "title": "AutoSP: Unlocking Long-Context LLM Training Via Compiler-Based Sequence Parallelism",
+    "description": "Large-language-models (LLMs) demonstrate enormous utility in long-context tasks which require processing prompts that consist of tens to hundreds of thousands of tokens. However, existing LLM training libraries do not provide easy to use abstractions to optimize for long-context training, instead focusing on optimizations for models with large parameter counts through ZeRO-3/FSDP, Tensor and Pipeline parallelism. This forces users to rewrite LLM training libraries to incorporate compositions of various complex long-context optimizations, such as sequence-parallelism, to training pipelines; a…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2605.06663": {
     "checked_at": 1793212629,
@@ -809,11 +1259,23 @@
     "description": "Most Mixture-of-Experts (MoE) transformers preassign each expert to one layer for the whole of training. We study whether a brief global-access phase can learn a compatible expert-to-layer allocation that is then executed privately. UniPool-Lock gives every layer its own router over one global pool, balances aggregate pool usage, and scores experts with a scale-stable NormRouter. After the short ownership-learning phase, it assigns each expert to one layer, locks the disjoint allocation, and continues training as a layer-private MoE. With the same expert-FFN budget and routed expert FLOPs, th…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2605.07363": {
+    "checked_at": 1793252215,
+    "title": "MISA: Mixture of Indexer Sparse Attention for Long-Context LLM Inference",
+    "description": "DeepSeek Sparse Attention (DSA) sets the state of the art for fine-grained inference-time sparse attention by introducing a learned token-wise indexer that scores every prefix token and selects the most relevant ones for the main attention. To remain expressive, the indexer uses many query heads (for example, 64 on DeepSeek-V3.2) that share the same selected token set; this multi-head design is precisely what makes the indexer the dominant cost on long contexts. We propose MISA (Mixture of Indexer Sparse Attention), a drop-in replacement for the DSA indexer that treats its indexer heads as a…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2605.11706": {
     "checked_at": 1793212629,
     "title": "GRAFT: Graph-Tokenized LLMs for Tool Planning",
     "description": "Large language models (LLMs) are increasingly used to complete complex tasks by selecting and coordinating external tools across multiple steps. This requires aligning tool choices with subtask intent while satisfying directional execution dependencies among tools. To do this, existing methods model these dependencies as tool graphs and incorporate the graphs with LLMs through retrieval, serialization, or prompt-level injection. However, these external graph-use strategies all follow a matching paradigm, which often fails to align tool choices with the underlying subtask structure, producing…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2605.12357": {
+    "checked_at": 1793252215,
+    "title": "$δ$-mem: Efficient Online Memory for Large Language Models",
+    "description": "Large language models increasingly need to accumulate and reuse historical information in long-term assistants and agent systems. Simply expanding the context window is costly and often fails to ensure effective context utilization. We propose $δ$-mem, a lightweight memory mechanism that augments a frozen full-attention backbone with a compact online state of associative memory. $δ$-mem compresses past information into a fixed-size state matrix updated by delta-rule learning, and uses its readout to generate low-rank corrections to the backbone's attention computation during generation. With…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2605.12374": {
     "checked_at": 1793212629,
@@ -827,6 +1289,18 @@
     "description": "Modern LLM RL systems separate rollout generation from policy optimization. These two stages are expected to produce token probabilities that match exactly. However, implementation differences can make them assign different values to the same sequence under the same model weights, inducing Training-Inference Mismatch (TIM). TIM is difficult to inspect because it is entangled with off-policy drift and common stabilization mechanisms. In this work, we isolate TIM in a zero-mismatch diagnostic setting (VeXact), and show that small token-level numerical disagreements can independently cause train…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2605.15250": {
+    "checked_at": 1793252215,
+    "title": "GQLA: Group-Query Latent Attention for Hardware-Adaptive Decoding",
+    "description": "Decoding efficiency depends on KV-cache traffic, computation, and parallelism. Multi-head Latent Attention (MLA) offers absorbed and head-expanded forms, but its head-specific projections limit grouped KV sharing. We introduce Group-Query Latent Attention (GQLA), whose group-shared up-projections preserve a joint latent and enable a shardable expanded cache. The same weights support equivalent MQA-absorb and GQA execution using existing kernels. Roofline analysis relates path preference to GPU compute-to-bandwidth ratio and tensor parallelism (TP): absorption trades traffic for computation an…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2605.15250v4": {
+    "checked_at": 1793252215,
+    "title": "GQLA: Group-Query Latent Attention for Hardware-Adaptive Decoding",
+    "description": "Decoding efficiency depends on KV-cache traffic, computation, and parallelism. Multi-head Latent Attention (MLA) offers absorbed and head-expanded forms, but its head-specific projections limit grouped KV sharing. We introduce Group-Query Latent Attention (GQLA), whose group-shared up-projections preserve a joint latent and enable a shardable expanded cache. The same weights support equivalent MQA-absorb and GQA execution using existing kernels. Roofline analysis relates path preference to GPU compute-to-bandwidth ratio and tensor parallelism (TP): absorption trades traffic for computation an…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2605.18855": {
     "checked_at": 1793212629,
     "title": "Delta Attention Residuals",
@@ -838,6 +1312,12 @@
     "title": "Delta Attention Residuals",
     "description": "Attention Residuals replace standard additive residual connections with learned softmax attention over previous layer outputs, enabling selective cross-layer routing. However, standard Attention Residuals still attend over cumulative hidden states in previous layers, which are highly redundant. We show that this redundancy leads to routing collapse in deeper layers: attention weights become low-contrast and closer to uniform (max weight ${\\approx}$0.2), limiting the model's ability to select informative states in previous layers. This raises a key but underexplored design question: what layer…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2605.22791": {
+    "checked_at": 1793252215,
+    "title": "Gated DeltaNet-2: Decoupling Erase and Write in Linear Attention",
+    "description": "Linear attention replaces the unbounded cache of softmax attention with a fixed-size recurrent state, reducing sequence mixing to linear time and decoding to constant memory. The hard part is not just what to forget, but how to edit this compressed memory without scrambling existing associations. Delta-rule models subtract the current read before writing a new value, and Kimi Delta Attention (KDA) sharpens forgetting with channel-wise decay. But the active edit still uses a single scalar gate to control two different things: how much old content to erase on the key side and how much new conte…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2605.26494": {
     "checked_at": 1793212629,
@@ -875,6 +1355,42 @@
     "description": "Mixture-of-Experts (MoE) and looped architectures scale models along two orthogonal axes, namely parameter capacity and effective depth. However, mainstream looped architectures rely on dense backbones that couple parameter count with per-token FLOPs, which makes it impossible to isolate the effect of iterative computation under matched budgets. To this end, we present LoopMoE, a looped MoE language model that integrates sparse routing with iterative weight-shared computation through two designs. The first is IterAdaLN, which resolves weight-sharing symmetry via a modulation signal jointly co…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2606.04511": {
+    "checked_at": 1793252215,
+    "title": "SparDA: Sparse Decoupled Attention for Efficient Long-Context LLM Inference",
+    "description": "Sparse attention reduces compute and memory bandwidth for long-context LLM inference. However, two key challenges remain: (1) KV cache capacity still grows with sequence length, and offloading to CPU memory introduces a PCIe transfer bottleneck; (2) the sparse selection step itself retains $O(T^2)$ complexity and can dominate attention cost at long contexts. We propose SparDA, a decoupled sparse attention architecture that introduces a fourth per-layer projection, the Forecast, alongside Query, Key, and Value. The Forecast predicts the KV blocks needed by the next layer, enabling lookahead se…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2606.04536": {
+    "checked_at": 1793252215,
+    "title": "Scaling Self-Evolving Agents via Parametric Memory",
+    "description": "Existing memory-augmented LLM agents store past experience exclusively in prompt space, as textual summaries or retrieved passages, while keeping model parameters frozen throughout a rollout. Such agents can \\emph{look up} what they have seen but cannot \\emph{learn from} it: their policy is unchanged by experience, and any information dropped from the context is permanently lost. We introduce \\texttt{TMEM}, a self-evolving parametric memory framework in which the agent not only compresses history into explicit memory but also absorbs distilled supervision into fast LoRA weights $Δ_t$ via ligh…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2606.06453": {
+    "checked_at": 1793252215,
+    "title": "Vortex: Efficient and Programmable Sparse Attention Serving for AI Agents",
+    "description": "Sparse attention is becoming increasingly important for serving large language models (LLMs) as generation lengths continue to grow. However, deploying and evaluating new sparse attention algorithms at scale remains highly engineering-intensive, slowing both human researchers and AI agents in exploring the sparse attention design. To address this challenge, we present Vortex, a system that combines a Python-embedded frontend language atop a page-centric tensor abstraction for expressing a broad range of sparse attention algorithms, with an efficient backend tightly integrated into modern LLM…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2606.06467": {
+    "checked_at": 1793252215,
+    "title": "You Only Index Once: Cross-Layer Sparse Attention with Shared Routing",
+    "description": "Long-context inference in modern LLMs is increasingly constrained by decoding efficiency, especially in reasoning-heavy settings where models generate long intermediate chains of thought. Existing sparse attention methods often face a practical efficiency-quality trade-off. Structured block sparse methods typically provide stronger acceleration but incur noticeable quality loss, while token sparse methods are usually more accurate yet deliver limited end-to-end speedup because top-k routing over the full cache remains expensive. In this work, we propose cross-layer sparse attention (CLSA), wh…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2606.13392": {
+    "checked_at": 1793252215,
+    "title": "MiniMax Sparse Attention",
+    "description": "Ultra-long-context capability is becoming indispensable for frontier LLMs: agentic workflows, repository-scale code reasoning, and persistent memory all require the model to jointly attend over hundreds of thousands to millions of tokens, yet the quadratic cost of softmax attention makes this untenable at deployment scale. We introduce MiniMax Sparse Attention (MSA), a blockwise sparse attention built upon Grouped Query Attention (GQA). A lightweight Index Branch scores key-value blocks and independently selects a Top-k subset for each GQA group, enabling group-specific sparse retrieval while…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2606.15079": {
+    "checked_at": 1793252215,
+    "title": "Ling and Ring 2.6 Technical Report: Efficient and Instant Agentic Intelligence at Trillion-Parameter Scale",
+    "description": "Efficient and scalable agentic intelligence requires models that can deliver both low-latency responses and strong reasoning capabilities while remaining practical to train, serve, and deploy. In this report, we present Ling-2.6 and Ring-2.6, a family of models designed to address this challenge at scale. Ling-2.6 is optimized for instant response generation and high capability per output token, whereas Ring-2.6 is tailored for deeper reasoning and more advanced agentic workflows. Instead of training from scratch, we upgrade the Ling-2.0 base model through architectural migration pre-training…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2606.16371": {
     "checked_at": 1793212629,
     "title": "CacheMuon: Using Temporal Preconditioning To Approximate Polar Factor",
@@ -899,6 +1415,12 @@
     "description": "We present a preview version of DeepSeek-V4 series, including two strong Mixture-of-Experts (MoE) language models -- DeepSeek-V4-Pro with 1.6T parameters (49B activated) and DeepSeek-V4-Flash with 284B parameters (13B activated) -- both supporting a context length of one million tokens. DeepSeek-V4 series incorporate several key upgrades in architecture and optimization: (1) a hybrid attention architecture that combines Compressed Sparse Attention (CSA) and Heavily Compressed Attention (HCA) to improve long-context efficiency; (2) Manifold-Constrained Hyper-Connections (mHC) that enhance conv…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2606.24775": {
+    "checked_at": 1793252215,
+    "title": "Are We Ready For An Agent-Native Memory System?",
+    "description": "Memory for large language model (LLM) agents has rapidly evolved from simple retrieval-augmented mechanisms into a data management system that supports persistent information storage, retrieval, update, consolidation, and dynamic lifecycle governance throughout agent execution. Despite this evolution, existing evaluations still benchmark agent memory mainly through end-to-end task success metrics (e.g., F1, BLEU), while treating the underlying system as a monolithic black box. As a result, critical system-level concerns, including operational costs, architectural trade-offs across memory modu…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2607.01218": {
     "checked_at": 1793212629,
     "title": "The State-Prediction Separation Hypothesis",
@@ -916,6 +1438,12 @@
     "title": "DSpark: Confidence-Scheduled Speculative Decoding with Semi-Autoregressive Generation",
     "description": "Speculative decoding accelerates Large Language Model (LLM) inference by decoupling draft generation from target verification. While recent parallel drafters efficiently propose long token sequences in a single forward pass, they suffer from rapid acceptance decay due to a lack of inter-token dependencies. Furthermore, indiscriminately verifying these extended blocks wastes critical batch capacity on tokens with high rejection risks, severely degrading throughput in high-concurrency serving systems. We introduce DSpark, a speculative decoding framework that unifies high-throughput parallel ge…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2607.05969": {
+    "checked_at": 1793252215,
+    "title": "MemDefrag: Latent Memory Defragmentation for Large Language Models",
+    "description": "Latent memory, which stores past knowledge fragments as per-layer hidden states, has emerged as a promising paradigm (e.g., MemoryLLM and M+) for long-term memory in large language models (LLMs). However, the paradigm suffers from significant performance degradation during memory updates, due to positional encoding misalignment and the absence of any tracing mechanism to distinguish target memory fragments from irrelevant ones. To discover such a tracing mechanism, we probe the layer-wise attention density over stored memory fragments, and find that a small set of middle transformer layers co…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2607.06202": {
     "checked_at": 1793212629,
@@ -947,17 +1475,53 @@
     "description": "Hyper-Connections (HC) expand the residual stream of Transformers into $N$ parallel streams, providing a form of memory scaling beyond model width and depth. Manifold-Constrained HC (mHC) stabilizes this formulation at scale. The large gains from $N{=}1$ to $N{=}4$ suggest residual-stream expansion as a promising scaling axis. However, existing HC-family methods typically stop at $N{=}4$. Our experiments reveal why: scaling mHC beyond this point yields diminishing performance gains and rapidly increasing training cost. We attribute this limitation to two bottlenecks: insufficient write-back i…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2607.24653": {
+    "checked_at": 1793252215,
+    "title": "Kimi K3: Open Frontier Intelligence",
+    "description": "We introduce Kimi K3, a 2.8T parameter Mixture-of-Experts model with 104 billion activated parameters, native vision capabilities, and a 1-million-token context window. Kimi K3 is built on Kimi Delta Attention and Attention Residuals, which improve information flow across sequence length and model depth. Together with Stable LatentMoE, which effectively activates 16 of 896 routed experts per token, and refined training and data recipes, these advances yield an approximately 2.5x improvement in overall scaling efficiency over Kimi K2. Post-training highlights reinforcement learning across gene…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2607.26760": {
+    "checked_at": 1793252215,
+    "title": "Metis: Memory Foundation Model",
+    "description": "Recent advances in AI agents have increasingly internalized native capabilities into their underlying foundation models, giving rise to multimodal foundation models and large reasoning models. However, agent memory is still primarily implemented through external modules, leaving the native memory capability largely unexplored. In this paper, we take a first step toward this direction by introducing memory foundation models, which empower foundation models with native memory capabilities. We formalize native memory from two perspectives: a persistent and dynamically evolving memory state withi…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2607.28611": {
     "checked_at": 1793212629,
     "title": "Chimera: Designing and Chinchilla-Scaling Hybrid Visual Diffusion Transformers",
     "description": "Visual generation increasingly requires high-resolution images, long videos, and multimodal context, making the quadratic cost of full attention prohibitive. We introduce Chimera, a hybrid visual diffusion backbone with a principled scaling recipe. Chimera processes text, image, and video tokens in one raster-ordered stream without positional embeddings. It combines Kimi Delta Attention (KDA) for long-context state tracking with O(N) complexity, interleaved Multi-head Latent Attention (MLA) for direct global interaction, and modality-aware short convolutions for local spatiotemporal context.…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2608.01630": {
+    "checked_at": 1793252215,
+    "title": "RING: Retrieval-Internalized Generation for Continual Large-Scale Knowledge Injection",
+    "description": "Retrieval-augmented generation (RAG) improves factuality but adds latency and engineering overhead at serving time. We propose RING (Retrieval-Internalized Generation), a holistic paradigm spanning both architecture and training that injects large-scale external knowledge into a \\textit{Mixture-of-Memory Experts} and learns parametric search over this internal memory via reinforcement learning, removing the external retriever entirely. Training proceeds in three stages: continued pre-training injects new corpora into a Knowledge Expert via our novel \\textit{Dual Causal Attention}; supervised…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2608.01662": {
+    "checked_at": 1793252215,
+    "title": "LongCat Sparse Attention: Taming the Lightning via Streaming-aware Hierarchical Cross-Layer Indexing",
+    "description": "DeepSeek Sparse Attention (DSA) enables efficient long-context modeling through its Lightning Indexer. However, practical deployment remains constrained by the indexer's expensive $O(L^2)$ scoring overhead and the hardware-inefficient, discontinuous memory-access patterns induced by its outputs. To address these system-level bottlenecks, we introduce LongCat Sparse Attention (LSA), a hardware-algorithm co-designed framework comprising three complementary and orthogonal strategies: (1) Streaming-Aware Indexing, which selectively converts scattered KV entries into hardware-aligned contiguous la…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2608.01672": {
+    "checked_at": 1793252215,
+    "title": "Learning What to Remember: Test-Time Training via Context Distillation",
+    "description": "Effective long-context modeling is not merely about retaining more of the past, but about preserving the information that may prove relevant later. Test-time training (TTT) is an appealing approach that performs online parameter updates for long-context modeling, yet existing TTT methods only optimize either reconstruction or online adaptation objectives without considering the future utility of retained information. In this work, we propose \\textbf{T}est-\\textbf{T}ime \\textbf{C}ontext \\textbf{D}istillation (TTCD), a TTT framework that introduces a self-supervised objective for allocating lim…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2608.01784": {
     "checked_at": 1793212629,
     "title": "REFLEX: Rethinking MoE Inference as Refinement-Aware Compute Allocation in Diffusion Language Models",
     "description": "Mixture-of-experts (MoE) models increase parameter capacity by activating only a small subset of experts for each token. This conditional-computation paradigm has enabled autoregressive language models to scale model capacity without a proportional increase in per-token computation. In diffusion language models (DLMs), however, each denoising forward jointly revisits all token positions despite their sharply different refinement demands, while the default fixed token-choice routing assigns them a uniform expert budget, creating a mismatch between expert computation and refinement demand. We a…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2608.02515": {
+    "checked_at": 1793252215,
+    "title": "LiveMem: Maintaining Memory State Continuity in Long-Running LLM Inference",
+    "description": "Long-running assistants and agents consume interaction streams that eventually outgrow the context. Existing context retention, summarization, and retrieval preserve access to selected history, but do not provide a persistent state over the full lifecycle when working context changes. We formulate this missing inference capability as \\emph{state continuity under context turnover}: carrying computation forward through a fixed-capacity memory state whose lifetime is independent of the active context. We introduce an intrinsic memory method, \\textbf{LiveMem}, which augments a pretrained full-att…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2608.02989": {
     "checked_at": 1793212629,
@@ -970,6 +1534,18 @@
     "title": "LLaDA MoE v2: Scaling Mixture-of-Experts Diffusion Language Models",
     "description": "Diffusion language models (dLLMs) offer an alternative to autoregressive (AR) language modeling, yet the scaling behavior of Mixture-of-Experts (MoE) dLLMs remains poorly understood. We systematically characterize how optimization hyperparameters, compute allocation, and architecture scale for MoE dLLMs, identifying quantitative differences from scaling trends previously reported for AR models. Specifically, for optimization, the optimal nominal batch size grows faster, while the optimal learning rate decays more rapidly with compute. For model--data allocation, IsoFLOP analysis reveals a sli…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2608.06838": {
+    "checked_at": 1793252215,
+    "title": "StateFlow: Sequence Pipeline Parallelism for Long-Context Modeling with Linear Recurrence",
+    "description": "Long-context training is increasingly important for large language models, and linear attention and state space models have become popular for improving long-context efficiency. However, efficiently parallelizing long-sequence training for recurrent and hybrid models remains challenging. We present StateFlow, a sequence pipeline parallelism system for models with linear recurrence. StateFlow partitions each sequence into chunks and schedules their execution while propagating boundary states and gradients across chunks, thereby reducing activation lifetimes and improving training throughput. S…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2608.12218": {
+    "checked_at": 1793252215,
+    "title": "Information Abundance Paradox: Long-Context Training Undermines Parametric Knowledge",
+    "description": "Large language models are increasingly trained and deployed with long contexts that span documents, code repositories, and interaction histories. This scaling reflects the implicit assumption that training on longer contexts will only help the model by exposing it to richer evidence. We challenge this view by studying how the context window shapes a model's mode of learning, shifting it between parametric internalization and contextualization. We propose the Information Abundance Paradox, which hypothesizes that abundant relevant information in the training context can reduce the incentive to…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2608.12385": {
     "checked_at": 1793212629,
@@ -989,11 +1565,41 @@
     "description": "Deploying large language models (LLMs) for inference on edge devices is challenging due to severe memory and bandwidth constraints. While speculative decoding and Mixture-of-Experts (MoE) have been proposed to improve inference efficiency, naively combining them often incurs excessive verification overhead and poor expert reuse, limiting their effectiveness in memory-bound edge settings. In this work, we propose S2-MoE, an efficient self-speculative decoding framework for MoE inference on edge devices. S2-MoE reduces redundant verification through routing-aware adaptive speculative expansion,…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2608.15943": {
+    "checked_at": 1793252215,
+    "title": "KV-Pipe: On the Relation Between KV Sharing and Pipeline Parallel Efficiency in LLMs",
+    "description": "Pipeline parallelism (PP) is widely used to scale large language model (LLM) training, but its efficiency is often limited by stage imbalance and pipeline bubbles. Meanwhile, cross-layer KV sharing has primarily been studied as a mechanism for reducing KV-cache costs during inference, without examining how KV reuse reshapes pipeline workloads. We present \\textbf{KV-Pipe}, a stage-aware KV-sharing mechanism that turns KV reuse into a pipeline-balancing control knob. KV-Pipe starts from the tail stage, converts selected attention layers to cross-layer KV sharing in a tail-first order, and itera…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2608.16844": {
+    "checked_at": 1793252215,
+    "title": "Proteus: Incremental Memory Activation for Long-Context Sequence Modeling",
+    "description": "The quadratic cost of attention-based sequence models for long contexts has motivated a growing line of research on memory-based models that can compress context into a compact state. However, most existing memory models expose a static memory throughout the entire sequence. Because early tokens face no compression pressure, they occupy too many degrees of freedom and \"pollute\" the memory state, leaving little capacity for later context and increasing interference between what is stored and what arrives next. We study a new paradigm of incremental memory activation, where the effective capaci…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2608.17616": {
+    "checked_at": 1793252215,
+    "title": "MoNe: Modular Neural Memory for Efficient Long Context Inference",
+    "description": "We present MoNe, a lightweight modular neural memory that attaches to any frozen pretrained Transformer to enable long-context inference without retraining. MoNe reads context in fixed-size segments via test-time learning of fast-weight neural memory networks with layer-localized gradient updates; at inference, the memory generates keys and values from the query tokens alone, with no context tokens re-read. This two-phase design decouples inference cost from context length, achieving $O(N)$ preprocessing and $O(1)$ query cost with peak GPU memory that does not grow with $N$. At 128K tokens, M…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2608.21308": {
+    "checked_at": 1793252215,
+    "title": "Rethinking Expressivity and Efficiency in Test-Time Training",
+    "description": "Test-Time Training (TTT) enables long-context processing via continuous weight updates during inference, but current methods struggle to balance the expressivity of per-token update dynamics with the hardware efficiency of chunk-wise approximations. We propose E$^2$-TTT (Expressive and Efficient TTT) to bridge this gap. Under the standard approximation of taking gradients at the chunk-start weights, we derive a closed-form state transition that exactly reproduces the chunk-end fast-weight and momentum states of the per-token recurrence. This enables fully parallelized chunk-level training whi…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2609.02672": {
     "checked_at": 1793212629,
     "title": "oHC: Orthogonal Hyper-Connections on SO(4) via Quaternions",
     "description": "Hyper-Connections (HC) replace the single residual stream of a Transformer with $n$ parallel ones, mixing them at every layer with a learned $n \\times n$ residual matrix. Leaving that matrix unconstrained places no limit on the factor by which the mixing step rescales the residual streams, and that factor compounds across layers, which destabilizes training. Manifold-constrained Hyper-Connections (mHC) address this by restricting the matrix to the doubly stochastic matrices. That caps the factor at one, so the mixing can no longer amplify any direction, but nothing bounds it from below. We pr…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2609.03151": {
+    "checked_at": 1793252215,
+    "title": "BASP: Communication-Efficient Batch-Aware Sequence Parallelism for LLM Training",
+    "description": "Long-context reasoning for large language models (LLMs) is becoming increasingly important, but training over long sequences remains challenging due to massive memory and communication requirements. Sequence parallelism has emerged as an essential technique for addressing bottlenecks in long sequence LLM training. However, we observe that existing sequence parallelism methods are batch-agnostic and apply uniform sequence partitioning across all batch sizes, resulting in inefficient communication. In this paper, we introduce Batch- Aware Sequence Parallelism (BASP), a sequence parallelism appr…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2609.03807": {
     "checked_at": 1793212629,
@@ -1001,11 +1607,41 @@
     "description": "State--prediction separation (SPS) relieves a language model's hidden state of two competing burdens---summarizing the context and predicting the next token---by splitting the forward pass into a state stream and a prediction stream. The separation works, but it is expensive: the prediction stream is a second pass over the whole backbone, costing $\\sim$1.9$\\times$ the pretraining FLOPs, and even more in terms of wall-clock time when using a flexible attention mask. This paper makes state--prediction separation almost free. We take the separation to its limit with a free pause token: a predict…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2609.04434": {
+    "checked_at": 1793252215,
+    "title": "What Attention Recalls and Recurrence Controls in Hybrid Language Models",
+    "description": "Hybrid language models combine attention with a fixed-size recurrent state, but the role of each channel remains unclear. We introduce two cache-level interventions. Split-prefill keeps only the KV cache or only the recurrent state from a prefilled context, then generates an answer. State-swap pairs the KV cache from one context with the recurrent state from another in a single forward pass. On Qwen3.5 and Falcon-H1, the two channels split sharply by function. Exact retrieval survives only through attention (64-98% of full accuracy) and collapses to zero through recurrence. Output language an…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2609.07816": {
+    "checked_at": 1793252215,
+    "title": "Kalman Delta Networks: Uncertainty-aware Associative Memory",
+    "description": "Linear attention enables efficient long-context inference by compressing token history into a fixed-size recurrent memory. This compression makes each update a trade-off between incorporating new information and preserving useful associations. Models such as DeltaNet, Gated DeltaNet, and KDA predict write strength from the current token representation, without explicitly tracking uncertainty in the stored memory. Yet this uncertainty matters: a new observation should have greater influence when the existing association is uncertain and less when it is already well supported. We introduce Kalm…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2609.14306": {
+    "checked_at": 1793252215,
+    "title": "Flattening Every Memory Peak in Long-Context Mixture-of-Experts Training",
+    "description": "Training a Mixture-of-Experts (MoE) model at long context or large batch size fails as soon as any one component's peak allocation exceeds device memory, so the target is every peak at once, not the average footprint. Four are left unbounded by the parallelism plans in common use, and each grows differently: expert dispatch with the routing matrix, the vocabulary projection with tokens times vocabulary, gradient checkpoint boundaries with depth times sequence length, and optimizer state with parameter count. Which one runs out first changes with the model, the context length, and the device c…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2609.14320": {
+    "checked_at": 1793252215,
+    "title": "SpectralShift: Effective Context Window Extension of Gated DeltaNet via Spectral Reparameterization",
+    "description": "Recently, linear attention layers have been increasingly adopted to replace softmax attention at scale for long-context modeling. However, existing context extension approaches typically apply continued pretraining directly without modifying these layers, overlooking the spectral properties of linear attention state dynamics. In this work, we study long-context extension of Gated DeltaNet (GDN) from a spectral perspective of transition matrix and identify two essential factors governing long-range information retrieval: (1) a sufficiently broad slow spectral band aligned with the target depen…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2609.14643": {
     "checked_at": 1793212629,
     "title": "BigMoMo: Efficient Inference of Large-Scale MoE with Speculative Decoding on Mobile Devices",
     "description": "Mixture-of-Experts (MoE) models expand language model capacity on smartphones, but expert offloading remains constrained by limited DRAM capacity and costly data movement. Sequential token routing couples expert execution to fragmented flash reads and multistage NPU preparation, leaving sparse computation stalled on weight transfers. Each transfer serves few tokens before execution moves on. We exploit the multi-token verification window of speculative decoding to decouple expert movement from single-token execution, enabling weight reuse, contiguous flash reads, and load-compute overlap. We…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2609.15126": {
+    "checked_at": 1793252215,
+    "title": "MoME: Mixture-of-Memory Embeddings for Context-Aware Sparse Lookup",
+    "description": "Scaling large language models efficiently has motivated sparse capacity mechanisms such as Mixture-of-Experts and, more recently, conditional memory: token-indexed embedding tables that augment the backbone with cheap parametric lookups. Existing memory-embedding methods retrieve via a deterministic function of the surface form, which collapses different contextual senses of the same token (e.g., python the language vs. the animal) into a single fixed entry. We introduce Mixture of Memory Embeddings (MoME), a context-aware memory mechanism that replaces each token's single memory row with a m…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2609.18176": {
     "checked_at": 1793212629,
@@ -1019,11 +1655,53 @@
     "description": "The widespread adoption of long-horizon agents has made model workloads increasingly input-heavy. Although prior work has substantially reduced the cost of long-context computation, prefill remains computationally expensive, and large KV caches continue to strain HBM and SSD capacity and data-transfer bandwidth. Together, these compute, storage, and bandwidth demands constitute the primary bottleneck to further lowering deployment costs. To address this challenge, we introduce DeepSeek-V4.1-Flash, a multimodal Mixture-of-Experts (MoE) model with 552B backbone parameters and support for contex…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2609.20734": {
+    "checked_at": 1793252215,
+    "title": "On-Demand Attention: Language Models Know When to Recall",
+    "description": "Reasoning and agentic workloads increasingly demand efficient long-context inference. Yet full-attention decoding reads the growing history at every step, although the benefit of global access varies across prediction positions. We find that, before global attention is computed for the current step, the decoding states available after local computation in frozen pretrained models already contain information predictive of its benefit over local attention. Building on this finding, we introduce On-Demand Attention (ODA), a local-first decoding method: after local computation, a lightweight reca…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2609.22471": {
     "checked_at": 1793212629,
     "title": "Efficient Mixture-of-Experts with Speculative Decoding via Expert Coactivation",
     "description": "Mixture-of-Experts (MoE) models are increasingly deployed alongside Speculative Decoding (SD) to accelerate inference, but combining the two is challenging. SD improves the inference speed of dense models by verifying groups of tokens in parallel. However, the inference speedup for SD with MoEs depends heavily on the number of tokens being verified. Using more verification tokens results in more experts being transferred from DRAM to the Neural Processing Unit (NPU), which increases the memory transfer cost. This negatively impacts model runtime, as memory transfer is typically the bottleneck…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2609.26368": {
+    "checked_at": 1793252215,
+    "title": "HySparse2: Hybrid Sparse Attention with Two-Level KV Sharing",
+    "description": "Long-horizon and multi-turn agents typically generate short actions and process long observations from tools and environments. This growing context demands efficient prefill, compact KV-cache storage, and accurate long-context retrieval. To meet these demands, we introduce HySparse2, a hybrid sparse attention architecture with two-level KV sharing. At the outer level, KV Bridging adopts a YOCO-style self-decoder and cross-decoder structure, but bridges only full-attention layers. The self-decoder uses hybrid sliding-window attention (SWA), while the cross-decoder uses hybrid sparse attention.…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2609.27294": {
+    "checked_at": 1793252215,
+    "title": "KITE: KV-Invariant Transformer Expansion for Efficient Agentic LLM Scaling",
+    "description": "Scaling a language model is not only a question of final quality: the architectural choice determines how much computation is spent during training, prompt processing, and autoregressive decoding to achieve certain model quality. An ideal model architecture should lower all above computation costs to facilitate scaling to a larger model, while ensure the larger model indeed outperforms smaller baselines. We introduce KV-Invariant Transformer Expansion (KITE), a scaling paradigm that achieves this goal. It trains the model from a smaller size to a larger size (i.e., saving training costs via u…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2609.28006": {
+    "checked_at": 1793252215,
+    "title": "Shared Global KV with Layer-Specific Local History",
+    "description": "Decoder-only Transformer language models cache keys and values (KV) to reuse past computation during generation. Sharing KV across layers saves storage but reduces the diversity of representations available across depth. We study what local memory should retain alongside shared global KV, separating historical content from the input source used to form it. At 126M parameters and 2K context, an eight-seed study finds about 1.4% lower held-out test perplexity with local history than with a current-token local branch. Capacity, entry-count and training-compute controls support the value of histo…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2609.32312v1": {
+    "checked_at": 1793252215,
+    "title": "Delayed Supervision for Test-Time Language Models",
+    "description": "Test-time language models adapt a compact memory while processing the input sequence. This perspective encompasses nonlinear fast-weight learning in LaCT, associative delta-rule updates in DeltaNet, and generalized delta-rule state updates in RWKV-7. Training these models to predict the next token does not explicitly require a fact to remain accessible after many subsequent memory updates. We study delayed supervision for this test-time memory: during post-training, ask a simulator-grounded question only after a long interval of unrelated events, and supervise its answer alongside ordinary ne…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2609.32564v1": {
+    "checked_at": 1793252215,
+    "title": "ProTTT: Learning to Learn Semantic User Memory with Test-Time Training",
+    "description": "Personalization requires language models to capture user-specific knowledge from a growing user history. Existing context-based approaches incur increasing inference costs as user history accumulates and rely on separate retrieval or summarization stages, while parametric-based approaches often require reconstructing user representations when new user data is added. We introduce ProTTT, a profile-supervised meta-learning framework for learning semantic user memory. The memory construction starts from a shared initialization and is updated for each user through test-time training on user histo…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2609.33465v3": {
+    "checked_at": 1793252215,
+    "title": "GSM: Efficient Language Modeling with Shared Global State",
+    "description": "Improving language model efficiency requires not only cheaper operations but also eliminating redundant computation. We argue that effective modeling requires information accessibility and computational depth, but not repeated historical retrieval across layers. Guided by this principle, we introduce the Global State Model (GSM), a causal encoder--decoder architecture that separates historical information acquisition from deep computation. The encoder progressively aggregates long-range information through multi-stage sparse retrieval into a fixed-size shared state, while decoder layers perfo…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2610.00888": {
     "checked_at": 1793212629,
@@ -1031,11 +1709,29 @@
     "description": "Multi-token prediction (MTP) improves the throughput of autoregressive generation by enabling the language model to draft multiple next tokens per forward pass, while a verification step over draft tokens ensures that token distribution of the backbone is preserved. Every open MTP-family release (MiMo-7B, DeepSeek-V3, Qwen3) trains its heads jointly with the backbone over the full pretraining run of tens of trillions of tokens, thus setting the drafter quality at pretraining time. We ask whether a lightweight post-training pass on target-generated chain-of-thought is enough to reach the same…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2610.04635": {
+    "checked_at": 1793252215,
+    "title": "LatentIndex: Cross-Layer Sharing with Layer-Specific Selection for Sparse Attention",
+    "description": "Sparse attention reduces core-attention computation, but its indexers still incur repeated selection work and per-layer key-cache storage. Reusing selected indices across layers reduces this overhead but constrains multiple layers to the same token set. We introduce LatentIndex, which extends the latent-sharing principle of Multi-head Latent Attention across indexer layers. Each layer group constructs a shared latent cache from its first layer's hidden states, while layer-specific scoring enables independent token selection. Absorbing key decoders into queries enables direct scoring of the sh…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2610.06031": {
     "checked_at": 1793212629,
     "title": "LightMTP: Lightweight Latent Multi-Token Prediction",
     "description": "Next-token prediction (NTP) is the standard pretraining objective for large language models, yet it provides an explicit training signal only for the immediate next token, which can lead models to exploit local patterns instead of capturing longer-range structure and ideas. Multi-token prediction (MTP) addresses this by training models to predict several future tokens. However, existing MTP methods often introduce a large number of new parameters with limited improvements in downstream performance. Latent MTP approaches address this efficiency issue by encoding future tokens into a vector rep…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2610.11287v1": {
+    "checked_at": 1793252215,
+    "title": "REMORY: Learning Residual Memory for Context Compaction",
+    "description": "Long-horizon agents compact their history to continue within a finite context window, but a textual summary alone may not support every subsequent decision. We introduce REMORY, a neural memory network that supplements the summary with a bounded sequence of soft memory tokens. Given the history and summary, the network learns to generate tokens that help a frozen LLM approximate the continuation it would produce with the full history. The tokens are conditioned on the summary and appended after it, forming an analogue of a residual connection along the sequence dimension. On SummHay, REMORY i…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2610.12338": {
+    "checked_at": 1793252215,
+    "title": "VFold: Symmetry-Aware Cross-Layer Value Cache Compression",
+    "description": "While caching key-value (KV) states accelerates Large Language Model (LLM) decoding, this cache can dominate memory usage at long context lengths. One solution is to compress this memory by exploiting inter-layer cache similarities. However, most existing techniques necessitate architectural changes to LLMs and incur substantial overhead. In this work, we propose a symmetry-aware value cache merging strategy that reduces cache memory while avoiding both harmful performance degradation and architectural overhead during decoding. Furthermore, we show that this approach can be exploited alongsid…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2610.13630": {
     "checked_at": 1793212629,
@@ -1043,17 +1739,35 @@
     "description": "Attention Residuals (AttnRes) enables content-dependent retrieval over network depth, which can be viewed as single-stream softmax attention along the depth axis. Inspired by the success of multi-head attention along the sequence axis, we introduce Multi-Stream Attention Residuals (MSAR), an extension of AttnRes that generalizes this mechanism to multi-head depth attention, yielding substantial performance gains with minimal additional overhead. MSAR draws stream diversity from sequence context through multi-scale causal convolutions, allowing different heads to retrieve historical representa…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2610.13990": {
+    "checked_at": 1793252215,
+    "title": "DoSA: Dots Sparse Attention",
+    "description": "Sparse attention visits few keys, yet finding them can still require scoring every key with every indexer head. We introduce DoSA (Dots Sparse Attention), a lossless method for making this computation conditional while preserving exact token selection. Its central observation is that Top-K selection requires sufficient evidence to reject a candidate, not necessarily its full score. A seed set supplies a lower bound on the winning threshold. Nonnegative head projections and joint residual bounds upper-bound positive contributions, while activation-informed aggregation bounds the magnitude subt…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2610.18809": {
     "checked_at": 1793212629,
     "title": "Depth Memory",
     "description": "Residual connections propagate information through a network by additively accumulating layer outputs. Recently proposed alternatives, such as Manifold-Constrained Hyper-Connections (mHC) and Attention Residuals (AttnRes), instead use more expressive depth aggregation mechanisms that improve language modeling performance at scale. In this work, we consider the mixing of representations over depth as a problem of storing and retrieving information across layers. Formalizing this perspective, we introduce Depth Memory (DM), a unified framework that describes the standard pre-layer-norm (PreLN)…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2610.21375v1": {
+    "checked_at": 1793252215,
+    "title": "Memorilla: Latent Semantic Memory for LLMs",
+    "description": "Memory enables large language models (LLMs) to use information beyond their parameters, such as past user conversations, long documents, or an agent's earlier actions. For a frozen LLM, access to this accumulated knowledge is limited to what a memory system places in its context window. However, gathering and combining relevant information needed for each query while keeping the model's context short remains challenging for existing systems. Here we introduce Memorilla, a memory system that gathers information from an entire document collection into a fixed number of query-dependent 'memory t…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/abs/2610.24766": {
     "checked_at": 1793212629,
     "title": "ECHO: Efficient Causal Self-Recursion Beyond Auxiliary Multi-Token Prediction",
     "description": "Existing Multi-token prediction (MTP) methods are auxiliary by design: the multi-horizon loss mostly trains modules attached to the backbone, and each added horizon costs another module and another pass. We propose Efficient Causal Self-Recursion (ECHO), which removes both costs. The backbone's own final layer predicts every horizon, so the supervision lands on the parameters that generate the next token, and Dynamic Depth Sampling (DDS) keeps deeper horizons affordable by drawing the training depth with probabilities that decay along depth. Future prediction thus becomes part of the autoregr…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2610.26825v2": {
+    "checked_at": 1793252215,
+    "title": "MemT-1.0: Towards Memory-Native Evolution",
+    "description": "Memory-native evolution requires making memory an intrinsic capability of foundation models, enabling them to continuously accumulate and utilize information. To this end, we introduce MemT-1.0, a new architecture of memory foundation models that internalize memory as part of model computation. Building on Metis, MemT-1.0 employs Gated DeltaNet-2 with a stable token-level memory update mechanism within each turn. We further introduce Mixture-of-Storage to scale native memory capacity. Following a deliberate backbone preparation, we develop a two-stage training pipeline consisting of continued…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/abs/2610.28619": {
     "checked_at": 1793212629,
@@ -1067,11 +1781,41 @@
     "description": "We present IQuest-Q1, a sparse Mixture-of-Experts (MoE) agentic foundation model with 320B total parameters (15B activated). IQuest-Q1 is developed through a three-stage process: (1) stable and efficient pre-training, combining Stable SplitNorm, Muon, and muP with a two-stage curriculum whose second stage increases the coding-data mixture, preserving a wide stability margin between safe and optimal learning rates; (2) fine-grained mid-training, expanding the data mixture across domains and formats and progressively extending the context; and (3) multi-scaffold with multi-version post-training…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2610.34180v1": {
+    "checked_at": 1793252215,
+    "title": "Write What Matters: Disentangling Token Selection from Slot Allocation in Recurrent Memory",
+    "description": "Long-sequence models must retain earlier information. Full attention keeps all past tokens but grows expensive, and recurrent-memory models compress history into fixed slots for linear-time processing. Limited capacity makes writes consequential: distractors can interfere with useful content, while skipped evidence cannot be recalled. Existing multi-slot memories write every token to the same number of slots, merging whether to store it with how many slots to update. We introduce Factorized Write Routing (FWR), which first keeps or skips each token and then chooses a fixed or token-adaptive n…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2405.05254v2": {
+    "checked_at": 1793252215,
+    "title": "You Only Cache Once: Decoder-Decoder Architectures for Language Models",
+    "description": "We introduce a decoder-decoder architecture, YOCO, for large language models, which only caches key-value pairs once. It consists of two components, i.e., a cross-decoder stacked upon a self-decoder. The self-decoder efficiently encodes global key-value (KV) caches that are reused by the cross-decoder via cross-attention. The overall model behaves like a decoder-only Transformer, although YOCO only caches once. The design substantially reduces GPU memory demands, yet retains global attention capability. Additionally, the computation flow enables prefilling to early exit without changing the f…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/html/2412.19437v2": {
     "checked_at": 1793212629,
     "title": "DeepSeek-V3 Technical Report",
     "description": "We present DeepSeek-V3, a strong Mixture-of-Experts (MoE) language model with 671B total parameters with 37B activated for each token. To achieve efficient inference and cost-effective training, DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and DeepSeekMoE architectures, which were thoroughly validated in DeepSeek-V2. Furthermore, DeepSeek-V3 pioneers an auxiliary-loss-free strategy for load balancing and sets a multi-token prediction training objective for stronger performance. We pre-train DeepSeek-V3 on 14.8 trillion diverse and high-quality tokens, followed by Supervised Fine-Tunin…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2501.00663": {
+    "checked_at": 1793252215,
+    "title": "Titans: Learning to Memorize at Test Time",
+    "description": "Over more than a decade there has been an extensive research effort on how to effectively utilize recurrent models and attention. While recurrent models aim to compress the data into a fixed-size memory (called hidden state), attention allows attending to the entire context window, capturing the direct dependencies of all tokens. This more accurate modeling of dependencies, however, comes with a quadratic cost, limiting the model to a fixed-length context. We present a new neural long-term memory module that learns to memorize historical context and helps attention to attend to the current co…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2502.00592": {
+    "checked_at": 1793252215,
+    "title": "M+: Extending MemoryLLM with Scalable Long-Term Memory",
+    "description": "Equipping large language models (LLMs) with latent-space memory has attracted increasing attention as they can extend the context window of existing language models. However, retaining information from the distant past remains a challenge. For example, MemoryLLM (Wang et al., 2024a), as a representative work with latent-space memory, compresses past information into hidden states across all layers, forming a memory pool of 1B parameters. While effective for sequence lengths up to 16k tokens, it struggles to retain knowledge beyond 20k tokens. In this work, we address this limitation by introd…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2502.12216": {
+    "checked_at": 1793252215,
+    "title": "Tactic: Adaptive Sparse Attention with Clustering and Distribution Fitting for Long-Context LLMs",
+    "description": "Long-context models are essential for many applications but face inefficiencies in loading large KV caches during decoding. Prior methods enforce fixed token budgets for sparse attention, assuming a set number of tokens can approximate full attention. However, these methods overlook variations in the importance of attention across heads, layers, and contexts. To address these limitations, we propose Tactic, a sparsity-adaptive and calibration-free sparse attention mechanism that dynamically selects tokens based on their cumulative attention scores rather than a fixed token budget. By setting…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/html/2505.07608": {
     "checked_at": 1793212629,
@@ -1085,11 +1829,53 @@
     "description": "Transformers replace recurrence with a memory that grows with sequence length and self-attention that enables ad-hoc lookups over past tokens. Consequently, they lack an inherent incentive to compress history into compact latent states with consistent transition rules. This often leads to learning solutions that generalize poorly. We introduce Next-Latent Prediction (NextLat), which extends standard next-token training with self-supervised predictions in the latent space. Specifically, NextLat trains a transformer to learn latent representations that are predictive of its next latent state gi…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/html/2512.12087": {
+    "checked_at": 1793252215,
+    "title": "BLASST: Dynamic BLocked Attention Sparsity via Softmax Thresholding",
+    "description": "The growing demand for long-context inference capabilities in Large Language Models (LLMs) has intensified the computational and memory bottlenecks inherent to the self-attention mechanism. To address this challenge, we introduce BLASST, a drop-in, dynamic sparse attention mechanism that accelerates inference by using only a fixed scalar threshold to skip attention blocks. Our method targets practical inference deployment by removing the barriers to adoption present in existing works. As such, BLASST eliminates training requirements, avoids expensive pre-computation passes, accelerates both p…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2602.03560v1": {
+    "checked_at": 1793252215,
+    "title": "HySparse: A Hybrid Sparse Attention Architecture with Oracle Token Selection and KV Cache Sharing",
+    "description": "This work introduces Hybrid Sparse Attention (HySparse), a new architecture that interleaves each full attention layer with several sparse attention layers. While conceptually simple, HySparse strategically derives each sparse layer's token selection and KV caches directly from the preceding full attention layer. This architecture resolves two fundamental limitations of prior sparse attention methods. First, conventional approaches typically rely on additional proxies to predict token importance, introducing extra complexity and potentially suboptimal performance. In contrast, HySparse uses t…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/html/2602.15763": {
     "checked_at": 1793212629,
     "title": "GLM-5: from Vibe Coding to Agentic Engineering",
     "description": "We present GLM-5, a next-generation foundation model designed to transition the paradigm of vibe coding to agentic engineering. Building upon the agentic, reasoning, and coding (ARC) capabilities of its predecessor, GLM-5 adopts DSA to significantly reduce training and inference costs while maintaining long-context fidelity. To advance model alignment and autonomy, we implement a new asynchronous reinforcement learning infrastructure that drastically improves post-training efficiency by decoupling generation from training. Furthermore, we propose novel asynchronous agent RL algorithms that fu…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2604.12452": {
+    "checked_at": 1793252215,
+    "title": "Latent-Condensed Transformer for Efficient Long Context Modeling",
+    "description": "Large language models (LLMs) face significant challenges in processing long contexts due to the linear growth of the key-value (KV) cache and quadratic complexity of self-attention. Existing approaches address these bottlenecks separately: Multi-head Latent Attention (MLA) reduces the KV cache by projecting tokens into a low-dimensional latent space, while sparse attention reduces computation. However, sparse methods cannot operate natively on MLA's compressed latent structure, missing opportunities for joint optimization. In this paper, we propose Latent-Condensed Attention (LCA), which dire…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2604.26837": {
+    "checked_at": 1793252215,
+    "title": "Unifying Sparse Attention with Hierarchical Memory for Scalable Long-Context LLM Serving",
+    "description": "Long-context LLM serving is bottlenecked by the cost of attending over ever-growing KV caches. Dynamic sparse attention promises relief by accessing only a small, query-dependent subset of the KV state per decoding step and extending the KV storage to CPU memory. In practice, however, these algorithmic savings rarely translate into end-to-end system-level gains because sparse methods typically operate at different granularities and thus rely on ad hoc, per-algorithm implementations. At the same time, hierarchical KV storage introduces a new systems bottleneck: retrieving fine-grained, irregul…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2605.07363": {
+    "checked_at": 1793252215,
+    "title": "MISA: Mixture of Indexer Sparse Attention for Long-Context LLM Inference",
+    "description": "DeepSeek Sparse Attention (DSA) sets the state of the art for fine-grained inference-time sparse attention by introducing a learned token-wise indexer that scores every prefix token and selects the most relevant ones for the main attention. To remain expressive, the indexer uses many query heads (for example, 64 on DeepSeek-V3.2) that share the same selected token set; this multi-head design is precisely what makes the indexer the dominant cost on long contexts. We propose MISA (Mixture of Indexer Sparse Attention), a drop-in replacement for the DSA indexer that treats its indexer heads as a…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2606.04511": {
+    "checked_at": 1793252215,
+    "title": "SparDA: Sparse Decoupled Attention for Efficient Long-Context LLM Inference",
+    "description": "Sparse attention reduces compute and memory bandwidth for long-context LLM inference. However, two key challenges remain: (1) KV cache capacity still grows with sequence length, and offloading to CPU memory introduces a PCIe transfer bottleneck; (2) the sparse selection step itself retains $O(T^2)$ complexity and can dominate attention cost at long contexts. We propose SparDA, a decoupled sparse attention architecture that introduces a fourth per-layer projection, the Forecast, alongside Query, Key, and Value. The Forecast predicts the KV blocks needed by the next layer, enabling lookahead se…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2606.19348": {
+    "checked_at": 1793252215,
+    "title": "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence",
+    "description": "We present a preview version of DeepSeek-V4 series, including two strong Mixture-of-Experts (MoE) language models -- DeepSeek-V4-Pro with 1.6T parameters (49B activated) and DeepSeek-V4-Flash with 284B parameters (13B activated) -- both supporting a context length of one million tokens. DeepSeek-V4 series incorporate several key upgrades in architecture and optimization: (1) a hybrid attention architecture that combines Compressed Sparse Attention (CSA) and Heavily Compressed Attention (HCA) to improve long-context efficiency; (2) Manifold-Constrained Hyper-Connections (mHC) that enhance conv…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/html/2607.01218": {
     "checked_at": 1793212629,
@@ -1103,11 +1889,41 @@
     "description": "State--prediction separation (SPS) relieves a language model's hidden state of two competing burdens---summarizing the context and predicting the next token---by splitting the forward pass into a state stream and a prediction stream. The separation works, but it is expensive: the prediction stream is a second pass over the whole backbone, costing $\\sim$1.9$\\times$ the pretraining FLOPs, and even more in terms of wall-clock time when using a flexible attention mask. This paper makes state--prediction separation almost free. We take the separation to its limit with a free pause token: a predict…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/html/2609.19969": {
+    "checked_at": 1793252215,
+    "title": "DeepSeek-V4.1-Flash: Pushing the Limits of KV Cache Compression",
+    "description": "The widespread adoption of long-horizon agents has made model workloads increasingly input-heavy. Although prior work has substantially reduced the cost of long-context computation, prefill remains computationally expensive, and large KV caches continue to strain HBM and SSD capacity and data-transfer bandwidth. Together, these compute, storage, and bandwidth demands constitute the primary bottleneck to further lowering deployment costs. To address this challenge, we introduce DeepSeek-V4.1-Flash, a multimodal Mixture-of-Experts (MoE) model with 552B backbone parameters and support for contex…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/html/2609.19969v1": {
     "checked_at": 1793212629,
     "title": "DeepSeek-V4.1-Flash: Pushing the Limits of KV Cache Compression",
     "description": "The widespread adoption of long-horizon agents has made model workloads increasingly input-heavy. Although prior work has substantially reduced the cost of long-context computation, prefill remains computationally expensive, and large KV caches continue to strain HBM and SSD capacity and data-transfer bandwidth. Together, these compute, storage, and bandwidth demands constitute the primary bottleneck to further lowering deployment costs. To address this challenge, we introduce DeepSeek-V4.1-Flash, a multimodal Mixture-of-Experts (MoE) model with 552B backbone parameters and support for contex…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2609.26368": {
+    "checked_at": 1793252215,
+    "title": "HySparse2: Hybrid Sparse Attention with Two-Level KV Sharing",
+    "description": "Long-horizon and multi-turn agents typically generate short actions and process long observations from tools and environments. This growing context demands efficient prefill, compact KV-cache storage, and accurate long-context retrieval. To meet these demands, we introduce HySparse2, a hybrid sparse attention architecture with two-level KV sharing. At the outer level, KV Bridging adopts a YOCO-style self-decoder and cross-decoder structure, but bridges only full-attention layers. The self-decoder uses hybrid sliding-window attention (SWA), while the cross-decoder uses hybrid sparse attention.…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2609.26368v1": {
+    "checked_at": 1793252215,
+    "title": "HySparse2: Hybrid Sparse Attention with Two-Level KV Sharing",
+    "description": "Long-horizon and multi-turn agents typically generate short actions and process long observations from tools and environments. This growing context demands efficient prefill, compact KV-cache storage, and accurate long-context retrieval. To meet these demands, we introduce HySparse2, a hybrid sparse attention architecture with two-level KV sharing. At the outer level, KV Bridging adopts a YOCO-style self-decoder and cross-decoder structure, but bridges only full-attention layers. The self-decoder uses hybrid sliding-window attention (SWA), while the cross-decoder uses hybrid sparse attention.…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2609.33465v3": {
+    "checked_at": 1793252215,
+    "title": "GSM: Efficient Language Modeling with Shared Global State",
+    "description": "Improving language model efficiency requires not only cheaper operations but also eliminating redundant computation. We argue that effective modeling requires information accessibility and computational depth, but not repeated historical retrieval across layers. Guided by this principle, we introduce the Global State Model (GSM), a causal encoder--decoder architecture that separates historical information acquisition from deep computation. The encoder progressively aggregates long-range information through multi-stage sparse retrieval into a fixed-size shared state, while decoder layers perfo…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2610.04635v1": {
+    "checked_at": 1793252215,
+    "title": "LatentIndex: Cross-Layer Sharing with Layer-Specific Selection for Sparse Attention",
+    "description": "Sparse attention reduces core-attention computation, but its indexers still incur repeated selection work and per-layer key-cache storage. Reusing selected indices across layers reduces this overhead but constrains multiple layers to the same token set. We introduce LatentIndex, which extends the latent-sharing principle of Multi-head Latent Attention across indexer layers. Each layer group constructs a shared latent cache from its first layer's hidden states, while layer-specific scoring enables independent token selection. Absorbing key decoders into queries enables direct scoring of the sh…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/html/2610.06031v1": {
     "checked_at": 1793212629,
@@ -1115,11 +1931,23 @@
     "description": "Next-token prediction (NTP) is the standard pretraining objective for large language models, yet it provides an explicit training signal only for the immediate next token, which can lead models to exploit local patterns instead of capturing longer-range structure and ideas. Multi-token prediction (MTP) addresses this by training models to predict several future tokens. However, existing MTP methods often introduce a large number of new parameters with limited improvements in downstream performance. Latent MTP approaches address this efficiency issue by encoding future tokens into a vector rep…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/html/2610.11287v1": {
+    "checked_at": 1793252215,
+    "title": "REMORY: Learning Residual Memory for Context Compaction",
+    "description": "Long-horizon agents compact their history to continue within a finite context window, but a textual summary alone may not support every subsequent decision. We introduce REMORY, a neural memory network that supplements the summary with a bounded sequence of soft memory tokens. Given the history and summary, the network learns to generate tokens that help a frozen LLM approximate the continuation it would produce with the full history. The tokens are conditioned on the summary and appended after it, forming an analogue of a residual connection along the sequence dimension. On SummHay, REMORY i…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/html/2610.24766v1": {
     "checked_at": 1793212629,
     "title": "ECHO: Efficient Causal Self-Recursion Beyond Auxiliary Multi-Token Prediction",
     "description": "Existing Multi-token prediction (MTP) methods are auxiliary by design: the multi-horizon loss mostly trains modules attached to the backbone, and each added horizon costs another module and another pass. We propose Efficient Causal Self-Recursion (ECHO), which removes both costs. The backbone's own final layer predicts every horizon, so the supervision lands on the parameters that generate the next token, and Dynamic Depth Sampling (DDS) keeps deeper horizons affordable by drawing the training depth with probabilities that decay along depth. Future prediction thus becomes part of the autoregr…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2610.26825v2": {
+    "checked_at": 1793252215,
+    "title": "MemT-1.0: Towards Memory-Native Evolution",
+    "description": "Memory-native evolution requires making memory an intrinsic capability of foundation models, enabling them to continuously accumulate and utilize information. To this end, we introduce MemT-1.0, a new architecture of memory foundation models that internalize memory as part of model computation. Building on Metis, MemT-1.0 employs Gated DeltaNet-2 with a stable token-level memory update mechanism within each turn. We further introduce Mixture-of-Storage to scale native memory capacity. Following a deliberate backbone preparation, we develop a two-stage training pipeline consisting of continued…",
+    "fetched_at": 1793252215
   },
   "https://arxiv.org/html/2610.30949v1": {
     "checked_at": 1793212629,
@@ -1379,6 +2207,12 @@
     "description": "We present GLM-5V-Turbo, a step toward native foundation models for multimodal agents. As foundation models are increasingly deployed in real environments, agentic capability depends not only on language reasoning, but also on the ability to perceive, interpret, and act over heterogeneous contexts such as images, videos, webpages, documents, GUIs. GLM-5V-Turbo is built around this objective: multimodal perception is integrated as a core component of reasoning, planning, tool use, and execution, rather than as an auxiliary interface to a language model. This report summarizes the main improvem…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/pdf/2605.15250v4": {
+    "checked_at": 1793252215,
+    "title": "GQLA: Group-Query Latent Attention for Hardware-Adaptive Decoding",
+    "description": "Decoding efficiency depends on KV-cache traffic, computation, and parallelism. Multi-head Latent Attention (MLA) offers absorbed and head-expanded forms, but its head-specific projections limit grouped KV sharing. We introduce Group-Query Latent Attention (GQLA), whose group-shared up-projections preserve a joint latent and enable a shardable expanded cache. The same weights support equivalent MQA-absorb and GQA execution using existing kernels. Roofline analysis relates path preference to GPU compute-to-bandwidth ratio and tensor parallelism (TP): absorption trades traffic for computation an…",
+    "fetched_at": 1793252215
+  },
   "https://arxiv.org/pdf/2605.26486": {
     "checked_at": 1793212629,
     "title": "LongCat-Video-Avatar 1.5 Technical Report",
@@ -1396,6 +2230,18 @@
     "title": "MiniMax Sparse Attention",
     "description": "Ultra-long-context capability is becoming indispensable for frontier LLMs: agentic workflows, repository-scale code reasoning, and persistent memory all require the model to jointly attend over hundreds of thousands to millions of tokens, yet the quadratic cost of softmax attention makes this untenable at deployment scale. We introduce MiniMax Sparse Attention (MSA), a blockwise sparse attention built upon Grouped Query Attention (GQA). A lightweight Index Branch scores key-value blocks and independently selects a Top-k subset for each GQA group, enabling group-specific sparse retrieval while…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/pdf/2609.27294": {
+    "checked_at": 1793252215,
+    "title": "KITE: KV-Invariant Transformer Expansion for Efficient Agentic LLM Scaling",
+    "description": "Scaling a language model is not only a question of final quality: the architectural choice determines how much computation is spent during training, prompt processing, and autoregressive decoding to achieve certain model quality. An ideal model architecture should lower all above computation costs to facilitate scaling to a larger model, while ensure the larger model indeed outperforms smaller baselines. We introduce KV-Invariant Transformer Expansion (KITE), a scaling paradigm that achieves this goal. It trains the model from a smaller size to a larger size (i.e., saving training costs via u…",
+    "fetched_at": 1793252215
+  },
+  "https://arxiv.org/pdf/2610.13990": {
+    "checked_at": 1793252215,
+    "title": "DoSA: Dots Sparse Attention",
+    "description": "Sparse attention visits few keys, yet finding them can still require scoring every key with every indexer head. We introduce DoSA (Dots Sparse Attention), a lossless method for making this computation conditional while preserving exact token selection. Its central observation is that Top-K selection requires sufficient evidence to reject a candidate, not necessarily its full score. A seed set supplies a lower bound on the winning threshold. Nonnegative head projections and joint residual bounds upper-bound positive contributions, while activation-informed aggregation bounds the magnitude subt…",
+    "fetched_at": 1793252215
   },
   "https://azure.github.io/MS-AMP/docs/introduction/": {
     "checked_at": 1793212629,
@@ -1457,6 +2303,12 @@
     "description": "Higher-order optimization algorithms such as Shampoo have been effectively applied in neural network training for at least a decade. These methods have achieved significant success more recently when…",
     "fetched_at": 1793212629
   },
+  "https://developer.nvidia.com/blog/optimizing-communication-for-mixture-of-experts-training-with-hybrid-expert-parallel/": {
+    "checked_at": 1793252215,
+    "title": "Optimizing Communication for Mixture-of-Experts Training with Hybrid Expert Parallel | NVIDIA Technical Blog",
+    "description": "In LLM training, Expert Parallel (EP) communication for hyperscale mixture-of-experts (MoE) models is challenging. EP communication is essentially all-to-all, but due to its dynamics and sparseness…",
+    "fetched_at": 1793252215
+  },
   "https://developer.nvidia.com/nsight-compute": {
     "checked_at": 1793212629,
     "title": "NVIDIA Nsight Compute",
@@ -1474,6 +2326,12 @@
     "title": "Gemma 4 | Google AI Edge | Google for Developers",
     "description": "",
     "fetched_at": 1793212629
+  },
+  "https://developers.googleblog.com/en/introducing-gemma-3n-developer-guide/": {
+    "checked_at": 1793252215,
+    "title": "Introducing Gemma 3n: The developer guide- Google Developers Blog",
+    "description": "Learn how to build with Gemma 3n, a mobile-first architecture, MatFormer technology, Per-Layer Embeddings, and new audio and vision encoders.",
+    "fetched_at": 1793252215
   },
   "https://developers.googleblog.com/gemma-4-12b-the-developer-guide/": {
     "checked_at": 1793212629,
@@ -1658,6 +2516,12 @@
     "description": "Evo-1: Lightweight Vision-Language-Action Model with Preserved Semantic Alignment - MINT-SJTU/Evo-1",
     "fetched_at": 1793212629
   },
+  "https://github.com/MemTensor/Metis": {
+    "checked_at": 1793252215,
+    "title": "GitHub - MemTensor/Metis: Metis is the memory foundation model series developed by Metis Group, MemTensor.",
+    "description": "Metis is the memory foundation model series developed by Metis Group, MemTensor. - MemTensor/Metis",
+    "fetched_at": 1793252215
+  },
   "https://github.com/MiniMax-AI": {
     "checked_at": 1793212629,
     "title": "MiniMax",
@@ -1676,11 +2540,23 @@
     "description": "Kimi K2 is the large language model series developed by Moonshot AI team - MoonshotAI/Kimi-K2",
     "fetched_at": 1793212629
   },
+  "https://github.com/MoonshotAI/Kimi-K2.5": {
+    "checked_at": 1793252215,
+    "title": "GitHub - MoonshotAI/Kimi-K2.5: Open Visual Agentic Intelligence",
+    "description": "Open Visual Agentic Intelligence. Contribute to MoonshotAI/Kimi-K2.5 development by creating an account on GitHub.",
+    "fetched_at": 1793252215
+  },
   "https://github.com/MoonshotAI/Kimi-K3": {
     "checked_at": 1793212629,
     "title": "GitHub - MoonshotAI/Kimi-K3: Open Frontier Intelligence",
     "description": "Open Frontier Intelligence. Contribute to MoonshotAI/Kimi-K3 development by creating an account on GitHub.",
     "fetched_at": 1793212629
+  },
+  "https://github.com/MoonshotAI/Kimi-Linear": {
+    "checked_at": 1793252215,
+    "title": "GitHub - MoonshotAI/Kimi-Linear",
+    "description": "Contribute to MoonshotAI/Kimi-Linear development by creating an account on GitHub.",
+    "fetched_at": 1793252215
   },
   "https://github.com/MoonshotAI/MoBA": {
     "checked_at": 1793212629,
@@ -1826,6 +2702,12 @@
     "description": "A foundation model that generates synchronized video and audio in a single model - OpenMOSS/MOVA",
     "fetched_at": 1793212629
   },
+  "https://github.com/OpenNLPLab/lightning-attention": {
+    "checked_at": 1793252215,
+    "title": "GitHub - OpenNLPLab/lightning-attention: Lightning Attention-2: A Free Lunch for Handling Unlimited Sequence Lengths in Large Language Models",
+    "description": "Lightning Attention-2: A Free Lunch for Handling Unlimited Sequence Lengths in Large Language Models - OpenNLPLab/lightning-attention",
+    "fetched_at": 1793252215
+  },
   "https://github.com/QwenLM/Qwen-VLA": {
     "checked_at": 1793212629,
     "title": "GitHub - QwenLM/Qwen-VLA: The official repository of Qwen-VLA",
@@ -1838,11 +2720,23 @@
     "description": "Qwen3 is the large language model series developed by Qwen team, Alibaba Cloud. - QwenLM/Qwen3",
     "fetched_at": 1793212629
   },
+  "https://github.com/QwenLM/Qwen3.8-Flash-Next": {
+    "checked_at": 1793252215,
+    "title": "GitHub - QwenLM/Qwen3.8-Flash-Next: Qwen3.8-Flash-Next is the foundation model developed by Qwen Team, Alibaba Group.",
+    "description": "Qwen3.8-Flash-Next is the foundation model developed by Qwen Team, Alibaba Group. - QwenLM/Qwen3.8-Flash-Next",
+    "fetched_at": 1793252215
+  },
   "https://github.com/ROCm/TransformerEngine": {
     "checked_at": 1793212629,
     "title": "GitHub - ROCm/TransformerEngine",
     "description": "Contribute to ROCm/TransformerEngine development by creating an account on GitHub.",
     "fetched_at": 1793212629
+  },
+  "https://github.com/RUCAIBox/GDN-SpectralShift": {
+    "checked_at": 1793252215,
+    "title": "GitHub - RUCAIBox/GDN-SpectralShift: Megatron-LM patch for SpectralShift: extending Gated DeltaNet's effective context window via spectral reparameterization and learning-rate scaling.",
+    "description": "Megatron-LM patch for SpectralShift: extending Gated DeltaNet's effective context window via spectral reparameterization and learning-rate scaling. - RUCAIBox/GDN-SpectralShift",
+    "fetched_at": 1793252215
   },
   "https://github.com/Robbyant/lingbot-video": {
     "checked_at": 1793212629,
@@ -1979,11 +2873,23 @@
     "description": "JetStream is a throughput and memory optimized engine for LLM inference on XLA devices, starting with TPUs (and GPUs in future -- PRs welcome). - AI-Hypercomputer/JetStream",
     "fetched_at": 1793212629
   },
+  "https://github.com/huggingface/transformers/blob/main/src/transformers/models/qwen3_next/configuration_qwen3_next.py": {
+    "checked_at": 1793252215,
+    "title": "transformers/src/transformers/models/qwen3_next/configuration_qwen3_next.py at main · huggingface/transformers",
+    "description": "🤗 Transformers: the model-definition framework for state-of-the-art machine learning models in text, vision, audio, and multimodal models, for both inference and training. - huggingface/transformers",
+    "fetched_at": 1793252215
+  },
   "https://github.com/inclusionAI/Ling-V2": {
     "checked_at": 1793212629,
     "title": "GitHub - inclusionAI/Ling-V2: Ling-V2 is a MoE LLM provided and open-sourced by InclusionAI.",
     "description": "Ling-V2 is a MoE LLM provided and open-sourced by InclusionAI. - inclusionAI/Ling-V2",
     "fetched_at": 1793212629
+  },
+  "https://github.com/inclusionAI/Ling-V2.5": {
+    "checked_at": 1793252215,
+    "title": "GitHub - inclusionAI/Ling-V2.5",
+    "description": "Contribute to inclusionAI/Ling-V2.5 development by creating an account on GitHub.",
+    "fetched_at": 1793252215
   },
   "https://github.com/lil-lab/sps/blob/main/figures/attention_masks.png": {
     "checked_at": 1793212629
@@ -2089,6 +2995,18 @@
     "title": "Making Deep Learning go Brrrr From First Principles",
     "description": "",
     "fetched_at": 1793212629
+  },
+  "https://huggingface.co/IAAR-Shanghai/Metis-27B/blob/main/metis_hyper_memory.py": {
+    "checked_at": 1793252215,
+    "title": "metis_hyper_memory.py · IAAR-Shanghai/Metis-27B at main",
+    "description": "We’re on a journey to advance and democratize artificial intelligence through open source and open science.",
+    "fetched_at": 1793252215
+  },
+  "https://huggingface.co/IAAR-Shanghai/Metis-4B/blob/main/metis_local_memory.py": {
+    "checked_at": 1793252215,
+    "title": "metis_local_memory.py · IAAR-Shanghai/Metis-4B at main",
+    "description": "We’re on a journey to advance and democratize artificial intelligence through open source and open science.",
+    "fetched_at": 1793252215
   },
   "https://huggingface.co/MiniMaxAI": {
     "checked_at": 1793212629,
@@ -2441,6 +3359,12 @@
     "description": "Step API 稳定 · 高性能 · 易集成，领先的模型和工具，加速你的下一个 AI 应用落地",
     "fetched_at": 1793212629
   },
+  "https://proceedings.mlr.press/v235/qin24c.html": {
+    "checked_at": 1793252215,
+    "title": "Various Lengths, Constant Speed: Efficient Language Modeling with Lightning Attention",
+    "description": "We present Lightning Attention, the first linear attention implementation that maintains a constant training speed for various sequence lengths under fixed memory consumption. Due to the issue with...",
+    "fetched_at": 1793252215
+  },
   "https://pytorch.org/blog/flash-decoding/": {
     "checked_at": 1793212629,
     "title": "Flash-Decoding for long-context inference - PyTorch",
@@ -2459,6 +3383,12 @@
     "description": "",
     "fetched_at": 1793212629
   },
+  "https://qwen.ai/blog?id=4074cca80393150c248e508aa62983f9cb7d27cd": {
+    "checked_at": 1793252215,
+    "title": "Qwen",
+    "description": "Qwen offers comprehensive functionality spanning chatbot, image and video understanding, image generation, document processing, web search integration, tool utilization, and artifacts.",
+    "fetched_at": 1793252215
+  },
   "https://qwen.ai/blog?id=qwen3-coder": {
     "checked_at": 1793212629,
     "title": "Qwen",
@@ -2476,6 +3406,9 @@
   },
   "https://qwenlm.github.io/blog/qwen3-vl/": {
     "checked_at": 1793212629
+  },
+  "https://raw.githubusercontent.com/QwenLM/Qwen3.8-Flash-Next/main/tech_report.pdf": {
+    "checked_at": 1793252215
   },
   "https://raw.githubusercontent.com/XiaomiMiMo/MiMo/main/MiMo-7B-Technical-Report.pdf": {
     "checked_at": 1793212629
@@ -2552,8 +3485,23 @@
   "https://spaces.ac.cn/archives/10739": {
     "checked_at": 1793212629
   },
+  "https://spaces.ac.cn/archives/11033": {
+    "checked_at": 1793252215
+  },
   "https://spaces.ac.cn/archives/11416": {
     "checked_at": 1793212629
+  },
+  "https://spaces.ac.cn/archives/7546": {
+    "checked_at": 1793252215
+  },
+  "https://spaces.ac.cn/tag/attention/": {
+    "checked_at": 1793252215
+  },
+  "https://tech.meituan.com/2026/06/30/LongCat2.0.html": {
+    "checked_at": 1793252215,
+    "title": "美团 LongCat-2.0 正式发布：在国产算力集群上完成全流程训练与推理的万亿参数模型 | 美团 · 技术团队",
+    "description": "作为业界首个在五万卡国产算力集群上完成全流程训练与推理的万亿参数模型（总参数 1.6 T，平均激活约 48 B，动态范围 33B~56B），LongCat-2.0 从零开始预训练，原生支持 1M 超长上下文，其架构设计自始至终围绕一个核心目标：让模型在真实的 Agentic Coding 任务中，更高效、更稳定地完成代码理解、生成与执行。",
+    "fetched_at": 1793252215
   },
   "https://tech.preferred.jp/en/blog/technologies-behind-distributed-deep-learning-allreduce/": {
     "checked_at": 1793212629,
@@ -2668,6 +3616,12 @@
     "title": "NVIDIA Blackwell Architecture",
     "description": "The Engine Behind AI Factories For The Age of AI Reasoning.",
     "fetched_at": 1793212629
+  },
+  "https://www.tylerromero.com/translations/scientific-spaces/a-brief-history-of-linear-attention/": {
+    "checked_at": 1793252215,
+    "title": "A Brief History of Linear Attention: From Imitation and Innovation to Feeding Back",
+    "description": "Translated from 线性注意力简史：从模仿、创新到反哺 by Jianlin Su (苏剑林)",
+    "fetched_at": 1793252215
   },
   "https://z.ai/blog/glm-5.2": {
     "checked_at": 1793212629
