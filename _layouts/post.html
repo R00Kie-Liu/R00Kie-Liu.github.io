@@ -37,7 +37,7 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="{{ '/assets/js/post-image-lightbox.js?v=20261029' | relative_url }}" defer></script>
-    <script src="{{ '/assets/js/post-tables.js?v=20261027' | relative_url }}" defer></script>
+    <script src="{{ '/assets/js/post-tables.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
     <script src="{{ '/assets/js/post-link-preview.js' | relative_url }}?v={{ site.time | date: '%s' }}" data-metadata-base="{{ '/assets/link-previews/' | relative_url }}" data-metadata-version="{{ site.time | date: '%s' }}" defer></script>
   </head>
   <body>

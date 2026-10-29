@@ -37,6 +37,14 @@
     var frame = null;
     var caption = table.caption && table.caption.textContent.trim();
     var label = caption || '表格 ' + (index + 1);
+    var columns = Array.prototype.reduce.call(table.rows, function(max, row) {
+      var count = Array.prototype.reduce.call(row.cells, function(n, cell) {
+        return n + cell.colSpan;
+      }, 0);
+      return Math.max(max, count);
+    }, 0);
+    wrapper.classList.toggle('has-many-columns', columns >= 5);
+    wrapper.style.setProperty('--post-table-columns', columns);
 
     function update() {
       frame = null;
@@ -55,9 +63,6 @@
       var rows = table.tBodies.length ? Array.prototype.reduce.call(table.tBodies, function(n, body) {
         return n + body.rows.length;
       }, 0) : table.rows.length;
-      var columns = table.rows.length ? Array.prototype.reduce.call(table.rows[0].cells, function(n, cell) {
-        return n + cell.colSpan;
-      }, 0) : 0;
       var directions = [];
       if (wide) directions.push('左右滚动');
       if (tall && !expanded) directions.push('上下滚动');
