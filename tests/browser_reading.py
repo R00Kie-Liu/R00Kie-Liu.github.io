@@ -18,6 +18,15 @@ async def settle(page):
     await page.wait_for_timeout(80)
 
 
+async def assert_image_ratio(image):
+    await image.evaluate('e=>e.decode().catch(()=>{})')
+    size = await image.evaluate('''e=>({naturalWidth:e.naturalWidth,naturalHeight:e.naturalHeight,
+        width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height,src:e.currentSrc})''')
+    assert size['naturalWidth'] > 0 and size['naturalHeight'] > 0, size
+    error = abs((size['width'] / size['height']) / (size['naturalWidth'] / size['naturalHeight']) - 1)
+    assert error < 0.015, size
+
+
 async def main(args):
     report = {'viewports': [], 'errors': [], 'bad_responses': []}
     args.output.mkdir(parents=True, exist_ok=True)
@@ -42,6 +51,7 @@ async def main(args):
             thumbnails = page.locator('.publications img')
             assert await thumbnails.count() >= 20
             assert await thumbnails.evaluate_all("es=>es.every(e=>e.loading==='lazy'&&e.srcset&&e.hasAttribute('width'))")
+            assert await thumbnails.evaluate_all("es=>es.every(e=>getComputedStyle(e).objectFit==='contain')")
             await thumbnails.first.scroll_into_view_if_needed()
             await page.wait_for_function('document.querySelector(".publications img").naturalWidth>0')
             await page.screenshot(path=str(args.output / f'home-{width}.png'))
@@ -101,6 +111,7 @@ async def main(args):
                 image = page.locator('.post-image-frame img').first
                 await image.scroll_into_view_if_needed()
                 await page.wait_for_function('(selector)=>{const e=document.querySelector(selector);return e.complete&&e.naturalWidth>0;}', arg='.post-image-frame img')
+                await assert_image_ratio(image)
                 await image.click()
                 assert await page.locator('.post-image-lightbox').is_visible()
                 await page.locator('.post-image-lightbox-img').click()
@@ -126,6 +137,7 @@ async def main(args):
                     gif = page.locator('.post-content img[data-full-src$="pointwise-product.gif"]')
                     await gif.scroll_into_view_if_needed()
                     await page.wait_for_function('(selector)=>document.querySelector(selector).src.endsWith("pointwise-product.gif")', arg='img[data-full-src$="pointwise-product.gif"]')
+                    await assert_image_ratio(gif)
                     await gif.click()
                     assert (await page.locator('.post-image-lightbox-img').get_attribute('src')).endswith('pointwise-product.gif')
                     await page.keyboard.press('Escape')
@@ -144,13 +156,14 @@ async def main(args):
         fallback = page.locator('noscript img[src$="pointwise-product.gif"]')
         await fallback.scroll_into_view_if_needed()
         assert await fallback.is_visible()
+        await assert_image_ratio(fallback)
         await context.close()
         await browser.close()
     assert not report['errors'], report['errors']
     assert not report['bad_responses'], report['bad_responses']
     report['checks'] = ['responsive layout', 'mobile menu', 'search and filters', 'full list after scrolling',
         'real fonts and future glyph fallback', 'all representative formulas', 'native and deferred images',
-        'image zoom and restore', 'paper and GitHub previews', 'copy full code and URL', 'themes', 'no-JavaScript fallback']
+        'image aspect ratios', 'uncropped thumbnails', 'image zoom and restore', 'paper and GitHub previews', 'copy full code and URL', 'themes', 'no-JavaScript fallback']
     (args.output / 'qa.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print('PASS: desktop/mobile reading, fonts, formulas, images, links and preview interactions.')
 
