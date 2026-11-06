@@ -1787,6 +1787,12 @@
     "description": "Long-sequence models must retain earlier information. Full attention keeps all past tokens but grows expensive, and recurrent-memory models compress history into fixed slots for linear-time processing. Limited capacity makes writes consequential: distractors can interfere with useful content, while skipped evidence cannot be recalled. Existing multi-slot memories write every token to the same number of slots, merging whether to store it with how many slots to update. We introduce Factorized Write Routing (FWR), which first keeps or skips each token and then chooses a fixed or token-adaptive n…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/abs/2610.38331": {
+    "checked_at": 1793961809,
+    "title": "Multi-Token Prediction Done Right",
+    "description": "Multi-Token Prediction (MTP) is now a common ingredient in language-model pre-training, as it improves downstream performance and enables faster inference through speculative decoding. We identify a flaw in standard MTP training, in which a residual component of the MTP gradient interferes with both next-token and multi-token learning, increasingly so with scale. Specifically, the MTP cross-entropy gradient can be decomposed exactly into a KL self-distillation term that pulls each MTP head toward the model's own next-token prediction (NTP) distribution and improves speculative decoding, and a…",
+    "fetched_at": 1793961809
+  },
   "https://arxiv.org/html/2405.05254v2": {
     "checked_at": 1793252215,
     "title": "You Only Cache Once: Decoder-Decoder Architectures for Language Models",
@@ -1954,6 +1960,12 @@
     "title": "IQuest-Q1: Advancing Foundation Capabilities for Agentic CLI Systems",
     "description": "We present IQuest-Q1, a sparse Mixture-of-Experts (MoE) agentic foundation model with 320B total parameters (15B activated). IQuest-Q1 is developed through a three-stage process: (1) stable and efficient pre-training, combining Stable SplitNorm, Muon, and muP with a two-stage curriculum whose second stage increases the coding-data mixture, preserving a wide stability margin between safe and optimal learning rates; (2) fine-grained mid-training, expanding the data mixture across domains and formats and progressively extending the context; and (3) multi-scaffold with multi-version post-training…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2610.38331v1": {
+    "checked_at": 1793961809,
+    "title": "Multi-Token Prediction Done Right",
+    "description": "Multi-Token Prediction (MTP) is now a common ingredient in language-model pre-training, as it improves downstream performance and enables faster inference through speculative decoding. We identify a flaw in standard MTP training, in which a residual component of the MTP gradient interferes with both next-token and multi-token learning, increasingly so with scale. Specifically, the MTP cross-entropy gradient can be decomposed exactly into a KL self-distillation term that pulls each MTP head toward the model's own next-token prediction (NTP) distribution and improves speculative decoding, and a…",
+    "fetched_at": 1793961809
   },
   "https://arxiv.org/pdf/2412.19437": {
     "checked_at": 1793212629,
@@ -2262,7 +2274,7 @@
     "fetched_at": 1793212629
   },
   "https://cdrdv2-public.intel.com/817486/gaudi-3-ai-accelerator-white-paper.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://cloud.google.com/tpu/docs/v5e": {
     "checked_at": 1793212629,
@@ -2271,7 +2283,7 @@
     "fetched_at": 1793212629
   },
   "https://crd.lbl.gov/assets/pubs_presos/parlab08-roofline-talk.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://cursor.com/blog/mixture-of-kittens": {
     "checked_at": 1793212629,
@@ -2346,10 +2358,10 @@
     "fetched_at": 1793212629
   },
   "https://dl.acm.org/doi/10.1145/3789240.3829201": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://dl.acm.org/doi/pdf/10.1145/3567955.3567959": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://docs.habana.ai/en/latest/PyTorch/PyTorch_FP8_Training/index.html": {
     "checked_at": 1793212629,
@@ -2382,16 +2394,16 @@
     "fetched_at": 1793212629
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/fp8_primer.html": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/features/low_precision_training/nvfp4/nvfp4.html": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/index.html": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://docs.nvidia.com/dgx-superpod-reference-architecture-dgx-h100.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://docs.nvidia.com/megatron-core/developer-guide/0.16.1/apidocs/core/core.transformer.moe.experts.html": {
     "checked_at": 1793212629,
@@ -2508,7 +2520,7 @@
     "fetched_at": 1793212629
   },
   "https://github.com/Introspective-Diffusion/I-DLM/tree/main/sglang": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://github.com/MINT-SJTU/Evo-1": {
     "checked_at": 1793212629,
@@ -2835,7 +2847,7 @@
     "fetched_at": 1793212629
   },
   "https://github.com/deepseek-ai/DeepEP/blob/main/docs/legacy.md": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://github.com/deepseek-ai/DeepSeek-OCR": {
     "checked_at": 1793212629,
@@ -2892,10 +2904,10 @@
     "fetched_at": 1793252215
   },
   "https://github.com/lil-lab/sps/blob/main/figures/attention_masks.png": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://github.com/lil-lab/sps/blob/main/figures/gradient_params_fp.png": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://github.com/meituan-longcat": {
     "checked_at": 1793212629,
@@ -2988,7 +3000,7 @@
     "fetched_at": 1793212629
   },
   "https://hc34.hotchips.org/assets/program/conference/day2/Network%20and%20Switches/NVSwitch%20HotChips%202022%20r5.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://horace.io/brrr_intro.html": {
     "checked_at": 1793212629,
@@ -3093,7 +3105,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/resolve/main/DeepSeek_V4.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://huggingface.co/docs/accelerate/usage_guides/gaudi": {
     "checked_at": 1793212629,
@@ -3156,7 +3168,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/moonshotai/Kimi-K3/raw/main/config.json": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://huggingface.co/nvidia": {
     "checked_at": 1793212629,
@@ -3291,10 +3303,10 @@
     "fetched_at": 1793212629
   },
   "https://microsoft.ai/pdf/mai-thinking-1.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://mimo.xiaomi.com/blog/mimo-tilert-1000tps": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://mimo.xiaomi.com/mimo-v2-5": {
     "checked_at": 1793212629,
@@ -3309,10 +3321,10 @@
     "fetched_at": 1793212629
   },
   "https://moonshotai.github.io/Kimi-K2.5/": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://moonshotai.github.io/Kimi-K2.6/": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-gemma-4": {
     "checked_at": 1793212629,
@@ -3345,7 +3357,7 @@
     "fetched_at": 1793212629
   },
   "https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyworook.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://platform.kimi.ai/docs/guide/kimi-k3-quickstart": {
     "checked_at": 1793212629,
@@ -3396,7 +3408,10 @@
     "fetched_at": 1793212629
   },
   "https://qwen.ai/blog?id=qwen3.5": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809,
+    "title": "Qwen",
+    "description": "Qwen offers comprehensive functionality spanning chatbot, image and video understanding, image generation, document processing, web search integration, tool utilization, and artifacts.",
+    "fetched_at": 1793961809
   },
   "https://qwen.ai/blog?id=qwen3.5-omni": {
     "checked_at": 1793212629,
@@ -3405,31 +3420,31 @@
     "fetched_at": 1793212629
   },
   "https://qwenlm.github.io/blog/qwen3-vl/": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://raw.githubusercontent.com/QwenLM/Qwen3.8-Flash-Next/main/tech_report.pdf": {
-    "checked_at": 1793252215
+    "checked_at": 1793961809
   },
   "https://raw.githubusercontent.com/XiaomiMiMo/MiMo/main/MiMo-7B-Technical-Report.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://raw.githubusercontent.com/jianc99/jianc99.github.io/master/images/dflash_system.png": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Flash-Prover/main/LongCat_Flash_Prover_Technical_Report.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Next/main/tech_report.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-3.5-Flash/main/step_3p5_flash_tech_report.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-Audio-R1/main/Step-Audio-R1.5.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step3/main/Step3-Sys-Tech-Report.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://research.nvidia.com/labs/cosmos-lab/infotok/": {
     "checked_at": 1793212629,
@@ -3444,7 +3459,7 @@
     "fetched_at": 1793212629
   },
   "https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://resources.nvidia.com/en-us-tensor-core": {
     "checked_at": 1793212629,
@@ -3471,7 +3486,7 @@
     "fetched_at": 1793212629
   },
   "https://sglang.readthedocs.io/": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://siboehm.com/articles/22/CUDA-MMM": {
     "checked_at": 1793212629,
@@ -3480,22 +3495,28 @@
     "fetched_at": 1793212629
   },
   "https://spaces.ac.cn/archives/10592": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://spaces.ac.cn/archives/10739": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://spaces.ac.cn/archives/11033": {
-    "checked_at": 1793252215
+    "checked_at": 1793961809
   },
   "https://spaces.ac.cn/archives/11416": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://spaces.ac.cn/archives/7546": {
-    "checked_at": 1793252215
+    "checked_at": 1793961809
   },
   "https://spaces.ac.cn/tag/attention/": {
-    "checked_at": 1793252215
+    "checked_at": 1793961809
+  },
+  "https://sylvan820.github.io/D-MTP/": {
+    "checked_at": 1793961809,
+    "title": "DMTP: A Better First Token for Block Drafting via MTP",
+    "description": "DMTP combines pretrained MTP first-token prediction with parallel DFlash drafting. A technical blog by Piggy Shen covering the method, inference design, and evaluation.",
+    "fetched_at": 1793961809
   },
   "https://tech.meituan.com/2026/06/30/LongCat2.0.html": {
     "checked_at": 1793252215,
@@ -3624,12 +3645,12 @@
     "fetched_at": 1793252215
   },
   "https://z.ai/blog/glm-5.2": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://zhuanlan.zhihu.com/p/2013649391051896797": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   },
   "https://zhuanlan.zhihu.com/p/2067703296500954047": {
-    "checked_at": 1793212629
+    "checked_at": 1793961809
   }
 }
