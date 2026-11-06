@@ -14,7 +14,7 @@ description: "沿多步预训练与投机草拟两条脉络，梳理 DeepSeek-V3
 
 这两个问题有交集，也各自发展出了不少工作。相似的辅助头可以服务于不同目标，多 token 输出也可以来自不同的推理过程。下面按它们解决的问题组织这段脉络。
 
-资料截至 **2026 年 10 月 23 日**，图文与表述于 **2026 年 10 月 29 日**修订。
+主体资料整理于 **2026 年 10 月 23 日**；**2026 年 11 月 6 日**补入 Soft-MTP 与 DMTP 的讨论。
 
 ## 1. 两个起点：多步预测用于解码，还是用于预训练
 
@@ -151,6 +151,25 @@ V4.1-Flash 的报告明确说，backbone 预训练阶段省去了 MTP 模块。�
 
 主干已经训好，或者 policy 在 RL 中持续变化时，单独维护 drafter 可以直接围绕当前 policy 和服务请求优化。联合预训练的优势在于更广的数据覆盖，两者最终要在实际请求分布上比较质量与成本。
 
+### 4.4 DMTP：让原生 MTP 开头，block drafter 续写
+
+[DMTP](https://sylvan820.github.io/D-MTP/) 是一篇技术博客，研究原生 MTP 与 DFlash 的协作。它用冻结的 MTP 提出首个候选 $T_1$，把预测 $T_1$ 时的 hidden 与 $E(T_1)$ 归一化、拼接投影，作为 DFlash 的首位输入；后者从 `[T1, MASK×6]` 并行预测 $T_2$～$T_7$，七个候选一起验证。历史 target 特征的注入路径保留。
+
+这里有两种 token 要分开：$A=x_a$ 是 target 已输出、尚未处理的 pending token；$T_1=x_{a+1}$ 是 MTP 提出的候选，仍可能被拒绝。target 特征只到 $x_{a-1}$，传给 DFlash 的是**预测 $T_1$ 时**的 MTP hidden，既不需要 target 提前处理 $T_1$，也不是把 MTP 的 KV 拼进历史缓存。[方法与时序](https://sylvan820.github.io/D-MTP/)
+
+这个分工可以接上第 7 节的 prefix survival。把各位置条件接受率记为 $a_i$，则
+
+$$
+\mathbb E[N_{\mathrm{commit}}]
+=1+a_1\left(1+a_2+a_2a_3+\cdots+\prod_{i=2}^{K}a_i\right).
+$$
+
+若其余条件接受率固定，提高 $a_1$ 会抬高所有后续前缀的存活概率。因而，一个可靠的首位预测器有机会让整块并行计算更有价值。DMTP 的补充消融也区分了“只换成 MTP 候选 token”与“再注入预测表示”；不过该接口消融仅使用 8 条 Code 请求，其幅度还需要更大样本复验。
+
+公开 Qwen3.6-27B 实验在温度 0、每数据集前 80 条、最多生成 1,024 token 的设置下，报告 GSM8K 平均接受长度由 4.318 升至 5.074。统计包含 correction/bonus；验证采用 target-only 的逐 token 匹配，口径不同于 $p/q$ rejection sampling。博客另报端到端吞吐，包含新增 MTP 和选词成本。[实验设置与结果](https://sylvan820.github.io/D-MTP/)
+
+它提供了一种连接联合预训练与后装 drafter 的方式：保留已有首位能力，再训练并行后缀。能否把这种分工提前放进预训练，并同时改善主干 NTP，是下一步实验问题；当前工作冻结 target 与 MTP，尚未直接检验这一点。
+
 ## 5. 近期改进：各自补哪一块
 
 沿着这两条线，近期还有几类尝试，分别修改参数约束、监督形式、补训成本和调度方式。
@@ -218,15 +237,40 @@ ECHO 还做了 Dynamic Depth Sampling。每个 optimizer step 抽一个深度 $D
 
 这个设计对应的实验问题是：给定一份额外训练预算，是增加辅助模块的表达能力更划算，还是进一步约束主干现有参数更划算？做对照时，最好同时保留 matched-token 和 matched-FLOPs 两组比较，否则容易把多花计算和结构收益混在一起。
 
-### 5.5 补训预测头：已有模型需要付出多少成本
+### 5.5 Soft-MTP：同一个未来标签，应该回传什么梯度
+
+[Multi-Token Prediction Done Right](https://arxiv.org/abs/2610.38331) 把问题推进到优化目标。令 $p$ 为 MTP 分布，$q$ 为预测同一个 token 的位置对齐 NTP 分布，$y$ 为 one-hot 标签；两者共享线性输出矩阵 $W$。在最终归一化之后、进入 LM head 的表示空间，MTP 的 CE 梯度可精确分解为：
+
+$$
+\underbrace{W^\top(p-y)}_{g_{\mathrm{CE}}}
+=\underbrace{W^\top(p-q)}_{g_{\mathrm{KL}}}
++\underbrace{W^\top(q-y)}_{g_{\mathrm{res}}}.
+$$
+
+把 $q$ 作为 stop-gradient teacher，第一项就是 forward KL 对 MTP 表示的梯度。Soft-MTP 用 straight-through routing，从已有 NTP CE 反传中抵消第二项，保留表示侧的 KL 信号；共享输出头仍接收 CE 梯度。因此它不等于把整个 MTP loss 换成显式 KL。[梯度分解与实现](https://arxiv.org/html/2610.38331v1#S5)
+
+省略 loss 权重与平均计数，对一对已对齐的表示，可以把路由写成：
+
+$$
+\widetilde h_{\mathrm{NTP}}
+=h_{\mathrm{NTP}}+\operatorname{sg}(h_{\mathrm{MTP}})-h_{\mathrm{MTP}}.
+$$
+
+前向数值不变，反向向 MTP 表示注入负的 NTP CE 梯度。实现时还要匹配两侧标签、有效位置、loss 权重与 reduction；不同 horizon 的有效 token 数不同，直接粘贴一行未缩放的代码不一定完成抵消。它避免的是相对标准 MTP **额外物化** teacher/student 全词表张量，不代表 MTP 本身没有词表投影成本。
+
+论文在 167M～1.2B 上报告相对标准 MTP 的收益。以 1.2B 为例，FineWeb-Edu PPL 是 NTP 10.57、标准 MTP 10.89、Soft-MTP 10.74：它改善了标准 MTP 的退化，但该指标仍未超过纯 NTP。梯度恒等式是精确的；residual 低信噪比且干扰优化，则是论文实验支持的观察。residual 也包含 teacher 对数据分布的误差修正，去掉它是在采样噪声与 teacher 偏差之间取舍。[结果与偏差—方差分析](https://arxiv.org/html/2610.38331v1#S6)
+
+这给“什么类 MTP loss 更好”增加了一个必要对照：在架构不变时，先比较 hard CE、显式 KL 与这种梯度路由，再判断收益是否来自新的表示任务。它也连接了 NextLat 的 readout-space 蒸馏，但没有解决 all-mask drafter 的信息缺口：位置对齐的 AR teacher 可能看到了 student 不可见的中间 token。分解恒等式仍成立，逐样本预测能力却不会因此等同。
+
+### 5.6 补训预测头：已有模型需要付出多少成本
 
 Match the Distribution, Not the Compute 关心现成模型补训 MTP 的成本。作者冻结 Qwen3-8B，用约 2.5B 个目标生成 token 训练链式预测头，并报告有竞争力的预期加速。文中也研究放宽验证与动态启用预测头。读结果时要把严格验证和允许分布偏移的部分分开，预期加速也需要真实 engine 的 wall-clock 结果来检验。[论文，2026-10-01](https://arxiv.org/abs/2610.00888)
 
-### 5.6 AMTP：在线选择草拟长度
+### 5.7 AMTP：在线选择草拟长度
 
 AMTP 把草拟长度变成在线决策。它从验证反馈中估计草稿前缀能活多长，再选择预期 tokens/s 更好的 horizon，不需要重训模型，也保留原本的严格 verifier。作者相对固定窗口报告了最高约 10% 的吞吐收益。这里优化的是给定 drafter 的使用方式。[Adaptive Multi-Token Prediction，2026-10-20](https://arxiv.org/abs/2610.28619)
 
-### 5.7 无训练探测与无验证生成
+### 5.8 无训练探测与无验证生成
 
 还有两条边界路线。[ESP](https://arxiv.org/abs/2603.17942) 用 embedding-space probing 在冻结模型上构造未来候选，再批量验证；[MTP via Self-Distillation](https://arxiv.org/abs/2602.06019) 则通过在线蒸馏改造模型，不依赖额外 verifier，接受一定质量变化。它们都涉及多 token 生成，但训练约束和质量保证不同，适合单列比较。
 
@@ -297,6 +341,8 @@ $$
 | 共享参数是否值得 | 独立辅助层、共享辅助层、主干层共享；固定数据与其他 recipe |
 | 递归使用是否稳定 | 每个位置的条件接受率、prefix survival，区分训练深度内外 |
 | 加速有没有兑现 | 同硬件、同 engine，记录 draft / verify / runtime 延迟及真实吞吐 |
+| 梯度路由是否有益 | 同架构 hard CE、显式 KL、Soft-MTP；同时检查主干与输出头的梯度 |
+| 首位与后缀怎样分工 | 同候选预算下，整块 DFlash、MTP 首位 + token、再加入 MTP hidden；统一 verifier |
 | 后训练是否破坏对齐 | base、SFT、RL checkpoint 分阶段测；实际采样设置与请求类型 |
 
 实现时还有几个不太显眼的地方。shifted labels 要在 packed document 边界截断，不能把下一篇文档开头当未来标签；assistant-only SFT 的 loss mask 要与移位后的预测位置对齐；共享层的 optimizer state 和 checkpoint 转换要保持一致，避免训练里 tied、导出后却分成两份。递归调用的 position、mask 和 KV 生命周期也要逐步核对。
@@ -311,7 +357,7 @@ $$
 
 *图 5：按本文内容生成的架构与训练／推理范式总览。上半部分比较独立多头、因果递归、参数共享、latent 监督、状态／预测分工与 block draft；下半部分整理三种常见训练与部署流程。图中方框省略了 norm、投影与 attention mask 等细节；具体 token 索引以正文公式为准。SPS 属于表征分工相关工作，NextLat 的转移以给定 token 为条件；它们与多步 token 监督的联系分别见第 5 节。总览为图像生成示意；图 1–4 来自论文或作者公开仓库。*
 
-这些设计可以组合。共享参数没有规定未来标签怎样给，block draft 也没有规定是否从预训练开始联合优化。判断一套方案是否值得采用，仍需要分别测主干能力、后训练适配成本，以及给定服务负载下的实际生成速度。
+这些设计可以组合。Soft-MTP 改变梯度路由，DMTP 组合原生 MTP 与 block draft，它们可以建立在图中的已有结构之上。共享参数没有规定未来标签怎样给，block draft 也没有规定是否从预训练开始联合优化。判断一套方案是否值得采用，仍需要分别测主干能力、后训练适配成本，以及给定服务负载下的实际生成速度。
 
 ## 参考资料
 
@@ -342,3 +388,6 @@ $$
 - [Efficient Training-Free Multi-Token Prediction via Embedding-Space Probing](https://arxiv.org/abs/2603.17942)
 - [Multi-Token Prediction via Self-Distillation](https://arxiv.org/abs/2602.06019)
 - [Fast Inference from Transformers via Speculative Decoding](https://arxiv.org/abs/2211.17192)
+
+- [Multi-Token Prediction Done Right（Soft-MTP）](https://arxiv.org/abs/2610.38331)
+- [DMTP: A Better First Token for Block Drafting via MTP（技术博客）](https://sylvan820.github.io/D-MTP/)
