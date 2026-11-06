@@ -3,8 +3,8 @@
 
 <div class="publications">
 <p class="publication-legend">
-  <span><sup>*</sup> Equal contribution</span>
-  <span><i class="fas fa-envelope" aria-hidden="true"></i> Corresponding author</span>
+  <span><sup>&dagger;</sup> Equal contribution</span>
+  <span><i class="far fa-envelope" aria-hidden="true"></i> Corresponding author</span>
 </p>
 <ol class="bibliography">
 
@@ -18,7 +18,7 @@
   </div>
   <div class="col-sm-9" style="position: relative;padding-right: 15px;padding-left: 20px;">
       <div class="title"><a href="{{ link.pdf }}">{{ link.title }}</a></div>
-      <div class="author">{{ link.authors | replace: '*', '<sup>*</sup>' | replace: '&dagger;', '<i class="fas fa-envelope" role="img" aria-label="Corresponding author" title="Corresponding author"></i>' }}</div>
+      <div class="author">{{ link.authors | replace: '&dagger;', '<i class="far fa-envelope" role="img" aria-label="Corresponding author" title="Corresponding author"></i>' | replace: '*', '<sup>&dagger;</sup>' }}</div>
       <div class="periodical"><em>{{ link.conference }}</em>
       </div>
     <div class="links">

@@ -81,6 +81,7 @@ html.dark-mode {
 .publications .author sup {
     font-size: 0.7em;
     line-height: 0;
+    font-weight: 400;
 }
 
 .publications h1 {
@@ -113,11 +114,6 @@ html.dark-mode {
     padding: 12px;
     border-radius: 12px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.publications ol.bibliography li:hover {
-    background: var(--bg-secondary, #f5f7fa);
-    box-shadow: var(--shadow-sm, 0 2px 16px rgba(26, 58, 92, 0.08));
 }
 
 .publications ol.bibliography li .abbr {
