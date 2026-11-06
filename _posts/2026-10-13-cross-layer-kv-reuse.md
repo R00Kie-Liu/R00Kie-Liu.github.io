@@ -2,22 +2,22 @@
 layout: post
 title: "长话长说（六）：KV 跨层复用，从 CLA、YOCO 到 KITE 与 VFold"
 date: 2026-10-13
-last_modified_at: 2026-10-27
+last_modified_at: 2026-11-06
 tags: [LLM, Attention, KV Cache, Long Context, Pretraining, Inference]
 description: "从 agentic 场景的 prefill 开销解释 YOCO-style 架构为何重新受到关注，再区分缓存、生成来源、索引与聚合状态共享，梳理 CLA、KITE/SST、CSA2/CED、HySparse2、GSM、LatentIndex 和 VFold。"
 ---
 
 ## 写在前面
 
-> 这是长上下文 attention 架构系列的第六篇，从[第三篇的研究趋势]({% post_url 2026-08-04-long-context-architecture-watchlist-2026 %})中拆出跨层复用，单独讨论。GQA、MLA 和序列压缩的基础见[第一篇]({% post_url 2026-07-27-long-context-attention-architecture-survey %})。 完整目录见[系列导航]({% post_url 2026-07-27-long-context-attention-architecture-survey %}#series-map)。
+> 这是长上下文 attention 架构系列的第六篇，讨论跨层 KV 复用。相关研究趋势见[第三篇]({% post_url 2026-08-04-long-context-architecture-watchlist-2026 %})，GQA、MLA 和序列压缩的基础见[第一篇]({% post_url 2026-07-27-long-context-attention-architecture-survey %})。完整目录见[系列导航]({% post_url 2026-07-27-long-context-attention-architecture-survey %}#series-map)。
 
 GQA 减少每层的 KV heads，MLA 把每个 token 的 KV 存小，稀疏 attention 减少每次读取的位置。这些方法仍可能保留一个默认前提：每过一层，都要生成、保存和选择一遍历史。
 
 这个前提并非必须。后面的层可以带着新的 query，读取前面某层生成的 KV。但沿深度复用也有代价：高层原本能写入自己的历史表示，现在可能只能重新解释一份较浅的表示。省下多少存储，与丢掉多少表达自由度，是同一个设计的两面。
 
-2024 年的 CLA、YOCO 已经把这条路线讲得很明确。到 2026 年，KITE、CED、HySparse2 又在不同设计中采用了 YOCO-style 的分工：一部分网络构建历史，另一部分网络读取历史。为什么这时值得重新讨论它？一个重要原因，是多轮 agent 把持续处理新输入的成本推到了更显眼的位置。
+2024 年的 CLA、YOCO 已经采用跨层复用。到 2026 年，KITE、CED、HySparse2 又在不同设计中采用了 YOCO-style 的分工：一部分网络构建历史，另一部分网络读取历史。多轮 agent 交互中，工具会反复返回需要处理的新输入，这类分工直接影响每轮输入的 prefill 成本。
 
-本文初稿依据截至 2026-10-13 的公开材料，本次补入 GSM 的 2026-10-15 修订版。先讨论工作负载动机，再展开 KITE/SST、CSA2/CED、HySparse2、GSM、局部历史消融，以及 LatentIndex、VFold。跨层复用包含几种不同机制，并非每一种都能缩短 prefill 路径。
+跨层复用能省下的开销，取决于被共享的对象和它的生成依赖。少存几份 KV、少做几次索引，与省去一段 prompt 的上层计算，是不同的收益。
 
 ## 为什么 YOCO-style 架构又受到关注
 
@@ -82,7 +82,7 @@ $$
 
 ### 1.1 从共享对象到实际执行收益
 
-下面按本文后续案例比较。表中的“提前结束”均指大量 prompt 位置的缓存构建；用于生成 logits 的末位置仍需相应上层计算。
+表中的“提前结束”均指大量 prompt 位置的缓存构建；用于生成 logits 的末位置仍需相应上层计算。
 
 | 方法 | 共享或提前生成什么 | 剩余依赖与 prefill 条件 |
 |---|---|---|
@@ -96,7 +96,7 @@ $$
 | LatentIndex | indexer latent／候选池 | 本层重打分、独立选 top-k，main KV 与前向依赖仍在 |
 | VFold | 对齐后合并的历史 V | 各层保留 key 与 attention，仍计算新位置的 KV，不能提前结束 |
 
-由此再读各节，就能区分容量压缩、减少选择与缩短前向依赖。下半部生成的 KV 供多少层使用，并不单独决定是否能提前结束；被跳过的层还剩不剩私有历史状态，才是执行条件。
+下半部生成的 KV 供多少层使用，并不单独决定是否能提前结束；被跳过的层还剩不剩私有历史状态，才是执行条件。
 
 ## 2. CLA：后面的层改为读取前面的 KV
 
@@ -268,7 +268,7 @@ $$n_s,n_c$$ 是源模型与 continuation 阶段的训练 token 数，$$f_s,f_c$$
 
 论文在 prefill:decode **成本权重**为 75:25 时，估计 SST 比 47B、63B 对照分别省 6.7%、31.6%。这里不是输入输出 token 比，也不是实测 GPU 成本或 serving 加速；用于参考这些权重的 OpenRouter 账单估计同样不等于 GPU 工作量。在该 proxy 下，prefill 成本占比需要超过约 65.5%，SST 才比 47B 对照更便宜。
 
-另外，continuation 使用 4,096 序列长度；论文的任务评测并非百万上下文或完整 agent 流程评测。KITE 对这篇综述的价值，是把 KV 复用与训练扩容连起来，而不是已经证明在所有长上下文 workload 下都更快。
+另外，continuation 使用 4,096 序列长度；论文的任务评测并非百万上下文或完整 agent 流程评测。KITE 将 KV 复用用于分阶段扩容，其成本优势依赖 prefill 与 decode 的比例，尚不能推广到所有长上下文 workload。
 
 <a id="csa2-ced"></a>
 
@@ -386,7 +386,7 @@ HySparse 原先在 sparse 层旁保留独立 SWA 分支。HySparse2 改为强制
 
 ### 5.5 GSM：把远程读取结果写进共享状态
 
-[GSM: Efficient Language Modeling with Shared Global State](https://arxiv.org/abs/2609.33465v3)（初版 2026-09-27，下面依据 v3）进一步追问：共享了 KV 和 top-k 以后，是否还需要每个 decoder 层重新汇聚远程历史？它将这项工作集中到 encoder，decoder 只读取已经包含远程信息的一段近期表示。
+[GSM: Efficient Language Modeling with Shared Global State](https://arxiv.org/abs/2609.33465v3)（初版 2026-09-27，v3 修订于 2026-10-15）将远程历史的读取与聚合集中到 encoder。HySparse2 的各个 decoder 层仍用自己的 query 读取选中的远程 KV；GSM 的 decoder 则只读取已经吸收远程信息的一段近期表示，不再逐层回查远程历史。
 
 ![GSM 的多阶段历史聚合与共享状态](/assets/img/blog/cross-layer-kv-reuse/gsm-fig1-architecture.png)
 
@@ -413,11 +413,11 @@ $$
 \mathcal M_t=[m_{\max(1,t-M+1)},\ldots,m_t],\qquad M=W+K.
 $$
 
-$$W$$ 和 $$K$$ 分别是 encoder 的局部窗口与稀疏条目预算；实际窗口还受文档边界和 mask 约束。30B-A3B 配置为 $$W=128,K=512,M=640$$。这些是近期位置的 KV，其表示已经吸收远程信息，不是从原始历史中再选出的 640 个位置，也不是 640 个可学习 memory tokens。
+$$W$$ 和 $$K$$ 分别是 encoder 的局部窗口与稀疏条目预算；实际窗口还受文档边界和 mask 约束。30B-A3B 配置为 $$W=128,K=512,M=640$$：decoder 读取的是最近 640 个位置的 KV，每个位置的表示都已吸收 encoder 检索到的远程信息。640 限制的是这个近期窗口，而非再次从完整历史中选出的 top-k，也不是可学习 memory tokens 的数量。
 
 同一位置的全部 decoder 层共享 $$\mathcal M_t$$，各层仍根据前层输出生成自己的 query，保留输出投影、attention sink 和 FFN/MoE；状态在 decoder 内保持不变。与 YOCO、HySparse2 相比，decoder 失去了当步按新 query 回查远程历史的自由，换来有界的读取与共享缓存。若有 $$L_D$$ 个 decoder 层，忽略逐 token 投影和 FFN，其 attention 成本为 $$O(L_DMd)$$，共享 KV 为 $$O(Md_{\mathrm{KV}})$$；$$d$$ 和 $$d_{\mathrm{KV}}$$ 分别概括 attention 宽度与条目存储宽度。
 
-**固定的是 decoder 的状态，不是整网历史存储。** encoder 仍保存历史表示，以便后续位置再次检索。这也将它与纯 recurrent linear attention 区分开：生成下一个 token 时，encoder 可以利用新输入回查尚未写进状态的信息；当前 token 的 decoder 则始终受已有共享状态约束。
+**decoder 状态有界，encoder 的历史存储仍随序列增长。** 生成下一个 token 时，encoder 可以利用新输入回查尚未写进状态的信息；当前 token 的 decoder 则始终受已有共享状态约束。纯 recurrent linear attention 不保留这种可供后续检索的逐 token 历史，两者的整网存储复杂度不同。
 
 ### 5.6 GSM 的 prefill 裁剪与实验范围
 
@@ -429,13 +429,17 @@ $$
 R_\ell=\min\left(T,\ m+(L_E-\ell)(W-1)\right)
 $$
 
-个位置执行 attention 读取和后续块内计算；聚合分支同步裁剪。额外的 suffix 覆盖后续 SWA 对前层输入的需求，范围随深度逐渐缩至 $$m$$。这与 §8.1 的精确 suffix 分析相同，都要沿依赖倒推，不能把所有后段 encoder 层一律裁到 $$M$$。
+个位置执行 attention 读取和后续块内计算；聚合分支同步裁剪。额外的 suffix 覆盖后续 SWA 对前层输入的需求，范围随深度逐渐缩至 $$m$$。较浅层必须多保留这些输入位置，所有后段 encoder 层一律裁到 $$M$$ 会截断依赖。§8.1 的局部历史结构也有同样的 suffix 扩展。
 
 论文以同深度、hidden width、数据和训练设置的 DeepSeek-V4.1-Flash 式主干为基线，从头训练，而非直接压缩已发布模型。1.5B dense、8B-A1.5B 和 30B-A3B 的十项下游平均分接近，后两档略高；各配置只有单次训练，未评估跨随机种子的波动。
 
-30B-A3B 在 31B input tokens 的主训练后适配到 64K，再测 4K–256K 的效率。256K、H800/H100、batch 1 下，prefill 吞吐约为基线 3.37×，cached decode 约 1.17–1.22×；request cache 从 0.491 降至 0.295 GiB，约减少 40%。这里统计 encoder、局部窗口和共享状态的唯一底层分配，而非只算 decoder。总 GPU 峰值仍约 72.5–72.8 GiB；32 卡训练基准虽达到 2.63× 吞吐，峰值分配却从 50.61 增至 56.75 GiB/GPU。附录 A.3 的推理流程描述为完整 prompt encoder 加末位置 decoder，上述速度数字没有单独量化依赖裁剪的增益。
+30B-A3B 在 31B input tokens 的主训练后适配到 64K，再测 4K–256K 的效率。256K、H800/H100、batch 1 下，prefill 吞吐约为基线 3.37×，cached decode 约 1.17–1.22×。附录 A.3 的推理流程描述为完整 prompt encoder 加末位置 decoder，因此这些数字反映的是该执行流程，没有单独量化上述依赖裁剪的增益。
 
-近 1M 的结果则来自额外 YaRN 扩展和约 5B input tokens 的 RULER-derived 任务适配：64 个多 key 样例全对，64 个多跳样例答对 59 个。它支持“encoder 保留历史检索、decoder 只读 640 个状态条目”能处理这些任务，不等于对任意百万 token 任务的无损保证。0.5B 的聚合阶段消融也显示，三阶段改为单阶段后，平均 RULER 从 94.33% 降到 83.33%，而增加到十阶段没有继续提升；状态形成前的检索深度有实际作用。
+同一推理配置的 request cache 从 0.491 降至 0.295 GiB，约减少 40%，统计包含 encoder、局部窗口和共享状态的唯一底层分配。总 GPU 峰值仍约 72.5–72.8 GiB；32 卡训练基准达到 2.63× 吞吐，峰值分配则从 50.61 增至 56.75 GiB/GPU。请求缓存缩小，并不代表训练或推理的总显存按相同比例下降。
+
+近 1M 的结果来自额外 YaRN 扩展和约 5B input tokens 的 RULER-derived 任务适配：64 个多 key 样例全对，64 个多跳样例答对 59 个。encoder 保留历史检索、decoder 只读 640 个状态条目的结构，在这组适配后任务中保留了长程检索能力；对其他百万 token 任务的泛化仍待验证。
+
+聚合阶段数也会影响质量。0.5B 消融中，三阶段改为单阶段后，平均 RULER 从 94.33% 降到 83.33%，而增加到十阶段没有继续提升。decoder 的读取预算相同，encoder 在状态形成前能累积多少轮检索结果，仍会改变最终表现。
 
 ## 6. IndexCache 到 LatentIndex：共享选择，还是共享选择依据
 
@@ -635,7 +639,7 @@ $$A_\ell$$ 和 $$A_{\ell+1}$$ 由各层自己的 query、key 计算，可以关�
 
 多轮 agent 让这一区分更有实际意义：即使复用已有 prefix，新的工具观测仍要进入模型。YOCO-style 架构将处理这些输入所需的缓存构建深度，与生成时使用的完整模型深度分开；收益是否足够大，需要按真实请求的缓存命中、剩余 prefill 和 decode 成本评估。
 
-CLA 适合建立最小机制理解；YOCO 解释为什么生成来源会改变 prefill，KITE 则把这种分工用于训练中的模型扩容；CSA2/CED 和 HySparse2 展示局部状态带来的取舍；GSM 把共享对象推进到已聚合历史的有界状态；LatentIndex 说明共享表示仍可保留独立选择；VFold 则提醒我们，K 与 V 也不必采用同一种压缩。
+CLA 减少 KV 的生成与保存份数；YOCO、KITE 将历史构建与上层读取分开；CSA2/CED 和 HySparse2 对层私有局部状态做出不同取舍。GSM 进一步将远程历史聚合到近期共享状态，限制 decoder 的直接读取范围，encoder 仍保留全局检索。LatentIndex 共享索引表示而保留逐层选择，VFold 则只合并对齐后的历史 value。它们减少的开销和保留的表达自由度各不相同。
 
 读新论文时，最有用的检查顺序是：标出物理保存的 bank，再标出每个 bank 的生成来源、读取层和选择集合。最后核对省掉的是容量、投影、索引还是整段前向依赖。这样才能判断它是否适合自己的模型，而不是只比较一个总压缩倍率。
 

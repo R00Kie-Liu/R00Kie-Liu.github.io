@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（二）：Linear Attention，从 KV cache 到递推状态"
 date: 2026-07-29
-last_modified_at: 2026-10-21
+last_modified_at: 2026-11-06
 tags: [LLM, Attention, Long Context, Pretraining]
 description: "从 Softmax Attention 的 KV cache 表示出发，解释 linear attention 如何把历史压成递推状态，以及它和 RWKV、RetNet、Mamba、Gated DeltaNet、Kimi Linear/KDA 的关系。"
 ---
@@ -11,9 +11,7 @@ description: "从 Softmax Attention 的 KV cache 表示出发，解释 linear at
 
 > 本文是长上下文 attention 架构系列的第二篇。第一篇先做 [attention 与 KV cache 总览]({% post_url 2026-07-27-long-context-attention-architecture-survey %})；这一篇只讲 linear attention 这条线；第三篇继续看 [长上下文 attention 设计趋势]({% post_url 2026-08-04-long-context-architecture-watchlist-2026 %})。 完整目录见[系列导航]({% post_url 2026-07-27-long-context-attention-architecture-survey %}#series-map)。
 
-在长上下文 attention 综述里，linear attention 是最容易讲糊的一条线。
-
-GQA/MQA 很直观：少存几组 K/V。MLA 也还在同一个框架里：把 K/V 压成 latent。SWA、DSA、MSA 也可以理解成“少看一些历史 token 或 block”。但 linear attention 不是这个思路。它问的是另一个问题：
+GQA/MQA 减少 K/V heads，MLA 把每个 token 的 K/V 压成 latent，SWA、DSA、MSA 减少每次读取的历史 token 或 block。linear attention 则改变历史的保存方式：
 
 > 历史一定要以 token-level KV list 的形式存在吗？
 
@@ -31,7 +29,7 @@ state_t
 
 每一步只更新一个状态，再用当前 query 读这个状态。这个变化看上去只是把公式换了个括号，但对长上下文推理来说，它等于把“不断增长的 KV cache”换成了“固定形状的递推记忆”。
 
-下文从 softmax attention 的历史表示出发，用一次矩阵乘法换序推到 recurrent state；然后解释有限状态为什么需要 gating 和 delta rule，再回到近期开源模型的 hybrid 配方。这样几条容易混在一起的路线，至少能在公式和系统接口上分开。
+从 softmax attention 的历史表示出发，矩阵乘法换序可以引出 recurrent state；有限状态中的写入干扰又引出 gating 和 delta rule。近期开源模型进一步将状态层与全局 attention 层组合成 hybrid 架构。
 
 ## 1. Full attention 的历史表示：KV list
 
@@ -145,7 +143,7 @@ $$
 
 2020 年左右，linear attention 的核心数学已经很清楚了。Katharopoulos 等人的 Linear Transformer 明确指出，自注意力可以通过 kernel feature map 和矩阵乘法结合律改写成线性复杂度，并展示了它和 RNN 的关系。Performer 则走另一条路，用 FAVOR+ 随机特征去近似 softmax attention。
 
-当时的任务和系统条件，还没有把它的长处逼出来。主战场很大一部分仍是 encoder / BERT 类任务，输入通常不够长，也没有 decoder-only 模型持续生成时反复读取 KV cache 的压力。把历史改成状态，带来的系统收益并不突出。
+当时大量研究仍围绕 encoder / BERT 类任务，输入通常不够长，也没有 decoder-only 模型持续生成时反复读取 KV cache 的压力。因此，把历史改成状态的系统收益并不明显。
 
 早期方法又常把目标定成“近似 softmax”。近似粗了会损失质量，近似复杂了则会吃掉速度与稳定性收益。更棘手的是 query-dependent selection：softmax attention 允许每个 query 重新挑选历史位置，而固定状态必须提前决定保留什么，细粒度证据难免发生压缩、混叠或遗忘。
 
@@ -159,7 +157,7 @@ $$
 
 ### 4.1 RWKV、RetNet、Mamba 和 linear attention 是什么关系
 
-这几个名字经常被混在一起。它们确实有关联，但不要简单画等号。
+这些方法都通过状态承接历史，但更新规则及其与 attention 的关系各不相同。
 
 | 路线 | 和 linear attention 的关系 | 适合放在哪个坐标里 |
 |---|---|---|
@@ -169,7 +167,7 @@ $$
 | Mamba / SSM | 不是 attention，但同属 state-based sequence model | 用选择性状态空间替代大量 token-to-token attention |
 | Gated DeltaNet / KDA | gated/delta linear attention 新一代 | 把有限状态的写入、遗忘、读取做得更强，更贴近 LLM 训练和推理 |
 
-RWKV 和 linear attention 的关系尤其值得单独说一下。RWKV 不是“把 softmax attention 换个 feature map”这种标准 linear attention，但它和 linear attention 共享一个大方向：训练时尽量保留 Transformer 的并行性，推理时像 RNN 一样维护状态。
+RWKV 不是“把 softmax attention 换个 feature map”这种标准 linear attention，但它和 linear attention 共享一个大方向：训练时尽量保留 Transformer 的并行性，推理时像 RNN 一样维护状态。
 
 因此，RWKV 可以放进 broader linear/recurrent attention family，但不应等同于某个具体的 linear attention 公式。它们面对同一个工程约束：能否避免每层 KV cache 随上下文无限增长。
 
@@ -251,7 +249,7 @@ Gated DeltaNet 的实际 block 还包含 q/k/v 投影、短卷积、SiLU、q/k �
 
 *图源：Gated Delta Networks, Figure 1。左侧给出两种 hybrid pattern：Gated DeltaNet-H1 在 Gated DeltaNet 与 SWA 之间交替，H2 则把 Mamba2、Gated DeltaNet 和 SWA 叠在同一个循环里。右侧是 Gated DeltaNet block design：$$q,k$$ 经过 Linear、short convolution 和 L2 normalization，$$v$$、$$\alpha$$、$$\beta$$ 也由输入分支生成，再进入 Gated Delta Rule；读出的状态经过 normalization、output gate 和 Linear 输出。*
 
-这里最容易漏掉的一点是：$$\alpha_t$$、$$\beta_t$$、$$\gamma_t$$ 不是手工规则，也没有单独的“遗忘标签”或“写入标签”。它们和普通 attention 里的 $$q,k,v$$ 一样，都是当前 token hidden state 经过 projection 生成的连续值，然后通过 next-token loss 反传学习。不过三者的激活函数和语义不完全一样：$$\alpha_t$$ 是 retention factor，Gated DeltaNet / Kimi Linear 里通常先生成 negative-Softplus 形式的 log-decay，再取指数；$$\beta_t$$ 是 bounded write strength，常用 sigmoid；$$\gamma_t$$ 是输出侧的 activation gate，常用 SiLU/Swish，不一定是 $$(0,1)$$ 里的概率门。
+$$\alpha_t$$、$$\beta_t$$、$$\gamma_t$$ 不是手工规则，也没有单独的“遗忘标签”或“写入标签”。它们和普通 attention 里的 $$q,k,v$$ 一样，都是当前 token hidden state 经过 projection 生成的连续值，然后通过 next-token loss 反传学习。不过三者的激活函数和语义不完全一样：$$\alpha_t$$ 是 retention factor，Gated DeltaNet / Kimi Linear 里通常先生成 negative-Softplus 形式的 log-decay，再取指数；$$\beta_t$$ 是 bounded write strength，常用 sigmoid；$$\gamma_t$$ 是输出侧的 activation gate，常用 SiLU/Swish，不一定是 $$(0,1)$$ 里的概率门。
 
 为什么 `old_value` 可以写成 $$S_{t-1}^\top k_t$$？可以先把状态近似理解成一张已经写过的 key-value memory：
 
@@ -365,7 +363,7 @@ $$
 
 ### 5.4 KDA：Kimi 线上的 gated delta attention
 
-Kimi Delta Attention (KDA) 适合单独拿出来讲。它和 Gated DeltaNet 共享“gating + delta update”的思想，但目标不只是提出一个 token-mixing block，而是把这类状态更新接到 Kimi Linear / Kimi K3 的 hybrid 架构、FlashKDA kernel、NoPE/MLA 分工和推理 state cache 里。
+Kimi Delta Attention (KDA) 和 Gated DeltaNet 共享“gating + delta update”的思想，并将更细粒度的状态更新与 Kimi Linear / Kimi K3 的 hybrid 架构、FlashKDA kernel、NoPE/MLA 分工和推理 state cache 配套设计。
 
 先给一个紧凑对照，再逐项展开：
 
@@ -533,7 +531,7 @@ $$
 
 ### 6.3 Lightning Attention：把 causal linear attention 跑起来
 
-Lightning Attention 容易被看成另一种 attention 公式，更准确的定位却是 linear attention 的一条 **GPU-friendly 计算路线**。
+Lightning Attention 是 linear attention 的一条 **GPU-friendly 计算路线**，通过分块组织局部计算与跨块状态读取。
 
 问题出在 causal linear attention 的训练侧。按定义，每个位置要读“之前所有 token 累积出来的状态”，朴素实现通常会写成 prefix-sum / cumsum：
 
@@ -729,7 +727,7 @@ MiniMax-01 每七个 Lightning Attention block 后接一个 softmax attention bl
 
 ### 9.2 Kimi：从 KDA 到 K3，linear state 也要服务化
 
-Kimi K3 技术报告把这条线讲得更具体。它每个 block 仍然采用 **3 KDA + 1 Gated MLA** 的 hybrid pattern，并在 backbone 末尾额外放一个 Gated MLA，确保最后一层做全局 attention。KDA 负责高频、位置敏感、recency-aware 的序列混合；Gated MLA 负责周期性的全局内容交互。
+Kimi K3 每个 block 仍然采用 **3 KDA + 1 Gated MLA** 的 hybrid pattern，并在 backbone 末尾额外放一个 Gated MLA，确保最后一层做全局 attention。KDA 负责高频、位置敏感、recency-aware 的序列混合；Gated MLA 负责周期性的全局内容交互。
 
 这里讨论的是 Kimi Linear / K3；Kimi K2/K2.5 的语言主干采用 MLA，不属于这条 KDA 路线。
 
@@ -786,8 +784,6 @@ linear attention 的回潮并不意味着 softmax attention 失效。变化来�
 [第三篇]({% post_url 2026-08-04-long-context-architecture-watchlist-2026 %}) 会接着处理剩下的问题：recurrent state、精确 KV、latent KV 和 sparse selection 为什么需要共存，以及 serving runtime 怎样理解这些不同的记忆层。
 
 ## 延伸阅读
-
-linear attention 这条线很容易被论文名带着跑。更稳的读法，是把它拆成公式、状态更新、训练 kernel 和模型 recipe 四层。
 
 - 公式入口可以从科学空间的两篇文章和 *Transformers are RNNs* 开始。这里先把 softmax attention 的矩阵乘法换序看明白：为什么历史可以从一串 KV 变成一个可递推的状态。
 - 早期方法建议接着读 Performer、RetNet、RWKV 和 Lightning Attention。它们各自处理 feature map、retention、RNN 化和 chunkwise parallelism，能帮人看清“线性复杂度”背后到底换来了什么约束。

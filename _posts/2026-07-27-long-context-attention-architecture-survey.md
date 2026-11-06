@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（一）：长上下文 Attention 架构总览"
 date: 2026-07-27
-last_modified_at: 2026-10-21
+last_modified_at: 2026-11-06
 tags: [LLM, Attention, Long Context, Pretraining]
 description: "梳理长上下文 LLM 中 attention 与 KV cache 架构的演进，包括 GQA、MLA、Kimi Linear/KDA、SWA、DSA/QSA、MiniMax MSA 与 CSA/HCA。"
 ---
@@ -13,7 +13,7 @@ description: "梳理长上下文 LLM 中 attention 与 KV cache 架构的演进�
 
 上下文从 32K、128K 推到 1M 时，attention 架构究竟减少了哪些计算和存储？
 
-只谈 RoPE 外推或模型标称长度，很容易把几类成本混在一起。训练和 prefill 主要受全量 token 交互的二次计算约束；decode 不再重算完整的 $$L\times L$$ 矩阵，却要在每一步反复读取不断增长的 KV cache；并发起来以后，cache 容量和布局又会限制 batch size。于是，同样被称作“高效 attention”的方法，动的可能根本不是同一个变量。
+RoPE 外推和模型标称长度并不能直接反映计算与存储成本。训练和 prefill 主要受全量 token 交互的二次计算约束；decode 不再重算完整的 $$L\times L$$ 矩阵，却要在每一步反复读取不断增长的 KV cache；并发起来以后，cache 容量和布局又会限制 batch size。于是，同样被称作“高效 attention”的方法，动的可能根本不是同一个变量。
 
 GQA/MQA 减少 KV head，MLA 压缩每个 token 的 KV 表示；SWA 固定缩小可见范围，DSA/QSA/MSA 按内容挑选远程 token、micro-block 或 block，CSA/HCA 则先把远程记忆压短再读；Kimi Linear/KDA 更彻底一些，让多数层用递推状态承接历史，只周期性保留全局 attention。后文都按同一组问题来比较：历史以什么形式保存，每个 query 实际读取什么，以及被省下的是训练计算、decode 带宽还是 cache 容量。
 
@@ -315,7 +315,7 @@ MLA 保留全历史访问，减少单 token 缓存，但条目数仍随长度增
 
 GQA 和 MLA 仍然保留“对历史 token 做 attention”的基本范式，只是减少 KV head 或 KV 表示维度。Kimi Linear 的思路更进一步：让大部分 token mixing 层不再使用 full attention，而是使用 Kimi Delta Attention (KDA) 这类 gated linear attention，把长程历史压进可递推更新的状态中；再周期性插入 MLA/full attention 层，避免纯线性 attention 丢失全局信息流。
 
-linear attention 这条线和 GQA/MLA/SWA/DSA 的思路差异比较大，[《长话长说（二）》]({% post_url 2026-07-29-linear-attention-from-kv-cache-to-recurrent-state %})专门讲它从 kernelized attention 到 gated/delta/state/hybrid 的来龙去脉。
+linear attention 将逐 token KV 改为递推状态；GQA/MLA 压缩 KV 的表示，SWA/DSA 则限制读取位置。[《长话长说（二）》]({% post_url 2026-07-29-linear-attention-from-kv-cache-to-recurrent-state %})推导 kernelized attention，并讨论 gated/delta 状态更新与 hybrid 架构。
 
 Kimi Linear 论文的核心配置是：
 
@@ -556,7 +556,7 @@ DSA 的核心是“从原始历史里选重要 token”。CSA/HCA 的核心是�
 | CSA | 每 $$m$$ 个 token 压成 compressed KV entry | 有，选 compressed entries | sliding window exact KV | 先压短，再精挑 |
 | HCA | 每 $$m'$$ 个 token 压成 heavily compressed entry，$$m'\gg m$$ | 通常无 top-k selector | sliding window exact KV | 用粗摘要保留极长历史痕迹 |
 
-如果用一句话分开它们：CSA 还在做“远程检索”，只是检索对象变成 compressed entries；HCA 更像“长期摘要层”，牺牲细粒度检索，换更低的 KV cache 和计算成本。
+CSA 仍按 query 检索 compressed entries；HCA 采用更高压缩率的条目承载远程历史，以更粗的表示换取更低的 KV cache 和计算成本。
 
 ### 9.5 同时压 compute 和 cache 的代价
 
@@ -618,8 +618,6 @@ GQA 减少 KV head 冗余，MSA 再减少读取块数。整块 gather 更规整�
 [第二篇]({% post_url 2026-07-29-linear-attention-from-kv-cache-to-recurrent-state %}) 沿着“KV list → recurrent state”单独推导 linear attention；[第三篇]({% post_url 2026-08-04-long-context-architecture-watchlist-2026 %}) 继续梳理近期长文 attention 设计趋势；[第四篇]({% post_url 2026-08-18-long-context-large-scale-llm-training-optimization %}) 再把这些结构放回训练 infra。
 
 ## 延伸阅读
-
-这篇主要提供坐标系。继续读时，不必按论文时间顺序排，我更建议顺着“到底压缩了什么”往下走。
 
 - 如果先关心 KV cache，读 GQA/MQA 和 MLA。GQA/MQA 说明 KV head 为什么可以共享；MLA 再往前一步，把每个 token 的 KV 表示压成 latent。读 DeepSeek-V2/V3 时，重点可以放在 latent cache、up-projection 和 RoPE 解耦上，不要停在“省 KV”这个结论。
 - 如果关心 linear attention，先接着读[第二篇]({% post_url 2026-07-29-linear-attention-from-kv-cache-to-recurrent-state %})。读 Kimi Linear/KDA 时，关键放在多数层如何把历史写进 recurrent state，以及少数全局层为什么仍要保留。

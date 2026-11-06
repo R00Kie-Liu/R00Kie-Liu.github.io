@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（三）：Attention 设计趋势，选择、压缩与访问调度"
 date: 2026-08-04
-last_modified_at: 2026-10-21
+last_modified_at: 2026-11-06
 tags: [LLM, Attention, Long Context, Pretraining, Inference]
 description: "梳理 2026 年前后长上下文 attention 机制的研究趋势：selector/indexer 降本、选择粒度重排、linear state 与 sparse retrieval 合流、表示感知的压缩与执行，以及 runtime 访问调度。"
 ---
@@ -11,9 +11,9 @@ description: "梳理 2026 年前后长上下文 attention 机制的研究趋势�
 
 > 这是长上下文 attention 架构系列的第三篇。第一篇看 [attention 与 KV cache 总览]({% post_url 2026-07-27-long-context-attention-architecture-survey %})，第二篇单独拆 [linear attention]({% post_url 2026-07-29-linear-attention-from-kv-cache-to-recurrent-state %})；这一篇讨论最近工作的方向。 完整目录见[系列导航]({% post_url 2026-07-27-long-context-attention-architecture-survey %}#series-map)。
 
-第一、二篇已经解释了 KV 压缩、稀疏选择和递推状态。继续读近期论文，更值得追问的是：这些部件进入模型后，原来的瓶颈消失了吗，还是转移到了选择、压缩和访问调度上？
+第一、二篇已经解释了 KV 压缩、稀疏选择和递推状态。这些部件减少了部分计算和存储，也会引入索引、压缩与调度开销。原来的瓶颈是否消失，取决于这些新增成本。
 
-下面沿五个设计问题展开：选择过程本身花多少钱，选择单位怎样影响证据保留，多种历史通道如何分工，压缩与执行怎样适配缓存表示，以及 runtime 能否利用模型给出的访问计划。每个方向都用机制或实验支撑，基础定义留给前两篇。
+这里比较五个设计问题：选择过程本身花多少钱，选择单位怎样影响证据保留，多种历史通道如何分工，压缩与执行怎样适配缓存表示，以及 runtime 能否利用模型给出的访问计划。
 
 ## 1. 先拆四个互相挤压的成本
 
@@ -25,7 +25,9 @@ description: "梳理 2026 年前后长上下文 attention 机制的研究趋势�
 
 后面几节按“选择成本 → 选择单位 → 记忆分工 → cache 语义 → serving 访问计划”往下走。Kimi K3、Ling/Ring 2.6 这类 hybrid block 设计仍然重要，但在这里只作为背景，不再展开配比。
 
-## 2. 趋势一：selector/indexer 成为新的主战场
+<a id="2-趋势一selectorindexer-成为新的主战场"></a>
+
+## 2. 趋势一：降低 selector/indexer 的开销
 
 早期 sparse attention 的说法通常是：full attention 要看全部历史，sparse attention 只看 top-k，于是计算量下降。这个说法没错，但它漏掉了一件事：top-k 本身从哪里来？
 
@@ -39,7 +41,7 @@ description: "梳理 2026 年前后长上下文 attention 机制的研究趋势�
 | DoSA | DSA indexer 的完整打分与选择 | 先证明哪些 token 不可能进入 top-k，再跳过它们的完整多头打分 |
 | Tactic | 固定 top-k budget | 用累计 attention mass 控制近似质量，token 数随 query 改变 |
 
-HISA 是最容易理解的一条。DeepSeek Sparse Attention 一类 token-level sparse 方法会为每个 query 给历史 token 打分，再把 top-k token 交给 Sparse MLA。粒度很细，但 indexer 要扫 prefix。
+DeepSeek Sparse Attention 一类 token-level sparse 方法会为每个 query 给历史 token 打分，再把 top-k token 交给 Sparse MLA。粒度很细，但 indexer 要扫 prefix。
 
 HISA 把搜索路径改成两级：
 
@@ -50,7 +52,7 @@ HISA 把搜索路径改成两级：
 
 *图源：HISA, Figure 1。左侧是 DSA indexer 对历史 token 逐个打分，右侧是 HISA 先选 block，再在候选 block 里选 token。*
 
-LongCat/LSA 从 streaming-aware、跨层和分层索引处理同一成本；这里保留两个判断：main attention 变稀疏，indexer 仍可能有 $$O(L^2)$$ scoring；top-k 地址离散，还可能把执行瓶颈推向访存。具体索引优化见延伸阅读。
+LongCat/LSA 从 streaming-aware、跨层和分层索引处理同一成本。main attention 变稀疏后，indexer 仍可能有 $$O(L^2)$$ scoring；top-k 地址离散，还可能把执行瓶颈推向访存。具体索引优化见延伸阅读。
 
 [MISA](https://arxiv.org/html/2605.07363#S4.SS1)先让所有 indexer heads 只对少量 pooled block keys 打分，按每个 head 在这些块上的加权贡献绝对值均值，选出活跃 heads；随后仅用它们扫描原始 token keys，再取 token top-k。HISA 沿 head 轴归约、选 blocks，MISA 沿 block 轴归约、选 heads。这里的 router 是便宜的统计计算，不需另外训练一个 FFN-MoE 路由器。
 
@@ -187,7 +189,7 @@ SALA 还强调迁移路径：用 HALO 做 Transformer-to-hybrid conversion，再
 | MLA + LCA | 对 semantic latent 做 pooling，对位置 key 选 anchor | 内容与位置是否需要不同压缩规则 |
 | GQLA | 同一 joint latent 支持紧凑吸收与展开 GQA 两条路径 | 缓存字节数、计算量和 TP 分片怎样共同影响速度 |
 
-CSA/HCA 属于从 DeepSeek 系列继续探索压缩历史的路线，但其 shared-KV MQA 不能当作标准 MLA latent cache 的简单叠加。基础结构见第一篇；这里最值得进一步展开的是 LCA 怎样利用 MLA 已有的内容／位置拆分。
+CSA/HCA 属于从 DeepSeek 系列继续探索压缩历史的路线，但其 shared-KV MQA 不能当作标准 MLA latent cache 的简单叠加。基础结构见第一篇。LCA 则直接利用 MLA 已有的内容／位置拆分，对两部分采用不同的压缩规则。
 
 ### 5.1 LCA：在 MLA latent space 里压上下文
 
@@ -362,8 +364,6 @@ $$
 评估这些设计时，除了 attention FLOPs，还应追问 selector 自己花了多少时间、共享或重建状态是否改变质量，以及稀疏访问能否转成真实吞吐。模型决定历史的表示和读取方式，runtime 承担它们的存储、传输和状态提交；两边的假设必须一致。
 
 ## 延伸阅读
-
-这篇更像一张趋势地图。后面继续追，可以按下面几条线读。
 
 - **基础结构**：先读第一篇里的 GQA、MLA、SWA、DSA/QSA/MSA、CSA/HCA，再读第二篇里的 Gated DeltaNet、KDA、Lightning Attention。第三篇默认这些概念已经在读者脑子里。
 - **selector/indexer 降本**：HISA、LongCat/LSA、MISA、DoSA 和 Tactic 可以放在一起读。DoSA §2 与 Appendix C 尤其适合对照“近似筛掉候选”和“证明候选选不上”，并检查数值误差、候选容量与恢复路径。

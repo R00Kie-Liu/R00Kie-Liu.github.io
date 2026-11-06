@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（四）：超长上下文训练的并行、显存与调度"
 date: 2026-08-18
-last_modified_at: 2026-10-21
+last_modified_at: 2026-11-06
 tags: [LLM, Long Context, Pretraining, Distributed Training]
 description: "讨论 128K、256K 到 1M token 上下文训练中的系统瓶颈：attention 计算、activation 显存、SP/CP、Ring Attention、Ulysses、linear attention CP、varlen packing、MoE/EP 负载、pipeline、attention disaggregation 与 compiler 调度。"
 ---
@@ -11,11 +11,11 @@ description: "讨论 128K、256K 到 1M token 上下文训练中的系统瓶颈�
 
 > 这是长上下文 attention 架构系列的第四篇。第一篇从 [attention 与 KV cache 总览]({% post_url 2026-07-27-long-context-attention-architecture-survey %}) 开始，第二篇单独拆 [linear attention]({% post_url 2026-07-29-linear-attention-from-kv-cache-to-recurrent-state %})，第三篇讨论 [长上下文 attention 设计趋势]({% post_url 2026-08-04-long-context-architecture-watchlist-2026 %})。这一篇不再问模型该长成什么样，而是问训练侧：结构基本定了以后，怎样让 128K、256K，甚至 1M context 在大规模集群上跑得动、跑得稳。 完整目录见[系列导航]({% post_url 2026-07-27-long-context-attention-architecture-survey %}#series-map)。
 
-长上下文训练有个容易误导人的说法：把 `max_position_embeddings` 拉大，换上更省显存的 attention kernel，再把 batch 调小一些，就可以继续训练。
+增大 `max_position_embeddings`、使用更省显存的 attention kernel、调小 batch，仍不足以解决长上下文训练中的全部开销。
 
-真正上手时，麻烦通常不是这样排队出现的。sequence length 变长以后，attention core 的计算、activation 保存、跨卡通信、变长样本 packing、MoE router 负载、梯度累积和调度策略会一起变形。单看某一个优化点，往往都能讲得通；把它们放到同一次训练里，就会发现一个地方省下来的显存，可能立刻被另一个地方的通信 buffer 或 expert token buffer 吃掉。
+sequence length 变长以后，attention core 的计算、activation 保存、跨卡通信、变长样本 packing、MoE router 负载、梯度累积和调度策略都会变化。单个模块省下来的显存，可能被同时驻留的通信 buffer 或 expert token buffer 占用，因此要按整步训练的峰值工作集评估。
 
-所以这篇把问题收窄到训练 infra：
+这些依赖引出一个训练系统问题：
 
 > 当上下文从 32K 推到 128K、256K、1M 后，训练系统到底要同时解决哪几类开销？
 
@@ -80,7 +80,7 @@ backward 的问题则是中间量在片上反复读写，以及多块向同一�
 
 ## 3. SP 和 CP 不是一回事
 
-讨论训练并行时，最容易混在一起的是 Sequence Parallelism 和 Context Parallelism。它们都切 sequence 维，但解决的问题不同。
+Sequence Parallelism 和 Context Parallelism 都切 sequence 维，前者在 Megatron 语境下主要分片非 TP activation，后者分摊长序列 attention 的计算与状态。
 
 Megatron 语境里的 Sequence Parallelism 通常和 Tensor Parallelism 绑定：TP 负责把线性层权重和 GEMM 切开，SP 则把 LayerNorm、Dropout 等原本在 TP ranks 上冗余保存的非 TP activation 沿序列维切开。它能明显缓解 activation memory，也能减少一部分冗余计算。
 
@@ -139,7 +139,7 @@ Ulysses 的限制也来自这里：如果按 head 维重排，CP size 通常要�
 
 2024 以后的一批工作，基本都在补这两个原型的工程缺口。[Striped Attention](https://arxiv.org/abs/2311.09431)把连续 sequence shard 改成条纹式分布，专门处理 causal attention 的三角形负载不均；论文报告在 256K causal transformer 训练上相对 Ring Attention 有最高 1.45x end-to-end throughput 提升，在 16 个 TPUv4 芯片、786K sequence 上有 1.65x speedup。这个数字不该跨硬件外推，但它说明“怎么切 token”本身就是性能问题。
 
-[DISTFLASHATTN](https://arxiv.org/abs/2310.03294)则沿着 FlashAttention 的思路做分布式 exact attention：token-level workload balancing、KV communication overlap、以及 rematerialization-aware gradient checkpointing 是它的三个核心点。它的评估覆盖 Llama-7B 及其变体、32K 到 512K sequence，并把 Ring、Ulysses、Megatron-LM + FlashAttention 都作为对照。它值得借鉴的地方，是把优化对象从“attention 算子”扩展到了 workload balance、通信隐藏和 checkpoint 策略。
+[DISTFLASHATTN](https://arxiv.org/abs/2310.03294)则沿着 FlashAttention 的思路做分布式 exact attention：token-level workload balancing、KV communication overlap、以及 rematerialization-aware gradient checkpointing 是它的三个核心点。它的评估覆盖 Llama-7B 及其变体、32K 到 512K sequence，并把 Ring、Ulysses、Megatron-LM + FlashAttention 都作为对照。它同时优化 attention 算子、workload balance、通信隐藏和 checkpoint 策略。
 
 [USP](https://arxiv.org/abs/2405.07719)和 [LoongTrain](https://arxiv.org/abs/2406.18485)可以放在一起看。USP 把 Ulysses 和 Ring 组合成统一的 sequence parallelism，并讨论和 DP/TP/PP/ZeRO 组成 4D parallelism 的实践；LoongTrain 进一步提出 2D-Attention，把 head parallel 和 context parallel 组合起来，用 Double-Ring-Attention、hybrid ZeRO 和 Selective Checkpoint++ 改善扩展性。它们共同说明一件事：当上下文继续拉长，单一维度的 CP 很快会碰到 head 数、网络拓扑或通信重叠的限制，系统需要在 head、context、optimizer state 和 checkpoint 之间一起分账。
 
@@ -270,7 +270,7 @@ DCP 把输入和输出切成 data blocks，把一个 query block 对某个 KV bl
 
 [Zeppelin](https://arxiv.org/abs/2509.21841)看的是另一层。DCP 主要在 CP 内部动态切 attention，Zeppelin 则从 data-parallel 训练里的变长 workload 出发，问一个更系统的问题：同一批样本，对 attention 模块、linear 模块和网络设备的压力并不一样，能不能用一套静态分配同时满足它们？
 
-它给出的答案是分层调度。对 attention，Zeppelin 先按序列长度和通信/计算比，把样本分到 local、intra-node、inter-node 三类队列：短序列尽量本地算，中等序列在节点内切，长序列才跨节点。对网络，它不把 GPU-NIC affinity 当成固定路径，而是用 local dispatch、multi-NIC inter-node transfer、local combine 三步路由，让更多 NIC 参与传输。对 linear module，它又加了 remapping layer：attention 最优的布局不一定让 MLP/linear 模块负载均衡，所以进入 linear 前后要重新排一次。论文报告平均 2.80x speedup，这个数字依赖硬件和长度分布；更值得借鉴的是它的分解方式：变长训练已经超过普通 packing 范围，attention 计算、linear 计算和网络拓扑要同时调度。
+它给出的答案是分层调度。对 attention，Zeppelin 先按序列长度和通信/计算比，把样本分到 local、intra-node、inter-node 三类队列：短序列尽量本地算，中等序列在节点内切，长序列才跨节点。对网络，它不把 GPU-NIC affinity 当成固定路径，而是用 local dispatch、multi-NIC inter-node transfer、local combine 三步路由，让更多 NIC 参与传输。对 linear module，它又加了 remapping layer：attention 最优的布局不一定让 MLP/linear 模块负载均衡，所以进入 linear 前后要重新排一次。论文报告平均 2.80x speedup，这个数字依赖硬件和长度分布。这里的调度对象包含 attention 计算、linear 计算和网络拓扑，已经超出普通 packing 的范围。
 
 ![Zeppelin 按 local / intra-node / inter-node 队列调度变长样本，并在 attention 与 linear 布局之间 remap](/assets/img/blog/long-context-training/zeppelin_varlen_scheduler_gpt_image2.png)
 
@@ -293,7 +293,7 @@ DCP 把输入和输出切成 data blocks，把一个 query block 对某个 KV bl
 
 ### 8.2 CAD/DistCA：将 core attention 拆成可重分配任务
 
-如果 attention 已经成为明显的 straggler，[CAD/DistCA](https://arxiv.org/abs/2510.18121)这种 attention disaggregation 就值得单独看。它先把 transformer layer 拆得更细：QKV projection、O projection、LayerNorm、FFN 这些算 context-independent 或近线性的部分；真正二次增长、又没有训练参数的，是 core attention，也就是 $$\mathrm{softmax}(QK^\top)V$$。当长文档和短文档混在同一个 batch 里，core attention 的 $$l^2$$ 项会让某些 DP rank 或 PP stage 变成 straggler，后面的 pipeline stage 跟着空等。
+[CAD/DistCA](https://arxiv.org/abs/2510.18121)通过 attention disaggregation 处理 core attention 造成的 straggler。它先把 transformer layer 拆得更细：QKV projection、O projection、LayerNorm、FFN 这些算 context-independent 或近线性的部分；真正二次增长、又没有训练参数的，是 core attention，也就是 $$\mathrm{softmax}(QK^\top)V$$。当长文档和短文档混在同一个 batch 里，core attention 的 $$l^2$$ 项会让某些 DP rank 或 PP stage 变成 straggler，后面的 pipeline stage 跟着空等。
 
 CAD 的关键观察有两个。第一，core attention 没有参数，临时数据也少，天然适合从原来的 layer 里拆出来单独调度。第二，现代 attention kernel 可以吃 arbitrary-length 的 fused token shards；只要 batch 足够大，切成 CA-tasks 再 rebatch，不一定会把 kernel efficiency 打碎。DistCA 就把这些 CA-tasks 发给 attention servers，由 scheduler 按 FLOPs 重新分配任务，尽量让所有 attention servers 同时结束。
 
@@ -325,11 +325,11 @@ MoE 模型里，长上下文还有一层额外放大器：expert routing。
 
 CP 和 EP 叠在一起时，问题更难直觉判断。CP 把同一条长序列切到多个 ranks；EP 又把 routed tokens 发到不同 experts；TP/PP/DP 还在旁边切 hidden、layer 和 batch。一个配置在短上下文 pretrain 里很稳，到了长上下文 post-training 不一定还能靠同样的显存余量撑住。
 
-[Ling/Ring 2.6 技术报告](https://arxiv.org/abs/2606.15079)里还有两个很工程化的观察，值得放进这里。第一，long-context MoE 训练会遇到 router load-balancing fluctuation 和 block-diagonal causal mask 造成的 rank 间负载不均。第二，pre-training 可以更激进地吃满 GPU memory，但 long-context post-training 需要更保守的显存策略，为突然的 router imbalance 留余量。
+[Ling/Ring 2.6 技术报告](https://arxiv.org/abs/2606.15079)指出，long-context MoE 训练会遇到 router load-balancing fluctuation 和 block-diagonal causal mask 造成的 rank 间负载不均。pre-training 可以更激进地吃满 GPU memory，但 long-context post-training 需要更保守的显存策略，为突然的 router imbalance 留余量。
 
 排查时可以直接跟踪一批 tokens：CP 切分后各源 rank 路由到哪些 experts，dispatch 后哪个接收端 buffer 最大，最慢的 expert GEMM 又让哪些 ranks 等待 combine。全局 router loss 较平衡，不保证每个 CP shard 或每次通信都平衡。expert 重布局、节点内重平衡和专用 dispatch/combine 分别处理其中的热点、搬运与等待，相关工作集中列在延伸阅读，不在这里逐项展开。
 
-还有一个不太显眼但很真实的坑：token count 和 index 的整数类型。长上下文加 MoE 后，一些 kernel 里原本默认 fit in int32 的 expert token count 可能溢出。报告里提到他们审计并把关键路径改成 int64。这个问题很小，却很能说明长上下文训练的性质：模型公式没有变，变大的是那些过去被当作安全常数的工程维度。
+token count 和 index 的整数类型也会影响训练。长上下文加 MoE 后，一些 kernel 里原本默认 fit in int32 的 expert token count 可能溢出。报告里提到他们审计并把关键路径改成 int64。模型公式没有变，原有整数类型能否容纳增长后的 token 数仍需检查。
 
 <a id="8-落地时按内圈到外圈排"></a>
 
@@ -345,13 +345,11 @@ CP 和 EP 叠在一起时，问题更难直觉判断。CP 把同一条长序列�
 
 最后，监控指标也要跟着变。不同长度 bucket 的 step time、OOM retry、router imbalance、CP 通信 overlap、packing 碎片率，都应该和 tokens/s 一起看。这里可以借鉴 [Long-Context Attention Benchmark](https://arxiv.org/abs/2510.17896) 这类工作的问题设定：同一个 attention/CP 方案，在不同 mask pattern、sequence length 和 distributed scale 下可能表现完全不同。对于 128K、256K、1M 这种级别的训练，系统方案不能只给出“能跑”的配置，还要说明哪条链路在吃时间、哪类样本在制造尾部延迟、哪块 buffer 需要留安全余量。
 
-如果只用一句话收束这篇：长上下文训练的核心，是把“每个 token 看见什么历史”这件事，在 kernel、并行、显存、通信和调度上同时说清楚。
+kernel、并行切分和任务调度都必须保留模型规定的历史可见范围；它们能否提高吞吐，还取决于组合后的峰值显存、通信重叠和负载分布。
 
 ## 延伸阅读
 
-这一篇的材料比较偏系统，不建议从“大而全”的 distributed training 综述开始。更有效的读法，是挑几条最容易落到工程改造的链路往里钻。
-
-- kernel 线先读 FlashAttention-3/4。FA-3 把异步和低精度放到 Hopper 上讨论；FA-4 继续把问题推到 pipeline 与硬件瓶颈迁移。读这两篇时，重点放在 bottleneck 怎样从 HBM I/O 移到 TMA、WGMMA、寄存器和调度。
+- kernel 线先读 FlashAttention-3/4。FA-3 把异步和低精度放到 Hopper 上讨论；FA-4 重点优化流水线并处理硬件瓶颈迁移。读这两篇时，重点放在 bottleneck 怎样从 HBM I/O 移到 TMA、WGMMA、寄存器和调度。
 - softmax CP 线可以把 Ring Attention、Striped Attention、Ulysses、DISTFLASHATTN、USP 和 LoongTrain 放在一起看。它们都在拆 $$L^2$$ attention，只是拆法分别偏 KV 交换、head 维重排、统一 SP/CP 或 head-context 混合。
 - 变长调度线读 DCP、Zeppelin、Seq1F1B 和 InfiniPipe。长上下文训练很少是整齐的固定长度矩阵乘，真实 batch 里的长度分布、document packing、pipeline bubble 和 straggler 会直接决定吞吐。
 - 递推训练线接着读 StateFlow 与 [E²-TTT](https://arxiv.org/abs/2608.21308)。StateFlow 调整 chunk 调度及 activation 生命周期；E²-TTT 推导 chunk-level fast-weight / momentum 转移，在“梯度于 chunk 起点权重计算”的近似下保留逐 token 更新的时序结构，不能理解成任意 TTT 都能无近似并行化。

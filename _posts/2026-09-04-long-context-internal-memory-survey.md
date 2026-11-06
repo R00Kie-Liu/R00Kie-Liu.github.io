@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（五）：从参数知识到内部记忆"
 date: 2026-09-04
-last_modified_at: 2026-10-28
+last_modified_at: 2026-11-06
 tags: [LLM, Long Context, Memory, Attention, Agent]
 description: "从 FFN 参数知识出发，比较 latent pool、在线 fast weights 与跨交互状态；结合 ProTTT、Metis/MemT-1.0、REMORY，讨论记忆怎样写入、稳定保留并服务后续任务。"
 ---
@@ -449,7 +449,7 @@ Metis 的实验设置里有一个重要对照：no-context。也就是说，后�
 
 [MemT-1.0](https://arxiv.org/abs/2610.26825v2)（2026-10，以下依据 v2）延续 local/hyper memory 分工，但不再沿用 Metis 的位置选择与批量旧状态修正。它在一次 turn 的写入阶段按 token 更新多通道状态，采用 Stable GDN-2，移除原有 query-key normalization vector，并以归一化、输出 gate 等组件组织读取。生成读取先前提交的快照，写入形成后续交互使用的新状态。
 
-其中最值得展开的是 Appendix C 的擦除几何。采用列向量、归一化 key，省略层和通道索引，原 GDN-2 的一个擦除因子可写为
+Appendix C 分析了擦除算子对旧状态的影响。采用列向量、归一化 key，省略层和通道索引，原 GDN-2 的一个擦除因子可写为
 
 $$
 A=I-k(\beta\odot k)^\top.
