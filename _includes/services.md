@@ -1,5 +1,11 @@
 <h2 id="services" style="margin: 60px 0px 10px;">Services</h2>
 
+<h3 style="margin:0 10px 0;">Talks</h3>
+
+<ul style="margin:0 0 20px;">
+  <li><strong>Parallel Generation, Iterative Refinement: The Evolution of LLaDA 2.x in Practice</strong>, Invited Speaker, X-AGI 2026, Beijing, October 18, 2026.</li>
+</ul>
+
 <h3 style="margin:0 10px 0;">Organization Committee</h3>
 
 <ul style="margin:0 0 5px;">

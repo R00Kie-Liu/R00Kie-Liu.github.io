@@ -1,0 +1,7 @@
+@article{liang2026ubtree,
+  title={UBTree: Parallel Tree Drafting via Unigram and Bigram Models for Speculative Decoding},
+  author={Liang, Chumeng and Wang, Linxuan and Peng, Xinyu and Liu, Huabin and Guo, Xiaoxu and Chen, Yuxin and Liu, Ge and Lin, Guang and Song, Qifan and Li, Jianguo},
+  journal={arXiv preprint arXiv:2609.39972},
+  year={2026},
+  url={https://arxiv.org/abs/2609.39972}
+}

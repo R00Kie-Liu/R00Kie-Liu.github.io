@@ -1,0 +1,7 @@
+@article{chen2026uploop,
+  title={UpLoop: Upcycling Large Language Models with Gated Loop},
+  author={Chen, Tieyuan and Liu, Huabin and Zhang, Yingtao and Li, Shijie and Pan, Tengyu and Lin, Weiyao and Li, Jianguo},
+  journal={arXiv preprint arXiv:2610.25004},
+  year={2026},
+  url={https://arxiv.org/abs/2610.25004}
+}

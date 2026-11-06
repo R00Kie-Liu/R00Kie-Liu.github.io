@@ -631,6 +631,26 @@
     "src800": "/assets/optimized/301da90a0fbeda49-800.webp",
     "w800": 800
   },
+  "pub_img/implicit-videoqa.png": {
+    "width": 1216,
+    "height": 430,
+    "src200": "/assets/optimized/f3b9e46ae7ced096-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/c584dbc16264f9a8-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/38e673ab39407760-800.webp",
+    "w800": 800
+  },
+  "pub_img/llada-moe-v2.png": {
+    "width": 2034,
+    "height": 613,
+    "src200": "/assets/optimized/b5b5287e37fb04ca-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/8fab64d7d4205fa0-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/a25d7db31a24927a-800.webp",
+    "w800": 800
+  },
   "pub_img/llada2.png": {
     "width": 988,
     "height": 493,
@@ -681,6 +701,16 @@
     "src800": "/assets/optimized/ae38ce2c36b1ea8d-800.webp",
     "w800": 800
   },
+  "pub_img/pcd.png": {
+    "width": 1509,
+    "height": 800,
+    "src200": "/assets/optimized/1eb938b084051781-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/2b6040605ee6f952-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/699fd908a64b1f48-800.webp",
+    "w800": 800
+  },
   "pub_img/sampler.png": {
     "width": 1017,
     "height": 395,
@@ -729,6 +759,26 @@
     "src400": "/assets/optimized/7817b7c70f532793-400.webp",
     "w400": 400,
     "src800": "/assets/optimized/4aa4985dbede1226-800.webp",
+    "w800": 800
+  },
+  "pub_img/ubtree.png": {
+    "width": 2035,
+    "height": 743,
+    "src200": "/assets/optimized/267b4a7c814a2812-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/67eba6dacd68a30b-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/8b517802c1df8b5f-800.webp",
+    "w800": 800
+  },
+  "pub_img/uploop.png": {
+    "width": 1395,
+    "height": 440,
+    "src200": "/assets/optimized/8e824bc9f1a87c33-200.webp",
+    "w200": 200,
+    "src400": "/assets/optimized/b538813c66cbbd37-400.webp",
+    "w400": 400,
+    "src800": "/assets/optimized/c202257ebe009ffe-800.webp",
     "w800": 800
   },
   "pub_img/vim.png": {

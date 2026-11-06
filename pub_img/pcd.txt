@@ -1,0 +1,7 @@
+@article{lu2026reducing,
+  title={Reducing Pretraining-Generation Mismatch in Diffusion Language Models},
+  author={Lu, Xiaocheng and Liu, Huabin and Guo, Song and Li, Jianguo},
+  journal={arXiv preprint arXiv:2608.09424},
+  year={2026},
+  url={https://arxiv.org/abs/2608.09424}
+}

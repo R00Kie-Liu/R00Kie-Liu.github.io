@@ -1,16 +1,65 @@
 main:
-  - title: Few-shot Action Recognition via Intra-and Inter-Video Information Maximization
-    authors: <strong>Huabin Liu</strong>, Weiyao Lin, Tieyuan Chen, Yuxi Li, Shuyuan Li, John See
+  # Recent entries checked against Google Scholar and the linked primary sources on 2026-11-06.
+  # UpLoop's co-first authorship follows the author's Scholar profile; the paper also marks core contributors.
+  - title: "UpLoop: Upcycling Large Language Models with Gated Loop"
+    authors: Tieyuan Chen*, <strong>Huabin Liu*<sup>&dagger;</sup></strong>, Yingtao Zhang, Shijie Li, Tengyu Pan, Weiyao Lin, Jianguo Li<sup>&dagger;</sup> (<strong>* Co-first author; <sup>&dagger;</sup> Corresponding author</strong>)
+    conference_short: arXiv
+    conference: arXiv preprint arXiv:2610.25004, 2026.
+    pdf: https://arxiv.org/abs/2610.25004
+    bibtex: ./pub_img/uploop.txt
+    image: ./pub_img/uploop.png
+
+  # UBTree v2 adds Xiaoxu Guo to the author list; Scholar currently retains the v1 list.
+  - title: "UBTree: Parallel Tree Drafting via Unigram and Bigram Models for Speculative Decoding"
+    authors: Chumeng Liang*, Linxuan Wang*, Xinyu Peng*, <strong>Huabin Liu<sup>&dagger;</sup></strong>, Xiaoxu Guo, Yuxin Chen, Ge Liu, Guang Lin, Qifan Song, Jianguo Li<sup>&dagger;</sup> (<strong>* Equal contribution; <sup>&dagger;</sup> Corresponding author</strong>)
+    conference_short: arXiv
+    conference: arXiv preprint arXiv:2609.39972, 2026.
+    pdf: https://arxiv.org/abs/2609.39972
+    bibtex: ./pub_img/ubtree.txt
+    image: ./pub_img/ubtree.png
+    page: https://www.inclusion-ai.org/ubtree/
+
+  - title: Reducing Pretraining-Generation Mismatch in Diffusion Language Models
+    authors: Xiaocheng Lu*, <strong>Huabin Liu*</strong>, Song Guo<sup>&dagger;</sup>, Jianguo Li<sup>&dagger;</sup> (<strong>* Co-first author; <sup>&dagger;</sup> Corresponding author</strong>)
+    conference_short: arXiv
+    conference: arXiv preprint arXiv:2608.09424, 2026.
+    pdf: https://arxiv.org/abs/2608.09424
+    bibtex: ./pub_img/pcd.txt
+    image: ./pub_img/pcd.png
+
+  - title: "LLaDA MoE v2: Scaling Mixture-of-Experts Diffusion Language Models"
+    authors: Fengqi Zhu, Shaoxuan Xu, Jingyang Ou, Zebin You, Yipeng Xing, <strong>Huabin Liu</strong>, Xiaolu Zhang, Jun Zhou, Zhenzhong Lan, Yankai Lin, Wayne Xin Zhao, Jianguo Li, Chongxuan Li, Ji-Rong Wen
+    conference_short: arXiv
+    conference: arXiv preprint arXiv:2608.03457, 2026.
+    pdf: https://arxiv.org/abs/2608.03457
+    bibtex: ./pub_img/llada-moe-v2.txt
+    image: ./pub_img/llada-moe-v2.png
+    page: https://www.inclusion-ai.org/LLaDA-Research/models/llada-moe-v2/
+
+  # Journal version published 2026-07-19: https://doi.org/10.1007/s11263-026-02925-w
+  - title: "Looking Beyond Visible Cues: Implicit Video Question Answering via Dual-Clue Reasoning"
+    authors: Tieyuan Chen, <strong>Huabin Liu</strong>, Yi Wang, Chaofan Gan, Mingxi Lv, Ziran Qin, Shijie Li, Liquan Shen, Junhui Hou, Zheng Wang, Weiyao Lin
+    conference_short: IJCV
+    conference: International Journal of Computer Vision <strong>(IJCV)</strong>, 134, article 351, 2026.
+    pdf: https://arxiv.org/abs/2506.07811
+    bibtex: ./pub_img/implicit-videoqa.txt
+    image: ./pub_img/implicit-videoqa.png
+    code: https://github.com/tychen-SJTU/Implicit-VideoQA
+    page: https://link.springer.com/article/10.1007/s11263-026-02925-w
+
+  - title: Few-Shot Action Recognition via Intra- and Inter-Video Information Maximization
+    authors: <strong>Huabin Liu</strong>, Tieyuan Chen, Yuxi Li, Shuyuan Li, John See, Weiyao Lin
     conference_short: TPAMI
-    conference: IEEE Transactions on Pattern Analysis and Machine Intelligence <strong>(TPAMI)</strong>, 2026.
+    conference: IEEE Transactions on Pattern Analysis and Machine Intelligence <strong>(TPAMI)</strong>, 48(7), 8250–8268, 2026.
     pdf: https://arxiv.org/pdf/2305.06114
     bibtex: ./pub_img/vim.txt
     image: ./pub_img/vim.png
+    page: https://doi.org/10.1109/TPAMI.2026.3674176
 
   - title: "MECD+: Unlocking Event-Level Causal Graph Discovery for Video Reasoning"
     authors: Tieyuan Chen, <strong>Huabin Liu</strong>, Yi Wang, Yihang Chen, Tianyao He, Chaofan Gan, Huanyu He, Weiyao Lin
     conference_short: TPAMI
-    conference: IEEE Transactions on Pattern Analysis and Machine Intelligence <strong>(TPAMI)</strong>, 2025.
+    conference: IEEE Transactions on Pattern Analysis and Machine Intelligence <strong>(TPAMI)</strong>, 48(3), 2628–2645, 2026 (online 2025).
     pdf: https://ieeexplore.ieee.org/abstract/document/11219357/
     bibtex: ./pub_img/mecd+.txt
     image: ./pub_img/mecd+.png

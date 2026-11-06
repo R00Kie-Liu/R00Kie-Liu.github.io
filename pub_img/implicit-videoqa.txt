@@ -1,0 +1,10 @@
+@article{chen2026looking,
+  title={Looking Beyond Visible Cues: Implicit Video Question Answering via Dual-Clue Reasoning},
+  author={Chen, Tieyuan and Liu, Huabin and Wang, Yi and Gan, Chaofan and Lv, Mingxi and Qin, Ziran and Li, Shijie and Shen, Liquan and Hou, Junhui and Wang, Zheng and Lin, Weiyao},
+  journal={International Journal of Computer Vision},
+  volume={134},
+  pages={351},
+  year={2026},
+  doi={10.1007/s11263-026-02925-w},
+  url={https://doi.org/10.1007/s11263-026-02925-w}
+}

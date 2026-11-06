@@ -1,0 +1,7 @@
+@article{zhu2026lladamoev2,
+  title={LLaDA MoE v2: Scaling Mixture-of-Experts Diffusion Language Models},
+  author={Zhu, Fengqi and Xu, Shaoxuan and Ou, Jingyang and You, Zebin and Xing, Yipeng and Liu, Huabin and Zhang, Xiaolu and Zhou, Jun and Lan, Zhenzhong and Lin, Yankai and Zhao, Wayne Xin and Li, Jianguo and Li, Chongxuan and Wen, Ji-Rong},
+  journal={arXiv preprint arXiv:2608.03457},
+  year={2026},
+  url={https://arxiv.org/abs/2608.03457}
+}

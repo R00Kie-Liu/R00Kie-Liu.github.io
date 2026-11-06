@@ -1,6 +1,10 @@
-@article{liu2023few,
-  title={Few-shot action recognition via intra-and inter-video information maximization},
-  author={Liu, Huabin and Lin, Weiyao and Chen, Tieyuan and Li, Yuxi and Li, Shuyuan and See, John},
-  journal={arXiv preprint arXiv:2305.06114},
-  year={2023}
+@article{liu2026few,
+  title={Few-Shot Action Recognition via Intra- and Inter-Video Information Maximization},
+  author={Liu, Huabin and Chen, Tieyuan and Li, Yuxi and Li, Shuyuan and See, John and Lin, Weiyao},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume={48},
+  number={7},
+  pages={8250--8268},
+  year={2026},
+  doi={10.1109/TPAMI.2026.3674176}
 }
