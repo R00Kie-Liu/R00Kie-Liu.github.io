@@ -2,7 +2,7 @@ main:
   # Recent entries checked against Google Scholar and the linked primary sources on 2026-11-06.
   # UpLoop's co-first authorship follows the author's Scholar profile; the paper also marks core contributors.
   - title: "UpLoop: Upcycling Large Language Models with Gated Loop"
-    authors: Tieyuan Chen*, <strong>Huabin Liu*<sup>&dagger;</sup></strong>, Yingtao Zhang, Shijie Li, Tengyu Pan, Weiyao Lin, Jianguo Li<sup>&dagger;</sup> (<strong>* Co-first author; <sup>&dagger;</sup> Corresponding author</strong>)
+    authors: Tieyuan Chen*, <strong>Huabin Liu*<sup>&dagger;</sup></strong>, Yingtao Zhang, Shijie Li, Tengyu Pan, Weiyao Lin, Jianguo Li<sup>&dagger;</sup>
     conference_short: arXiv
     conference: arXiv preprint arXiv:2610.25004, 2026.
     pdf: https://arxiv.org/abs/2610.25004
@@ -11,7 +11,7 @@ main:
 
   # UBTree v2 adds Xiaoxu Guo to the author list; Scholar currently retains the v1 list.
   - title: "UBTree: Parallel Tree Drafting via Unigram and Bigram Models for Speculative Decoding"
-    authors: Chumeng Liang*, Linxuan Wang*, Xinyu Peng*, <strong>Huabin Liu<sup>&dagger;</sup></strong>, Xiaoxu Guo, Yuxin Chen, Ge Liu, Guang Lin, Qifan Song, Jianguo Li<sup>&dagger;</sup> (<strong>* Equal contribution; <sup>&dagger;</sup> Corresponding author</strong>)
+    authors: Chumeng Liang*, Linxuan Wang*, Xinyu Peng*, <strong>Huabin Liu<sup>&dagger;</sup></strong>, Xiaoxu Guo, Yuxin Chen, Ge Liu, Guang Lin, Qifan Song, Jianguo Li<sup>&dagger;</sup>
     conference_short: arXiv
     conference: arXiv preprint arXiv:2609.39972, 2026.
     pdf: https://arxiv.org/abs/2609.39972
@@ -20,7 +20,7 @@ main:
     page: https://www.inclusion-ai.org/ubtree/
 
   - title: Reducing Pretraining-Generation Mismatch in Diffusion Language Models
-    authors: Xiaocheng Lu*, <strong>Huabin Liu*</strong>, Song Guo<sup>&dagger;</sup>, Jianguo Li<sup>&dagger;</sup> (<strong>* Co-first author; <sup>&dagger;</sup> Corresponding author</strong>)
+    authors: Xiaocheng Lu*, <strong>Huabin Liu*</strong>, Song Guo<sup>&dagger;</sup>, Jianguo Li<sup>&dagger;</sup>
     conference_short: arXiv
     conference: arXiv preprint arXiv:2608.09424, 2026.
     pdf: https://arxiv.org/abs/2608.09424
@@ -65,7 +65,7 @@ main:
     image: ./pub_img/mecd+.png
 
   - title: "CogStream: Context-guided Streaming Video Question Answering"
-    authors: Zicheng Zhao*, Kangyu Wang*, Shijie Li*, Rui Qian, Weiyao Lin, <strong>Huabin Liu<sup>&dagger;</sup></strong> (<strong><sup>&dagger;</sup> Corresponding author</strong>，<strong>* Equal Contribution</strong>)
+    authors: Zicheng Zhao*, Kangyu Wang*, Shijie Li*, Rui Qian, Weiyao Lin, <strong>Huabin Liu<sup>&dagger;</sup></strong>
     conference_short: AAAI
     conference: AAAI, 2026
     pdf: https://arxiv.org/abs/2506.10516
@@ -74,7 +74,7 @@ main:
     page: https://github.com/LiamZhao326/CogStream
 
   - title: "CSTA: Spatial-Temporal Causal Adaptive Learning for Exemplar-Free Video Class-Incremental Learning"
-    authors: Tieyuan Chen, <strong>Huabin Liu<sup>&dagger;</sup></strong>, Chern Hong Lim, John See, Xing Gao, Junhui Hou, Weiyao Lin<sup>&dagger;</sup> (<strong><sup>&dagger;</sup> Corresponding author</strong>)
+    authors: Tieyuan Chen, <strong>Huabin Liu<sup>&dagger;</sup></strong>, Chern Hong Lim, John See, Xing Gao, Junhui Hou, Weiyao Lin<sup>&dagger;</sup>
     conference_short: TCSVT
     conference: IEEE Transactions on Circuits and Systems for Video Technology <strong>(TCSVT)</strong>, 2025.
     pdf: https://arxiv.org/abs/2501.07236
@@ -90,7 +90,7 @@ main:
     bibtex: ./pub_img/entailment.txt
 
   - title: "MECD: Unlocking Multi-Event Causal Discovery in Video Reasoning"
-    authors: Tieyuan Chen*, <strong>Huabin Liu*</strong>, Tianyao He, Yihang Chen, Chaofan Gan, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Hui Lin, Weiyao Lin (<strong>* Co-first author</strong>)
+    authors: Tieyuan Chen*, <strong>Huabin Liu*</strong>, Tianyao He, Yihang Chen, Chaofan Gan, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Hui Lin, Weiyao Lin
     conference_short: NeurIPS
     conference: Neural Information Processing Systems <strong>(NeurIPS)</strong>, 2024
     image: ./pub_img/mecd.png
@@ -107,7 +107,7 @@ main:
     bibtex: ./pub_img/timecraft.txt
   
   - title: "DIBS: Enhancing Dense Video Captioning with Unlabeled Videos via Pseudo Boundary Enrichment and Online Refinement"
-    authors: Hao Wu*, <strong>Huabin Liu*</strong>, Yu Qiao, Xiao Sun (<strong>* Co-first author</strong>)
+    authors: Hao Wu*, <strong>Huabin Liu*</strong>, Yu Qiao, Xiao Sun
     conference_short: CVPR
     conference: IEEE/CVF Conference on Computer Vision and Pattern Recognition <strong>(CVPR)</strong>, 2024.
     pdf: https://openaccess.thecvf.com/content/CVPR2024/html/Wu_DIBS_Enhancing_Dense_Video_Captioning_with_Unlabeled_Videos_via_Pseudo_CVPR_2024_paper.html
@@ -116,7 +116,7 @@ main:
     code: https://github.com/haowuxc/DIBS
 
   - title: "Achieving Procedure-Aware Instructional Video Correlation Learning under Weak Supervision from a Collaborative Perspective"
-    authors: Tianyao He*, <strong>Huabin Liu*</strong>, Zeling Ni, Yuxi Li, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Weiyao Lin (<strong>* Co-first author</strong>)
+    authors: Tianyao He*, <strong>Huabin Liu*</strong>, Zeling Ni, Yuxi Li, Xiao Ma, Cheng Zhong, Yang Zhang, Yingxue Wang, Weiyao Lin
     conference_short: IJCV
     conference: International Journal of Computer Vision <strong>(IJCV)</strong>, 2024
     image: ./pub_img/cpa_ijcv.png
@@ -160,7 +160,7 @@ main:
     image: ./pub_img/giga.png
 
   - title: "TA2N: Two-Stage Action Alignment Network for Few-shot Action Recognition"
-    authors: Shuyuan Li, <strong>Huabin Liu*</strong>, Rui Qian, Yuxi Li, John See, Mengjuan Fei, Xiaoyuan Yu, Weiyao Lin (<strong>* Co-first author</strong>)
+    authors: Shuyuan Li, <strong>Huabin Liu*</strong>, Rui Qian, Yuxi Li, John See, Mengjuan Fei, Xiaoyuan Yu, Weiyao Lin
     conference_short: AAAI
     conference: AAAI Conference on Artificial Intelligence <strong>(AAAI)</strong>, 2023.
     pdf: https://ojs.aaai.org/index.php/AAAI/article/view/20029/19788
@@ -177,7 +177,7 @@ main:
     image: ./pub_img/tmm.png
 
   - title: Temporal Alignment via Event Boundary for Few-shot Action Recongnition
-    authors: Shuyuan Li*, <strong>Huabin Liu*</strong>, Mengjuan Fei, Xiaoyuan Yu, Weiyao Lin (* Equal Contribution)
+    authors: Shuyuan Li*, <strong>Huabin Liu*</strong>, Mengjuan Fei, Xiaoyuan Yu, Weiyao Lin
     conference_short: BMVC
     conference: British Machine Vision Conference <strong>(BMVC)</strong>, 2021
     pdf: https://www.bmvc2021-virtualconference.com/assets/papers/0878.pdf

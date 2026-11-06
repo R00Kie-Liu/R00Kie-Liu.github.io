@@ -63,6 +63,26 @@ html.dark-mode {
 
 .publications { margin-top: 2rem; }
 
+.publications .publication-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    margin: 0 0 1rem;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm, 0.8125rem);
+    line-height: 1.6;
+}
+
+.publications .publication-legend span {
+    white-space: nowrap;
+}
+
+.publications .author sup {
+    font-size: 0.7em;
+    line-height: 0;
+}
+
 .publications h1 {
     color: var(--global-theme-color);
     font-size: 2rem;
