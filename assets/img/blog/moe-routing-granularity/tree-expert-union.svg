@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="440" viewBox="0 0 1120 440" role="img" aria-labelledby="title desc">
+  <title id="title">父子专家复用与整树专家并集</title>
+  <desc id="desc">根节点选择专家 0 和 1，两个孩子分别选择 0 和 2、1 和 3。每条路径覆盖三个专家，整树覆盖四个专家。</desc>
+  <rect width="1120" height="440" rx="18" fill="#f8fafc"/>
+  <g font-family="Noto Sans SC, sans-serif" fill="#172b43">
+    <text x="38" y="46" font-size="23" font-weight="700">每个节点 top-2 · 每条边至多引入 1 个新专家</text>
+    <path d="M290 150 L170 238 M290 150 L410 238" fill="none" stroke="#7a8ba0" stroke-width="3"/>
+    <rect x="205" y="85" width="170" height="68" rx="12" fill="#dceafe" stroke="#6484b4" stroke-width="2"/>
+    <text x="290" y="112" text-anchor="middle" font-size="17">根节点</text>
+    <text x="290" y="139" text-anchor="middle" font-size="23" font-weight="700">{0, 1}</text>
+    <rect x="82" y="238" width="176" height="70" rx="12" fill="#e4f1ed" stroke="#589580" stroke-width="2"/>
+    <text x="170" y="266" text-anchor="middle" font-size="17">候选 A</text>
+    <text x="170" y="294" text-anchor="middle" font-size="23" font-weight="700">{0, 2}</text>
+    <rect x="322" y="238" width="176" height="70" rx="12" fill="#fff0de" stroke="#c99656" stroke-width="2"/>
+    <text x="410" y="266" text-anchor="middle" font-size="17">候选 B</text>
+    <text x="410" y="294" text-anchor="middle" font-size="23" font-weight="700">{1, 3}</text>
+    <text x="126" y="190" font-size="18" fill="#347a65">新增专家 2</text>
+    <text x="354" y="190" font-size="18" fill="#9e6a28">新增专家 3</text>
+    <rect x="580" y="83" width="496" height="252" rx="14" fill="#fff" stroke="#d4dce5" stroke-width="2"/>
+    <text x="610" y="124" font-size="20" font-weight="700">按路径统计</text>
+    <text x="610" y="163" font-size="20">根 → A　{0, 1, 2}　3 个专家</text>
+    <text x="610" y="202" font-size="20">根 → B　{0, 1, 3}　3 个专家</text>
+    <path d="M610 226 H1046" stroke="#e0e6ed" stroke-width="2"/>
+    <text x="610" y="266" font-size="20" font-weight="700">整树同时 verify</text>
+    <text x="610" y="307" font-size="24" font-weight="700" fill="#285f9e">{0, 1, 2, 3}　4 个专家</text>
+    <text x="38" y="394" font-size="21">兄弟节点可以引入不同专家；父子路由局部性不能直接变成整树的固定专家池。</text>
+  </g>
+</svg>
