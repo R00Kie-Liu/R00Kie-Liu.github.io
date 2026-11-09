@@ -373,11 +373,66 @@ SpecFit 将预计提交收益除以预计整轮时间，在小候选池内枚举
 
 ### 6.2 Diffusion 模型的语义生成分组：DCDM
 
-[Dynamic Chunking Diffusion Model（DCDM）][dcdm]将固定位置块替换为学习到的 semantic chunks。chunk 可以不连续，chunk-causal attention 决定哪些位置一起去噪、不同 chunk 怎样形成生成依赖。其 DCDM-MoE 变体另有 token-level MoE，语义生成分组没有自动约束 FFN 专家并集。
+[Dynamic Chunking Diffusion Model（DCDM）][dcdm]改变的是 block diffusion 的分组依据。固定块按“每连续若干个位置一组”划分，可能拆开相互依赖的代码位置或同一实体的不同提及。DCDM 根据隐藏状态学习分组，让相关位置有机会进入同一个去噪单元；一组可以大小不一，也可以包含不连续的位置。
+
+一次前向先经过一个 DiT block，再由 Chunking Attention 同时输出更新后的隐藏状态与每个位置的 chunk 编号。后续 DiT blocks 共享这些编号构造的 attention mask，完成去噪预测。图 22 中间展开的是分组层内部的计算，右侧颜色表示得到的位置组。
 
 [![DCDM 的内容分组与 chunk-causal attention](/assets/img/blog/moe-routing-granularity/dcdm-semantic-chunks.png)](/assets/img/blog/moe-routing-granularity/dcdm-semantic-chunks.png)
 
-*图 22：DCDM 的 Chunking Attention 为位置分组，右侧同色位置可以不连续，分组结果决定后续层的 chunk-causal attention mask；FFN 中的 MoE 是另一处设计。*
+*图 22：Chunking Attention 用可学习子空间处理当前隐藏状态，产生连续输出与离散分组；后续层根据分组使用 chunk-causal attention。右侧同色位置可以不连续。*
+
+#### 从隐藏状态得到 Chunk 编号
+
+设位置 $i$ 的隐藏状态为 $h_i\in\mathbb R^d$，共有 $K$ 个簇。每个簇用一个可学习矩阵 $\mu_k\in\mathbb R^{d\times r}$ 表示，其中 $r$ 是低维子空间的维度。分组层把同一个位置映射到各个子空间，取映射后向量的长度作为分数：
+
+$$
+\begin{aligned}
+p_{k,i}&=\mu_k^\top h_i,\\
+s_{i,k}&=\lVert p_{k,i}\rVert_2,\\
+c_i&=\arg\max_k(s_{i,k}+b_k).
+\end{aligned}
+$$
+
+$c_i$ 是位置 $i$ 的 chunk 编号。$b_k$ 只校正硬分组的负载：训练中按统计使用率下调过载簇的偏置，上调低使用率簇的偏置。模型比较的是对多个子空间的契合程度，分组参数随训练更新，不需要预先标注句子边界或语义类别。
+
+但只输出 `argmax` 编号，去噪损失无法通过这个离散操作训练分组。Chunking Attention 还为每个簇计算一张位置之间的 attention 矩阵：
+
+$$
+\begin{aligned}
+A^{(k)}_{ij}&=\frac{p_{k,i}^{\top}p_{k,j}}{\sqrt r},\\
+T^{(k)}_{ij}&=\operatorname{softmax}_{j}\!\left(A^{(k)}_{ij}\right).
+\end{aligned}
+$$
+
+每张矩阵都沿 key 位置归一化，再将各簇结果加和、按 $1/\sqrt K$ 缩放，通过共享的 value/output 投影更新隐藏状态。这样，同一组 $\mu_k$ 同时决定连续的 attention 输出和离散编号：去噪损失沿连续输出回传，编号则交给后续层生成 mask。训练还使用序列内均衡损失和跨 batch 的偏置调整，避免大量位置长期挤进少数簇。这里写的是未施加可见性限制的分数形式；训练时还会加入下述 noise mask。
+
+#### 分组怎样改变 Attention
+
+得到编号后，第 $k$ 个 chunk 就是所有满足 $c_i=k$ 的位置。推理时，查询位置 $i$ 能读取位置 $j$ 的条件为：
+
+$$
+M^{\mathrm{chunk}}_{ij}=\mathbf 1[c_j\le c_i].
+$$
+
+同组编号相等，可以双向注意；编号较大的组能读较小的组，反向不可见。这里的先后按 chunk 编号定义，不按文本位置定义。
+
+例如六个位置的编号为 $c=(1,2,1,3,2,3)$。固定长度为 2 的位置块原本会是 `[1,2]`、`[3,4]`、`[5,6]`，这次分组则给出：
+
+| 查询位置 | Chunk 编号 | 按 chunk-causal mask 可读取的位置 |
+|---|---|---|
+| 1、3 | 1 | 1、3 |
+| 2、5 | 2 | 1、2、3、5 |
+| 4、6 | 3 | 全部六个位置 |
+
+因此，位置 2 和 5 虽然不相邻，却能在同一组里互相提供去噪上下文，并以组 1 的内容为条件；它们不能读取组 3。这个例子固定了一次前向的编号，只解释信息可见性。原文给出了推理 mask，但没有展开跨去噪轮次固定或刷新分组的完整采样调度。
+
+#### 训练时的可见性与 MoE 专家选择
+
+训练使用带噪序列与干净序列拼接的双流输入，以干净的较早 chunk 为条件，同时预测带噪位置。分组阶段另有 noise mask：已知位置只读已知 key，当前被 mask 的位置可以读已知 key 和自身；相同的噪声标记也施加到干净半边。作者用这个限制阻断分组阶段经由其他待预测位置真实值形成的信息通路。
+
+后续去噪层的 mask 分开处理两条流：带噪 query 读取同组的带噪 key，以及严格较早组的干净 key；干净 query 只读取同组或较早组的干净 key。前面表格展示的是推理时的单流规则，训练时不能直接把它复制成一个不加区分的双流 mask。
+
+这些 chunk 编号控制的是 attention 的可见位置。DCDM-MoE 另将 decoder 的 MLP 替换为带 shared expert 的逐 token top-k MoE；这个 router 选择 FFN 专家，和输出 chunk 编号的分组层是两个模块。同一个语义 chunk 内的位置仍可选择不同专家，论文没有给它们设置类似 LLaDA2.2 的共享专家池。DCDM 对本篇的启发是学习位置分组；若要进一步用这些组约束专家搬运，还需要增加专家集合层面的设计。
 
 ### 6.3 AR MoE 的序列级调用预算：SeqTopK
 
