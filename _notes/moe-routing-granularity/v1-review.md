@@ -76,7 +76,27 @@ Multi-View Latent MoE 未纳入本篇。投机解码部分聚焦候选与专家�
 | `moce-hierarchical-routing.png` | MoCE EMNLP 2025 PDF 第 3 页 Figure 1；裁剪矩形 `(70,73,526,255)`，4 倍渲染；序列级分组与组内路由 |
 | `dcdm-semantic-chunks.png` | DCDM v1 Figure 1，原始 `https://arxiv.org/html/2605.15676v1/overview.png`；内容分组与 chunk-causal attention |
 
-图注只保留技术说明，原文链接在相邻正文及文献中。11 张论文图均核对过图中标注，原创 SVG 的数值与正文一致；SVG 直接保留原始矢量文件，论文图可点击打开原尺寸。
+图注只保留技术说明，原文链接在相邻正文及文献中。论文图均核对过图中标注，原创 SVG 的数值与正文一致；SVG 直接保留原始矢量文件，论文图可点击打开原尺寸。
+
+### 全部论文配图核对
+
+上一轮 12 张图只覆盖 11 项研究与 1 张原创示意图。本轮补齐剩余 11 项，正文的 22 项研究各有一张原文配图，含原创示意图共 23 张，图号已连续重排。逐项对应关系和所有原图来源记录在 `figure-coverage.json`，覆盖范围包含 LLaDA2.2 报告；模型代码与配置归入同一报告，不单独计算论文。
+
+| 新增文件 | 原文与内容 |
+|---|---|
+| `cache-aware-router.svg` | Cache-Aware Joint Router Adaptation v2 Figure 1；原始 `spatio-temporal-router.svg`，缓存保留与因果预取 |
+| `llada22-block-routing.png` | LLaDA2.2 报告第 4 页 Figure 3；矩形 `(343,114,542,342)`，5 倍渲染；块级候选池与池内路由 |
+| `sticky-token-consistency.png` | StickyMoE v1 第 23 页 Figure 3(a)；矩形 `(120,153,244,280)`，5 倍渲染；只保留正文讨论的同层相邻位置约束 |
+| `local-routing-cache-oracle.svg` | Local Routing Consistency v4 Figure 3；原始 `sch.svg`，需要未来窗口信息的缓存分析参照 |
+| `simbal-expert-redundancy.png` | SimBal v1 第 7 页 Figure 3；矩形 `(108,76,504,224)`，4 倍渲染；PES 专家冗余对比，未扩展正文篇幅 |
+| `cacheable-quality-locality.png` | Cacheable by Design? v1 第 8 页 Figure 5；矩形 `(123,69,488,208)`，4.5 倍渲染；局部性与质量的联合门槛 |
+| `evict-selection.png` | EVICT v2 Figure 4；原始 `method.png`，验证规模选择与祖先闭合树裁剪 |
+| `specfit-selection.png` | SpecFit v1 第 4 页 Figure 1；矩形 `(107,80,505,222)`，4.5 倍渲染；候选搜索、成本估计与原 target 验证 |
+| `draftexpert-architecture.svg` | DraftExpert v1 Figure 6；原始 `draftexpert_architecture.svg`，离线蒸馏与在线扩张感知验证 |
+| `moe-spec-budget.svg` | MoE-Spec v1 Figure 1；原始 `overview.svg`，候选树不变时的专家预算 |
+| `seqtopk-budget-allocation.png` | SeqTopK v2 第 1 页 Figure 1(a)；矩形 `(55,174,211,302)`，5 倍渲染；固定总预算下的跨位置分配 |
+
+图注保留条件：SCH 的 oracle 使用未来信息；负面结果图的 miss 与困惑度使用不同纵轴；SeqTopK 图解释训练中的整序列竞争；SpecFit 正文的离线路由信息条件继续保留。所有新增图已查看原尺寸，未生成替代图或改写图内标注。
 
 ## 构建与显示检查
 
@@ -84,7 +104,9 @@ Jekyll 构建通过。本轮修改后，Chromium 在 1440 像素桌面宽度和 
 
 补充 AR 动机后重新构建并检查两种宽度，数学、配图和表格总数保持一致；首表为 5 行场景、4 列，新增收益列可通过表格内部横向滚动访问。检查输出见 `ar-motivation-browser-check.json`，本次机械审稿无命中，公式、引用、frontmatter 和配图路径与前一版一致。
 
-最终图文版重新构建，1440 和 390 像素宽度均验证 70 处数学渲染、5 张表格、12 张图片，无 MathJax 错误、页面脚本错误或整页横向溢出。12 张图均加载成功，展示尺寸不超出正文，图片链接指向原尺寸资源。另查看桌面与手机截图，核对 SVG、方法图与紧邻说明。检查输出见 `final-illustrated-browser-check.json`。
+上一轮重点配图版重新构建，1440 和 390 像素宽度均验证 70 处数学渲染、5 张表格、12 张图片，无 MathJax 错误、页面脚本错误或整页横向溢出。12 张图均加载成功，展示尺寸不超出正文，图片链接指向原尺寸资源。另查看桌面与手机截图，核对 SVG、方法图与紧邻说明。检查输出见 `final-illustrated-browser-check.json`。
+
+补齐全部论文后再次构建，覆盖清单与正文 22 项引用逐一匹配，全部 23 张图片在桌面及手机宽度下加载成功，均可打开原尺寸。70 处数学、5 张表格、日期与系列元数据保持不变，无脚本或 MathJax 错误，也无整页横向溢出。已查看 LLaDA2.2、SimBal、负面结果曲线与 SeqTopK 的页面截图。检查输出见 `all-paper-figures-browser-check.json`。
 
 已修正 Kramdown 对行内集合括号及绝对值竖线的解析，使用 `\lbrace`、`\rbrace`、`\lvert` 和 `\rvert`，避免生成错误表格。预览生成目录的文件权限单独调整以便本地 HTTP 服务读取，站点样式和脚本未作修改。
 

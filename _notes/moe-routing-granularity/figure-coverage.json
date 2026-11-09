@@ -1,0 +1,302 @@
+{
+  "post": "_posts/2026-11-07-moe-routing-granularity-expert-reuse.md",
+  "paper_count": 22,
+  "papers": [
+    {
+      "reference": "llada-report",
+      "paper_url": "https://github.com/inclusionAI/LLaDA2.X/blob/main/LLaDA2_2_tech_report.pdf",
+      "image": "/assets/img/blog/moe-routing-granularity/llada22-block-routing.png",
+      "figure_number": 2,
+      "source": {
+        "type": "pdf_crop",
+        "url": "https://github.com/inclusionAI/LLaDA2.X/blob/main/LLaDA2_2_tech_report.pdf",
+        "page": 4,
+        "clip": [
+          343,
+          114,
+          542,
+          342
+        ],
+        "scale": 5
+      }
+    },
+    {
+      "reference": "des",
+      "paper_url": "https://arxiv.org/html/2602.00879v2",
+      "image": "/assets/img/blog/moe-routing-granularity/des-shared-pool.svg",
+      "figure_number": 3,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2602.00879v2/method_v4.svg"
+      }
+    },
+    {
+      "reference": "dmoe",
+      "paper_url": "https://arxiv.org/html/2605.30876v2",
+      "image": "/assets/img/blog/moe-routing-granularity/dmoe-block-expert-pool.png",
+      "figure_number": 4,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2605.30876v2/overview.png"
+      }
+    },
+    {
+      "reference": "team",
+      "paper_url": "https://arxiv.org/html/2602.08404v3",
+      "image": "/assets/img/blog/moe-routing-granularity/team-overview.png",
+      "figure_number": 5,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2602.08404v3/3.png"
+      }
+    },
+    {
+      "reference": "epoch",
+      "paper_url": "https://arxiv.org/html/2609.09748v1",
+      "image": "/assets/img/blog/moe-routing-granularity/epoch-overview.png",
+      "figure_number": 6,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2609.09748v1/fig-overview.png"
+      }
+    },
+    {
+      "reference": "blockffn",
+      "paper_url": "https://arxiv.org/html/2507.08771v2",
+      "image": "/assets/img/blog/moe-routing-granularity/blockffn-chunk-kernel.png",
+      "figure_number": 7,
+      "source": {
+        "type": "pdf_crop",
+        "url": "https://arxiv.org/pdf/2507.08771v2",
+        "page": 6,
+        "clip": [
+          104,
+          74,
+          510,
+          227
+        ],
+        "scale": 4.5
+      }
+    },
+    {
+      "reference": "coactivation",
+      "paper_url": "https://arxiv.org/html/2609.22471v1",
+      "image": "/assets/img/blog/moe-routing-granularity/coactivation-expert-reuse.png",
+      "figure_number": 9,
+      "source": {
+        "type": "pdf_crop",
+        "url": "https://arxiv.org/pdf/2609.22471v1",
+        "page": 1,
+        "clip": [
+          106,
+          526,
+          295,
+          644
+        ],
+        "scale": 4
+      }
+    },
+    {
+      "reference": "sticky",
+      "paper_url": "https://arxiv.org/html/2607.08780v1",
+      "image": "/assets/img/blog/moe-routing-granularity/sticky-token-consistency.png",
+      "figure_number": 8,
+      "source": {
+        "type": "pdf_crop",
+        "url": "https://arxiv.org/pdf/2607.08780v1",
+        "page": 23,
+        "clip": [
+          120,
+          153,
+          244,
+          280
+        ],
+        "scale": 5
+      }
+    },
+    {
+      "reference": "simbal",
+      "paper_url": "https://arxiv.org/html/2506.14038v1",
+      "image": "/assets/img/blog/moe-routing-granularity/simbal-expert-redundancy.png",
+      "figure_number": 11,
+      "source": {
+        "type": "pdf_crop",
+        "url": "https://arxiv.org/pdf/2506.14038v1",
+        "page": 7,
+        "clip": [
+          108,
+          76,
+          504,
+          224
+        ],
+        "scale": 4
+      }
+    },
+    {
+      "reference": "locality",
+      "paper_url": "https://arxiv.org/html/2505.16056v4",
+      "image": "/assets/img/blog/moe-routing-granularity/local-routing-cache-oracle.svg",
+      "figure_number": 10,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2505.16056v4/sch.svg"
+      }
+    },
+    {
+      "reference": "negative",
+      "paper_url": "https://arxiv.org/html/2608.18261v1",
+      "image": "/assets/img/blog/moe-routing-granularity/cacheable-quality-locality.png",
+      "figure_number": 12,
+      "source": {
+        "type": "pdf_crop",
+        "url": "https://arxiv.org/pdf/2608.18261v1",
+        "page": 8,
+        "clip": [
+          123,
+          69,
+          488,
+          208
+        ],
+        "scale": 4.5
+      }
+    },
+    {
+      "reference": "cache-aware",
+      "paper_url": "https://arxiv.org/html/2609.04895v2",
+      "image": "/assets/img/blog/moe-routing-granularity/cache-aware-router.svg",
+      "figure_number": 1,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2609.04895v2/spatio-temporal-router.svg"
+      }
+    },
+    {
+      "reference": "evict",
+      "paper_url": "https://arxiv.org/html/2605.00342v2",
+      "image": "/assets/img/blog/moe-routing-granularity/evict-selection.png",
+      "figure_number": 14,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2605.00342v2/method.png"
+      }
+    },
+    {
+      "reference": "ecospec",
+      "paper_url": "https://arxiv.org/html/2607.12696v1",
+      "image": "/assets/img/blog/moe-routing-granularity/ecospec-overview.png",
+      "figure_number": 15,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2607.12696v1/framework.png"
+      }
+    },
+    {
+      "reference": "specfit",
+      "paper_url": "https://arxiv.org/html/2610.15417v1",
+      "image": "/assets/img/blog/moe-routing-granularity/specfit-selection.png",
+      "figure_number": 16,
+      "source": {
+        "type": "pdf_crop",
+        "url": "https://arxiv.org/pdf/2610.15417v1",
+        "page": 4,
+        "clip": [
+          107,
+          80,
+          505,
+          222
+        ],
+        "scale": 4.5
+      }
+    },
+    {
+      "reference": "s2moe",
+      "paper_url": "https://arxiv.org/html/2608.15018v2",
+      "image": "/assets/img/blog/moe-routing-granularity/s2moe-reuse-gating.svg",
+      "figure_number": 17,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2608.15018v2/reuse.svg"
+      }
+    },
+    {
+      "reference": "draftexpert",
+      "paper_url": "https://arxiv.org/html/2607.24434v1",
+      "image": "/assets/img/blog/moe-routing-granularity/draftexpert-architecture.svg",
+      "figure_number": 18,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2607.24434v1/draftexpert_architecture.svg"
+      }
+    },
+    {
+      "reference": "moe-spec",
+      "paper_url": "https://arxiv.org/html/2602.16052v1",
+      "image": "/assets/img/blog/moe-routing-granularity/moe-spec-budget.svg",
+      "figure_number": 19,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2602.16052v1/overview.svg"
+      }
+    },
+    {
+      "reference": "acceptmoe",
+      "paper_url": "https://arxiv.org/html/2608.02989v1",
+      "image": "/assets/img/blog/moe-routing-granularity/acceptmoe-expert-set.svg",
+      "figure_number": 20,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2608.02989v1/algo1.svg"
+      }
+    },
+    {
+      "reference": "moce",
+      "paper_url": "https://aclanthology.org/2025.emnlp-main.718/",
+      "image": "/assets/img/blog/moe-routing-granularity/moce-hierarchical-routing.png",
+      "figure_number": 21,
+      "source": {
+        "type": "pdf_crop",
+        "url": "https://aclanthology.org/2025.emnlp-main.718.pdf",
+        "page": 3,
+        "clip": [
+          70,
+          73,
+          526,
+          255
+        ],
+        "scale": 4
+      }
+    },
+    {
+      "reference": "dcdm",
+      "paper_url": "https://arxiv.org/html/2605.15676v1",
+      "image": "/assets/img/blog/moe-routing-granularity/dcdm-semantic-chunks.png",
+      "figure_number": 22,
+      "source": {
+        "type": "original_image",
+        "url": "https://arxiv.org/html/2605.15676v1/overview.png"
+      }
+    },
+    {
+      "reference": "seqtopk",
+      "paper_url": "https://arxiv.org/html/2511.06494v2",
+      "image": "/assets/img/blog/moe-routing-granularity/seqtopk-budget-allocation.png",
+      "figure_number": 23,
+      "source": {
+        "type": "pdf_crop",
+        "url": "https://arxiv.org/pdf/2511.06494v2",
+        "page": 1,
+        "clip": [
+          55,
+          174,
+          211,
+          302
+        ],
+        "scale": 5
+      }
+    }
+  ],
+  "explanatory_figure": {
+    "image": "/assets/img/blog/moe-routing-granularity/tree-expert-union.svg",
+    "figure_number": 13
+  }
+}

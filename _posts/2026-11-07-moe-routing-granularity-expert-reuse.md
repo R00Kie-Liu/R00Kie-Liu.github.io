@@ -72,6 +72,10 @@ $$
 
 [Cache-Aware Joint Router Adaptation][cache-aware]从驻留决策入手，联合适配模型与辅助缓存 router，学习跨 token 保留哪些专家，并可利用因果信息提前加载权重。辅助 router 不覆盖模型实际的 top-k 选择；联合训练仍会改变模型参数。缓存决策用于减少后续访问的 miss 与加载量，模型仍按自身路由分数选择专家。
 
+[![Cache-Aware Joint Router Adaptation 的缓存保留与因果预取](/assets/img/blog/moe-routing-granularity/cache-aware-router.svg)](/assets/img/blog/moe-routing-granularity/cache-aware-router.svg)
+
+*图 1：左侧是容量受限的 GPU 专家缓存；中间学习访问后的专家保留，右侧在访问前加入因果预取。实际 MoE 选择仍由 Native Router 完成。*
+
 ## 2. Block Diffusion 的块内选池：共享候选范围
 
 LLaDA2.2、DES 和 dMoE 都面向 block diffusion MoE。一次去噪前向已经给出了当前块各位置的 hidden states，因此可以在这一层汇总整块路由分数，再限制各位置的候选范围。
@@ -108,6 +112,10 @@ $$
 
 报告将这个 max 聚合称为 token racing。一个专家即使只被某个位置强烈需要，也有机会凭该位置的高分进入候选池。池外分数被屏蔽后，各位置再独立选择 top-8。输出混合权重取自未加选择偏置的 sigmoid 分数，经归一化和 scaling 后使用。
 
+[![LLaDA2.2 的块级专家候选池与池内逐位置选择](/assets/img/blog/moe-routing-granularity/llada22-block-routing.png)](/assets/img/blog/moe-routing-granularity/llada22-block-routing.png)
+
+*图 2：LLaDA2.2 以 8 个专家的示例说明 block routing：整块先保留 1、3、7、8，再在这个范围内逐位置选择。蓝色专家可选，白色专家被屏蔽。*
+
 因此，这 32 个位置的专家并集最多为 48，逻辑调用次数仍是 $32\times8=256$。实际并集可以小于 48，候选容量也没有把每个位置的调用数改成 48。
 
 这层约束是模型设计的一部分，报告通过 continued pretraining 适应新的路由范围。公开函数还会根据本次前向的分数重新选池；同一 diffusion block 在下一次去噪迭代中，可以得到不同的候选集合。
@@ -118,7 +126,7 @@ $$
 
 [![DES 的逐位置选择、共享专家池与跨位置投票](/assets/img/blog/moe-routing-granularity/des-shared-pool.svg)](/assets/img/blog/moe-routing-granularity/des-shared-pool.svg)
 
-*图 1：逐位置少选专家，仍可能留下较大的整块并集；DES 先选共享候选池，再让各位置在池内选择。右侧对比局部高分专家并集与跨位置投票。*
+*图 3：逐位置少选专家，仍可能留下较大的整块并集；DES 先选共享候选池，再让各位置在池内选择。右侧对比局部高分专家并集与跨位置投票。*
 
 max 与 sum 聚合对应不同的偏好。下面是一组用于比较排序的示意分数，候选容量设为 2：
 
@@ -134,7 +142,7 @@ max 选择 A、C，保留位置 1 对 A 的强偏好；sum 选择 B、C，更重
 
 [![dMoE 的分数聚合、Top-p 选池与受限路由训练](/assets/img/blog/moe-routing-granularity/dmoe-block-expert-pool.png)](/assets/img/blog/moe-routing-granularity/dmoe-block-expert-pool.png)
 
-*图 2：dMoE 将 token-level 分数汇成 block-level 分数，以 top-p 选择专家池，并在受限路由的前向过程中训练。*
+*图 4：dMoE 将 token-level 分数汇成 block-level 分数，以 top-p 选择专家池，并在受限路由的前向过程中训练。*
 
 dMoE 通过微调与自蒸馏适应受限专家池。DES 直接作用于已有 checkpoint，不更新参数，但池内选择同样会改变原始模型的路由路径。
 
@@ -152,7 +160,7 @@ Block diffusion 还有一个时间维度：同一组位置会经过多次去噪�
 
 [![TEAM 的延迟缓存、热冷位置分类与两轮专家路由](/assets/img/blog/moe-routing-granularity/team-overview.png)](/assets/img/blog/moe-routing-granularity/team-overview.png)
 
-*图 3：TEAM 对已解码位置延迟一步缓存，对 hot mask 位置探索更多解掩码分支，并让 cold mask 位置复用第一轮路由形成的专家集合。*
+*图 5：TEAM 对已解码位置延迟一步缓存，对 hot mask 位置探索更多解掩码分支，并让 cold mask 位置复用第一轮路由形成的专家集合。*
 
 cold tokens 因而不会单独扩大本轮专家工作集，但其专家资格发生了变化；已解码状态的缓存则依赖表示近似稳定的观察。
 
@@ -162,7 +170,7 @@ cold tokens 因而不会单独扩大本轮专家工作集，但其专家资格�
 
 [![Epoch 的块级调度计划与 FreshLane 执行流程](/assets/img/blog/moe-routing-granularity/epoch-overview.png)](/assets/img/blog/moe-routing-granularity/epoch-overview.png)
 
-*图 4：Epoch 在调度侧管理专家支持集与位置状态，在执行侧通过 FreshLane Dispatch 传递本轮需要重新计算的 token–expert 项。*
+*图 6：Epoch 在调度侧管理专家支持集与位置状态，在执行侧通过 FreshLane Dispatch 传递本轮需要重新计算的 token–expert 项。*
 
 复用专家支持集，保留的是候选资格；复用专家输出，保留的是上一轮的计算值。前者可能排除本轮自然路由需要的专家，后者可能因状态变化而过时。Epoch 分别讨论 support 截断与缓存年龄的边界。已解码 token 即使不再需要新的输出 logits，也仍可能参与双向 attention 的上下文。
 
@@ -200,7 +208,7 @@ $$
 
 [![BlockFFN 按专家并集读取权重并对多位置统一执行的内核](/assets/img/blog/moe-routing-granularity/blockffn-chunk-kernel.png)](/assets/img/blog/moe-routing-granularity/blockffn-chunk-kernel.png)
 
-*图 5：BlockFFN 读取 chunk 专家并集对应的权重，让整块输入参与规则矩阵乘，再屏蔽不属于原激活模式的中间结果。*
+*图 7：BlockFFN 读取 chunk 专家并集对应的权重，让整块输入参与规则矩阵乘，再屏蔽不属于原激活模式的中间结果。*
 
 BlockFFN 为并集中的专家计算整块输入，包含一部分之后会被 mask 的行，用额外计算换取规则的矩阵形状和权重复用。TLS 与 CLS 接近时，这部分额外工作较少；差距很大时，补算量就会增加。
 
@@ -214,11 +222,15 @@ $$
 
 这个损失鼓励相邻分布接近，却不保证 top-k 集合不变。例如 $(0.501,0.499)$ 与 $(0.499,0.501)$ 很接近，top-1 仍选择不同专家。
 
+[![StickyMoE 在同一层约束相邻位置的路由分布](/assets/img/blog/moe-routing-granularity/sticky-token-consistency.png)](/assets/img/blog/moe-routing-granularity/sticky-token-consistency.png)
+
+*图 8：StickyMoE 在同一层比较相邻位置的 gate 分布，蓝色箭头对应被一致性损失约束的位置对。*
+
 [Expert Coactivation][coactivation]则同时修改训练目标和选择规则，结合 global load balancing、shared experts、相邻 router 一致性损失与 autoregressive expert selection。它允许局部窗口集中使用少量专家，同时在更大的训练 batch 上约束总体使用率，避免每个小窗口都被要求平均覆盖所有专家。
 
 [![Coactivation 在相同调用数下提高块内专家重叠](/assets/img/blog/moe-routing-granularity/coactivation-expert-reuse.png)](/assets/img/blog/moe-routing-granularity/coactivation-expert-reuse.png)
 
-*图 6：四个位置各选三个专家，逻辑调用数同为 12。Coactivation 的示意路由增加了位置间重叠，需要搬入 NPU 的独立专家从 9 个降到 5 个。*
+*图 9：四个位置各选三个专家，逻辑调用数同为 12。Coactivation 的示意路由增加了位置间重叠，需要搬入 NPU 的独立专家从 9 个降到 5 个。*
 
 其中，autoregressive expert selection 在同一个窗口内，让后一个位置保留前一个位置至少 $k-r$ 个专家，再按自己的分数补齐其余选择。若：
 
@@ -238,9 +250,21 @@ $$
 
 [Not All Models Suit Expert Offloading][locality]分析了不同 MoE 的局部路由一致性，区分固定专家集合对一段 token 的覆盖能力与有限缓存的命中能力，并发现局部均衡与局部一致性存在张力。全局负载均衡可以允许不同局部窗口使用不同专家组。
 
+[![Local Routing Consistency 用未来窗口构造缓存命中率分析参照](/assets/img/blog/moe-routing-granularity/local-routing-cache-oracle.svg)](/assets/img/blog/moe-routing-granularity/local-routing-cache-oracle.svg)
+
+*图 10：SCH 用未来窗口中的专家访问频率指导逐出，衡量路由序列中可利用的缓存局部性。图中的 oracle 需要未来信息，属于分析参照，不能直接作为在线缓存策略。*
+
 [Similarity Preserving Routers（SimBal）][simbal]关注均衡训练对输入相似关系的影响：相似 token 若被反复分散到不同专家，容易增加知识冗余。它采用近正交初始化，并对 router 权重的 Gram 矩阵施加接近单位阵的正则，目标是兼顾负载均衡与相似输入的专家偏好。这里约束的是 router 几何，不直接限制相邻位置的专家变化或 chunk 专家并集。
 
+[![SimBal 与常规负载均衡的专家冗余对比](/assets/img/blog/moe-routing-granularity/simbal-expert-redundancy.png)](/assets/img/blog/moe-routing-granularity/simbal-expert-redundancy.png)
+
+*图 11：SimBal 以成对专家相似度（PES）比较专家冗余：左侧按层统计，右侧显示训练中的变化；蓝线对应 SimBal，橙线对应常规负载均衡。*
+
 相邻路由变得更一致，也可能带来质量代价。StickyMoE 的证据来自小规模模型；[Cacheable by Design?][negative]在多域 137M 模型上，未能同时达到预设的缓存 miss 改善要求与困惑度增幅不超过 1% 的标准。
+
+[![Cacheable by Design 的局部性损失与困惑度代价曲线](/assets/img/blog/moe-routing-granularity/cacheable-quality-locality.png)](/assets/img/blog/moe-routing-granularity/cacheable-quality-locality.png)
+
+*图 12：局部性权重增大时，LRU miss 降幅（蓝，左轴）和困惑度代价（红，右轴）一起上升；图中没有同时满足 30% miss 降幅与 1% 困惑度增幅门槛的点。*
 
 ## 5. AR MoE 的投机树验证：专家并集与提交路径
 
@@ -256,7 +280,7 @@ $$
 
 [![父子新增专家约束与整树专家并集的区别](/assets/img/blog/moe-routing-granularity/tree-expert-union.svg)](/assets/img/blog/moe-routing-granularity/tree-expert-union.svg)
 
-*图 7：每条父子边只引入一个新专家，两条根到叶路径各覆盖三个专家，整棵树仍覆盖四个。*
+*图 13：每条父子边只引入一个新专家，两条根到叶路径各覆盖三个专家，整棵树仍覆盖四个。*
 
 在图中，每个节点使用两个专家、每条边至多引入一个新专家。推广到一般情形，含 $d$ 个节点的路径有上界 $k+(d-1)r$，而含 $N$ 个节点的整棵树只能据此得到 $k+(N-1)r$ 的上界，二者都与 $E$ 取最小值。路径局部性与跨分支复用需要分别设计；张量中相邻存放的两个节点也未必有父子关系。
 
@@ -283,13 +307,21 @@ $$
 
 EVICT 优化验证节点数。累计分数沿路径不增，排序时让祖先优先于同分后代，取排序列表的前若干节点便能构成合法子树；成本表反映平均的 MoE 扩张效应。
 
+[![EVICT 的验证预算选择与祖先闭合树裁剪](/assets/img/blog/moe-routing-granularity/evict-selection.png)](/assets/img/blog/moe-routing-granularity/evict-selection.png)
+
+*图 14：EVICT 先比较预计接受长度与测得的验证成本，选择验证规模，再截取祖先闭合的候选子树；保留节点一起进入 target 前向。*
+
 EcoSpec 进一步根据专家重叠选择具体路径：已选路径覆盖某些专家后，共享它们的其它路径变得更便宜。其 Global Expert Buffer 记录预测覆盖集合，不代表这些权重已经驻留。
 
 [![EcoSpec 的专家预测、覆盖集合维护与成本感知候选选择](/assets/img/blog/moe-routing-granularity/ecospec-overview.png)](/assets/img/blog/moe-routing-granularity/ecospec-overview.png)
 
-*图 8：EcoSpec 从候选树预测逐层专家需求，结合已有覆盖集合选择待验证节点，再交给 target MoE 并行验证。*
+*图 15：EcoSpec 从候选树预测逐层专家需求，结合已有覆盖集合选择待验证节点，再交给 target MoE 并行验证。*
 
 SpecFit 将预计提交收益除以预计整轮时间，在小候选池内枚举合法子树。论文当前使用参考前缀上预先取得的 route atlas，获取过程不计入请求计时；文中测试了模拟预测误差并估计 predictor 成本，在线 predictor 训练仍留待后续。这组测量隔离了集合选择器的作用，包含在线路由预测的吞吐收益仍需单独实测。
+
+[![SpecFit 根据逐层专家需求选择合法候选子树](/assets/img/blog/moe-routing-granularity/specfit-selection.png)](/assets/img/blog/moe-routing-granularity/specfit-selection.png)
+
+*图 16：SpecFit 从 draft 候选池中搜索祖先闭合子树，用预计收益与整轮时间的比值评分。选中的节点交给原 target 路由执行，缺失专家按需从主机内存加载。*
 
 这一组方法通过调整待验证节点降低成本，选中节点仍执行 target 原有路由。路由预测误差主要影响候选选择和执行效率。
 
@@ -301,21 +333,29 @@ SpecFit 将预计提交收益除以预计整轮时间，在小候选池内枚举
 
 [![S²-MoE 的置信度加权专家需求聚合与软路由偏置](/assets/img/blog/moe-routing-granularity/s2moe-reuse-gating.svg)](/assets/img/blog/moe-routing-granularity/s2moe-reuse-gating.svg)
 
-*图 9：S²-MoE 聚合四个候选位置的需求，为 E1–E3 增加软偏置。右侧仍有位置选择 E5，说明 preferred set 并非排他性的专家池。*
+*图 17：S²-MoE 聚合四个候选位置的需求，为 E1–E3 增加软偏置。右侧仍有位置选择 E5，说明 preferred set 并非排他性的专家池。*
 
 这里的 `cap` 限制获得 bias 的专家数，池外专家仍可被选择，所以它没有提供 $\lvert U\rvert\le\mathrm{cap}$ 的硬保证。这与 LLaDA2.2 的池外屏蔽不同，也与单独调整候选集合的方法不同：完整 S²-MoE 会改变 target 路由，其收益包含路由近似带来的质量取舍。
 
 [DraftExpert][draftexpert]把 drafter 自身的权重开销也纳入优化。它训练常驻的小型 draft expert，配合 shared、top-1 路径控制 drafter 占用，通过 router-agreement 蒸馏预测 target 专家。运行时结合置信度与新增专家需求截断多 token draft，并预取预计需要的权重；最终仍由完整 target 验证。
 
+[![DraftExpert 的常驻草稿路径、自蒸馏与专家预取](/assets/img/blog/moe-routing-granularity/draftexpert-architecture.svg)](/assets/img/blog/moe-routing-granularity/draftexpert-architecture.svg)
+
+*图 18：DraftExpert 左侧离线训练小型 draft expert，右侧用固定权重占用的路径生成草稿，再按置信度和新增专家需求截断，并为完整 target 验证预取权重。*
+
 ### 5.3 直接限制 Verifier 的专家资格
 
 [MoE-Spec][moe-spec]保留候选集合，在每层选固定预算的专家 shortlist。原始 top-k 落在池外时，截断其贡献或使用池内替代专家，从而限制验证器的专家工作集。
+
+[![MoE-Spec 按聚合需求限制验证器专家预算](/assets/img/blog/moe-routing-granularity/moe-spec-budget.svg)](/assets/img/blog/moe-routing-granularity/moe-spec-budget.svg)
+
+*图 19：MoE-Spec 在相同候选树上按聚合路由分数筛选专家，示例将专家集合从 8 个缩至 4 个。原选择落在池外的位置需要截断贡献或改选池内专家。*
 
 [AcceptMoE][acceptmoe]在此基础上加入最终提交概率：深层和旁支被提交的机会不同，聚合需求时不应等权。它用离线估计的提交概率加权 target-router 分数。选池时，先以根位置自然选择的 top-k 作为初始专家集合；对其余专家的需求分布计算熵，再取指数决定追加数量。需求集中时追加较少，需求分散时追加较多。卸载时还会根据驻留状态裁剪低收益的非驻留成员，包括初始集合中的非驻留专家。
 
 [![AcceptMoE 的提交概率加权需求与自适应专家集合](/assets/img/blog/moe-routing-granularity/acceptmoe-expert-set.svg)](/assets/img/blog/moe-routing-granularity/acceptmoe-expert-set.svg)
 
-*图 10：AcceptMoE 保留候选树，按提交概率汇总专家需求；以根位置专家作为初始集合，再随需求的集中程度调整追加专家数。图中展示驻留裁剪之前的选池过程。*
+*图 20：AcceptMoE 保留候选树，按提交概率汇总专家需求；以根位置专家作为初始集合，再随需求的集中程度调整追加专家数。图中展示驻留裁剪之前的选池过程。*
 
 与 block diffusion 的块级选池相比，这里也让多个位置竞争一组可用专家，但每个候选还带有不同的提交收益。池外屏蔽、截断或替代都会改变 verifier 的输出概率，接受步骤使用的也已经是修改后的 verifier 概率。
 
@@ -329,7 +369,7 @@ SpecFit 将预计提交收益除以预计整轮时间，在小候选池内枚举
 
 [![MoCE 的序列级专家组分配与组内逐位置路由](/assets/img/blog/moe-routing-granularity/moce-hierarchical-routing.png)](/assets/img/blog/moe-routing-granularity/moce-hierarchical-routing.png)
 
-*图 11：MoCE 先根据输入序列表示找到语义簇并激活对应专家组，再执行组内逐 token 路由。灰色分支是额外加入通用专家的变体。*
+*图 21：MoCE 先根据输入序列表示找到语义簇并激活对应专家组，再执行组内逐 token 路由。灰色分支是额外加入通用专家的变体。*
 
 ### 6.2 Diffusion 模型的语义生成分组：DCDM
 
@@ -337,7 +377,7 @@ SpecFit 将预计提交收益除以预计整轮时间，在小候选池内枚举
 
 [![DCDM 的内容分组与 chunk-causal attention](/assets/img/blog/moe-routing-granularity/dcdm-semantic-chunks.png)](/assets/img/blog/moe-routing-granularity/dcdm-semantic-chunks.png)
 
-*图 12：DCDM 的 Chunking Attention 为位置分组，右侧同色位置可以不连续，分组结果决定后续层的 chunk-causal attention mask；FFN 中的 MoE 是另一处设计。*
+*图 22：DCDM 的 Chunking Attention 为位置分组，右侧同色位置可以不连续，分组结果决定后续层的 chunk-causal attention mask；FFN 中的 MoE 是另一处设计。*
 
 ### 6.3 AR MoE 的序列级调用预算：SeqTopK
 
@@ -348,6 +388,10 @@ $$
 $$
 
 而块级专家池直接控制 $\lvert\bigcup_iS_i\rvert$。前者分配计算量，后者限制独立权重范围。SeqTopK 还需要在线推理机制处理 AR 生成时未来位置尚不可见的问题；不能将训练时的整序列竞争直接当成可提前执行的真实未来路由。
+
+[![SeqTopK 在整条序列内重新分配 token–expert 调用预算](/assets/img/blog/moe-routing-granularity/seqtopk-budget-allocation.png)](/assets/img/blog/moe-routing-granularity/seqtopk-budget-allocation.png)
+
+*图 23：SeqTopK 的训练示意。总调用预算相同，逐位置 top-k 让各列保留相同数量的专家；SeqTopK 跨位置比较分数，让不同位置获得不同数量的专家计算。*
 
 ## 7. 各类工作的模型范围与执行单元
 
