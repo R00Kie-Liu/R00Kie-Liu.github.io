@@ -17,6 +17,12 @@
     "description": "Nancy Hamdan, Osama Rakan Al Mraikhat, Fadi A. Zaraket. Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing. 2025.",
     "fetched_at": 1793212629
   },
+  "https://aclanthology.org/2025.emnlp-main.718/": {
+    "checked_at": 1794222436,
+    "title": "Mixture-of-Clustered-Experts: Advancing Expert Specialization and Generalization in Instruction Tuning",
+    "description": "Sugyeong Eo, Jung Jun Lee, Chanjun Park, Heuiseok Lim. Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing. 2025.",
+    "fetched_at": 1794222436
+  },
   "https://aclanthology.org/2025.findings-emnlp.30/": {
     "checked_at": 1793212629,
     "title": "Toolscaler: Scalable Generative Tool Calling via Structure-Aware Semantic Tokenization",
@@ -1829,11 +1835,35 @@
     "description": "We present MiMo-7B, a large language model born for reasoning tasks, with optimization across both pre-training and post-training stages. During pre-training, we enhance the data preprocessing pipeline and employ a three-stage data mixing strategy to strengthen the base model's reasoning potential. MiMo-7B-Base is pre-trained on 25 trillion tokens, with additional Multi-Token Prediction objective for enhanced performance and accelerated inference speed. During post-training, we curate a dataset of 130K verifiable mathematics and programming problems for reinforcement learning, integrating a t…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/html/2505.16056v4": {
+    "checked_at": 1794222436,
+    "title": "Not All Models Suit Expert Offloading: On Local Routing Consistency of Mixture-of-Expert Models",
+    "description": "Mixture-of-Experts (MoE) enables efficient scaling of large language models (LLMs) with sparsely activated experts during inference. To effectively deploy large MoE models on memory-constrained devices, many systems introduce *expert offloading* that caches a subset of experts in fast memory, leaving others on slow memory to run on CPU or load on demand. While some research has exploited the locality of expert activations, where consecutive tokens activate similar experts, the degree of this **local routing consistency** varies across models and remains understudied. In this paper, we propose…",
+    "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2506.14038v1": {
+    "checked_at": 1794222436,
+    "title": "Load Balancing Mixture of Experts with Similarity Preserving Routers",
+    "description": "Sparse Mixture of Experts (MoE) models offer a scalable and efficient architecture for training large neural networks by activating only a subset of parameters (\"experts\") for each input. A learned router computes a distribution over these experts, and assigns input tokens to a small subset. However, without auxiliary balancing mechanisms, routers often converge to using only a few experts, severely limiting model capacity and degrading performance. Most current load balancing mechanisms encourage a distribution over experts that resembles a roughly uniform distribution of experts per token.…",
+    "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2507.08771v2": {
+    "checked_at": 1794222436,
+    "title": "BlockFFN: Towards End-Side Acceleration-Friendly Mixture-of-Experts with Chunk-Level Activation Sparsity",
+    "description": "To alleviate the computational burden of large language models (LLMs), architectures with activation sparsity, represented by mixture-of-experts (MoE), have attracted increasing attention. However, the non-differentiable and inflexible routing of vanilla MoE hurts model performance. Moreover, while each token activates only a few parameters, these sparsely-activated architectures exhibit low chunk-level sparsity, indicating that the union of multiple consecutive tokens activates a large ratio of parameters. Such a sparsity pattern is unfriendly for acceleration under low-resource conditions (…",
+    "fetched_at": 1794222436
+  },
   "https://arxiv.org/html/2511.05963v4": {
     "checked_at": 1793212629,
     "title": "Next-Latent Prediction Transformers Learn Compact World Models",
     "description": "Transformers replace recurrence with a memory that grows with sequence length and self-attention that enables ad-hoc lookups over past tokens. Consequently, they lack an inherent incentive to compress history into compact latent states with consistent transition rules. This often leads to learning solutions that generalize poorly. We introduce Next-Latent Prediction (NextLat), which extends standard next-token training with self-supervised predictions in the latent space. Specifically, NextLat trains a transformer to learn latent representations that are predictive of its next latent state gi…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2511.06494v2": {
+    "checked_at": 1794222436,
+    "title": "Route Experts by Sequence, not by Token",
+    "description": "Mixture-of-Experts (MoE) architectures scale large language models (LLMs) by activating only a subset of experts per token, but the standard TopK routing assigns the same fixed number of experts to all tokens, ignoring their varying complexity. Prior adaptive routing methods introduce additional modules and hyperparameters, often requiring costly retraining from scratch. We propose Sequence-level TopK (SeqTopK), a minimal modification that shifts the expert budget from the token level to the sequence level. By selecting the top $T \\cdot K$ experts across all $T$ tokens, SeqTopK enables end-to…",
+    "fetched_at": 1794222436
   },
   "https://arxiv.org/html/2512.12087": {
     "checked_at": 1793252215,
@@ -1841,17 +1871,35 @@
     "description": "The growing demand for long-context inference capabilities in Large Language Models (LLMs) has intensified the computational and memory bottlenecks inherent to the self-attention mechanism. To address this challenge, we introduce BLASST, a drop-in, dynamic sparse attention mechanism that accelerates inference by using only a fixed scalar threshold to skip attention blocks. Our method targets practical inference deployment by removing the barriers to adoption present in existing works. As such, BLASST eliminates training requirements, avoids expensive pre-computation passes, accelerates both p…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/html/2602.00879v2": {
+    "checked_at": 1794222436,
+    "title": "Dynamic Expert Sharing: Decoupling Memory from Parallelism in Mixture-of-Experts Diffusion LLMs",
+    "description": "Among parallel decoding paradigms, diffusion large language models (dLLMs) have emerged as a promising candidate that balances generation quality and throughput. However, their integration with Mixture-of-Experts (MoE) architectures is constrained by an expert explosion: as the number of tokens generated in parallel increases, the number of distinct experts activated grows nearly linearly. This results in substantial memory traffic that pushes inference into a memory-bound regime, negating the efficiency gains of both MoE and parallel decoding. To address this challenge, we propose Dynamic Ex…",
+    "fetched_at": 1794222436
+  },
   "https://arxiv.org/html/2602.03560v1": {
     "checked_at": 1793252215,
     "title": "HySparse: A Hybrid Sparse Attention Architecture with Oracle Token Selection and KV Cache Sharing",
     "description": "This work introduces Hybrid Sparse Attention (HySparse), a new architecture that interleaves each full attention layer with several sparse attention layers. While conceptually simple, HySparse strategically derives each sparse layer's token selection and KV caches directly from the preceding full attention layer. This architecture resolves two fundamental limitations of prior sparse attention methods. First, conventional approaches typically rely on additional proxies to predict token importance, introducing extra complexity and potentially suboptimal performance. In contrast, HySparse uses t…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/html/2602.08404v3": {
+    "checked_at": 1794222436,
+    "title": "TEAM: Temporal-Spatial Consistency Guided Expert Activation for MoE Diffusion Language Model Acceleration",
+    "description": "Diffusion large language models (dLLMs) have recently gained significant attention due to their inherent support for parallel decoding. Building on this paradigm, Mixture-of-Experts (MoE) dLLMs with autoregressive (AR) initialization have further demonstrated strong performance competitive with mainstream AR models. However, we identify a fundamental mismatch between MoE architectures and diffusion-based decoding. Specifically, a large number of experts are activated at each denoising step, while only a small subset of tokens is ultimately accepted, resulting in substantial inference overhead…",
+    "fetched_at": 1794222436
+  },
   "https://arxiv.org/html/2602.15763": {
     "checked_at": 1793212629,
     "title": "GLM-5: from Vibe Coding to Agentic Engineering",
     "description": "We present GLM-5, a next-generation foundation model designed to transition the paradigm of vibe coding to agentic engineering. Building upon the agentic, reasoning, and coding (ARC) capabilities of its predecessor, GLM-5 adopts DSA to significantly reduce training and inference costs while maintaining long-context fidelity. To advance model alignment and autonomy, we implement a new asynchronous reinforcement learning infrastructure that drastically improves post-training efficiency by decoupling generation from training. Furthermore, we propose novel asynchronous agent RL algorithms that fu…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2602.16052v1": {
+    "checked_at": 1794222436,
+    "title": "MoE-Spec: Expert Budgeting for Efficient Speculative Decoding",
+    "description": "Speculative decoding accelerates Large Language Model (LLM) inference by verifying multiple drafted tokens in parallel. However, for Mixture-of-Experts (MoE) models, this parallelism introduces a severe bottleneck: large draft trees activate many unique experts, significantly increasing memory pressure and diminishing speedups from speculative decoding relative to autoregressive decoding. Prior methods reduce speculation depth when MoE verification becomes expensive. We propose MoE-Spec, a training-free verification-time expert budgeting method that decouples speculation depth from memory cos…",
+    "fetched_at": 1794222436
   },
   "https://arxiv.org/html/2604.12452": {
     "checked_at": 1793252215,
@@ -1865,11 +1913,29 @@
     "description": "Long-context LLM serving is bottlenecked by the cost of attending over ever-growing KV caches. Dynamic sparse attention promises relief by accessing only a small, query-dependent subset of the KV state per decoding step and extending the KV storage to CPU memory. In practice, however, these algorithmic savings rarely translate into end-to-end system-level gains because sparse methods typically operate at different granularities and thus rely on ad hoc, per-algorithm implementations. At the same time, hierarchical KV storage introduces a new systems bottleneck: retrieving fine-grained, irregul…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/html/2605.00342v2": {
+    "checked_at": 1794222436,
+    "title": "Making Every Verified Token Count: Adaptive Verification for MoE Speculative Decoding",
+    "description": "Tree-based speculative decoding accelerates autoregressive generation by verifying multiple draft candidates in parallel, but this advantage weakens for sparse Mixture-of-Experts (MoE) models. As the draft tree grows, different branches activate different experts, expanding the union of activated experts and substantially increasing target-side verification cost. We propose EVICT, a training-free, hyperparameter-free, and lossless adaptive verification method for MoE speculative decoding. EVICT makes every verified token count by truncating the draft tree before target verification and retain…",
+    "fetched_at": 1794222436
+  },
   "https://arxiv.org/html/2605.07363": {
     "checked_at": 1793252215,
     "title": "MISA: Mixture of Indexer Sparse Attention for Long-Context LLM Inference",
     "description": "DeepSeek Sparse Attention (DSA) sets the state of the art for fine-grained inference-time sparse attention by introducing a learned token-wise indexer that scores every prefix token and selects the most relevant ones for the main attention. To remain expressive, the indexer uses many query heads (for example, 64 on DeepSeek-V3.2) that share the same selected token set; this multi-head design is precisely what makes the indexer the dominant cost on long contexts. We propose MISA (Mixture of Indexer Sparse Attention), a drop-in replacement for the DSA indexer that treats its indexer heads as a…",
     "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2605.15676v1": {
+    "checked_at": 1794222436,
+    "title": "Dynamic Chunking for Diffusion Language Models",
+    "description": "Block discrete diffusion language models factorize a sequence autoregressively over fixed-size positional blocks, decoupling within-block parallel denoising from across-block conditioning. We argue that this rigid partition wastes structure already present in the sequence: blocks defined by position rather than by content separate semantically coherent tokens and group unrelated ones together. We introduce the \\textbf{D}ynamic \\textbf{C}hunking \\textbf{D}iffusion \\textbf{M}odel (DCDM), which replaces positional blocks with content-defined semantic chunks. At its core is Chunking Attention, a…",
+    "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2605.30876v2": {
+    "checked_at": 1794222436,
+    "title": "dMoE: dLLMs with Learnable Block Experts",
+    "description": "Diffusion Large Language Models (dLLMs) have recently emerged as a promising alternative to autoregressive models, offering competitive performance while naturally supporting parallel decoding. However, as dLLMs are increasingly integrated with Mixture-of-Experts (MoE) architectures to scale model capacity, a fundamental mismatch arises between block parallel decoding and token-level expert selection. Specifically, each dLLM forward pass processes multiple tokens with bidirectional dependencies, whereas conventional MoE layers route each token independently. This mismatch substantially increa…",
+    "fetched_at": 1794222436
   },
   "https://arxiv.org/html/2606.04511": {
     "checked_at": 1793252215,
@@ -1889,11 +1955,59 @@
     "description": "Transformers use the same forward computation stream to both predict the next token and store useful state for future token predictions. We formulate the \\emph{state-prediction separation hypothesis}: disentangling the two roles yields better language modeling performance. We design a Transformer variant that uses two computation streams to separate the two functions, and conduct pretraining experiments across various scales. Our experiments show that state-prediction separation consistently offers better data and compute efficiencies, improving validation loss and outperforming standard Tran…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/html/2607.08780v1": {
+    "checked_at": 1794222436,
+    "title": "Sticky Routing: Training MoE Models for Memory-Efficient Inference",
+    "description": "Mixture-of-Experts (MoE) models activate only a sparse subset of experts per token, yet consecutive tokens frequently activate different experts -- causing constant weight swapping between slow storage and fast memory on edge devices. Existing remedies are either system-level (caching heuristics) or post-hoc (router fine-tuning), leaving the root cause unchanged during pretraining. We propose StickyMoE, a differentiable routing consistency loss that penalises abrupt expert switches between adjacent tokens, encouraging the router to maintain the same expert assignment across semantically coher…",
+    "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2607.12696v1": {
+    "checked_at": 1794222436,
+    "title": "Less Experts, Faster Decoding: Cost-Aware Speculative Decoding for Mixture-of-Experts",
+    "description": "Sparse Mixture-of-Experts (MoE) models have become an important approach for scaling Large Language Models (LLMs), but their inference efficiency depends strongly on expert activation patterns. Speculative decoding (SD) accelerates autoregressive generation by verifying multiple draft tokens in parallel, yet existing draft selection strategies primarily optimize acceptance likelihood. In large-scale MoE models, however, selecting draft tokens also determines the union of experts activated during verification. We observe that confidence-driven SD can introduce \\textit{expert scattering}: high-…",
+    "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2607.24434v1": {
+    "checked_at": 1794222436,
+    "title": "DraftExpert: Expansion-Aware Self-Speculative Decoding for End-Device MoE Inference",
+    "description": "Large Mixture-of-Experts (MoE) language models are attractive for end-device deployment because only a small subset of experts is active per token, but their routed expert weights often exceed accelerator memory. We target latency-critical single-user settings where routed experts are staged on demand from CPU memory to a GPU or from Flash to a mobile NPU. In this setting, self-speculative decoding faces a new bottleneck: increasing the draft expert set improves accuracy but triggers extra expert loading, while cheap small-footprint drafts have low acceptance; moreover, verifying a multi-toke…",
+    "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2608.02989v1": {
+    "checked_at": 1794222436,
+    "title": "AcceptMoE: Commitment-Weighted Self-Sizing Verifier Expert Sets for Efficient MoE Speculative Decoding",
+    "description": "Speculative decoding verifies a tree of draft tokens in one target-model forward pass. For a mixture-of-experts (MoE) target, however, parallel verification can activate the union of the experts selected by all tree nodes, even though only a small subset of those nodes reaches the accepted output. Token count, activated-expert union size, and expert-weight traffic are therefore distinct cost measures: reducing the token workload need not shrink the expert union proportionally, and under offloading, transfer traffic also depends on cache residency. We introduce AcceptMoE, a verifier-side exper…",
+    "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2608.15018v2": {
+    "checked_at": 1794222436,
+    "title": "S2-MoE: Enabling Efficient Self-Speculative Decoding for Mixture-of-Experts on Edge Devices",
+    "description": "Deploying large language models (LLMs) for inference on edge devices is challenging due to severe memory and bandwidth constraints. While speculative decoding and Mixture-of-Experts (MoE) have been proposed to improve inference efficiency, naively combining them often incurs excessive verification overhead and poor expert reuse, limiting their effectiveness in memory-bound edge settings. In this work, we propose S2-MoE, an efficient self-speculative decoding framework for MoE inference on edge devices. S2-MoE reduces redundant verification through routing-aware adaptive speculative expansion,…",
+    "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2608.18261v1": {
+    "checked_at": 1794222436,
+    "title": "Cacheable by Design? Training Mixture-of-Experts Routers for Locality Against the Edge Memory-Bandwidth Wall: A Pre-Registered Negative Result with a Systems Measurement Study",
+    "description": "Serving a 235B-parameter Mixture-of-Experts (MoE) model on a single 8 GB GPU is bottlenecked not by compute but by memory bandwidth: decode must stream each token's active experts from whichever tier holds them, and on consumer hardware most experts sit on an SSD far slower than RAM. We quantify this bandwidth wall on Qwen3-235B (Q4_K_M, 134 GB): measured decode is 0.44 tok/s warm, matching a bytes-per-token / bandwidth model, while a batching scheme that should amortize one disk sweep instead collapses at batch 32 from paging thrash. We build llama-moe-trace, a zero-surgery router-telemetry…",
+    "fetched_at": 1794222436
+  },
   "https://arxiv.org/html/2609.03807": {
     "checked_at": 1793212629,
     "title": "Almost Free State Prediction Separation",
     "description": "State--prediction separation (SPS) relieves a language model's hidden state of two competing burdens---summarizing the context and predicting the next token---by splitting the forward pass into a state stream and a prediction stream. The separation works, but it is expensive: the prediction stream is a second pass over the whole backbone, costing $\\sim$1.9$\\times$ the pretraining FLOPs, and even more in terms of wall-clock time when using a flexible attention mask. This paper makes state--prediction separation almost free. We take the separation to its limit with a free pause token: a predict…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2609.04895v2": {
+    "checked_at": 1794222436,
+    "title": "Cache-Aware Joint Router Adaptation for Memory-Efficient MoE Inference",
+    "description": "Mixture-of-Experts (MoE) models activate few experts per token, yet their full expert sets can exceed GPU memory and require repeated weight transfers during decoding. We formulate expert-cache management as a model-side algorithmic problem and propose cache-aware post-training that jointly adapts the MoE backbone and lightweight auxiliary routers while preserving the native inference-time Top-K rule. The update-only Temporal Router learns same-layer retention across tokens without proactive loading. The full Spatio-Temporal Router adds a Spatio Router that uses the causal predecessor's hidde…",
+    "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2609.09748v1": {
+    "checked_at": 1794222436,
+    "title": "Epoch: Compiling Diffusion Blocks for Sparse MoE Serving",
+    "description": "Diffusion language models generate text by refining a fixed-size block of token positions through many forward passes, a loop that does not match the per-forward execution unit used by most LLM serving systems. A dense MoE runtime binds all work to the refinement-iteration clock: it rebuilds similar routing structure on every forward, recomputes expert outputs for positions whose logits are already dead, and sends those positions through dense expert-parallel collectives. This paper presents \\sys{}, a serving system that treats the diffusion block as a compilation unit. \\sys{} compiles a smal…",
+    "fetched_at": 1794222436
   },
   "https://arxiv.org/html/2609.19969": {
     "checked_at": 1793252215,
@@ -1906,6 +2020,12 @@
     "title": "DeepSeek-V4.1-Flash: Pushing the Limits of KV Cache Compression",
     "description": "The widespread adoption of long-horizon agents has made model workloads increasingly input-heavy. Although prior work has substantially reduced the cost of long-context computation, prefill remains computationally expensive, and large KV caches continue to strain HBM and SSD capacity and data-transfer bandwidth. Together, these compute, storage, and bandwidth demands constitute the primary bottleneck to further lowering deployment costs. To address this challenge, we introduce DeepSeek-V4.1-Flash, a multimodal Mixture-of-Experts (MoE) model with 552B backbone parameters and support for contex…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2609.22471v1": {
+    "checked_at": 1794222436,
+    "title": "Efficient Mixture-of-Experts with Speculative Decoding via Expert Coactivation",
+    "description": "Mixture-of-Experts (MoE) models are increasingly deployed alongside Speculative Decoding (SD) to accelerate inference, but combining the two is challenging. SD improves the inference speed of dense models by verifying groups of tokens in parallel. However, the inference speedup for SD with MoEs depends heavily on the number of tokens being verified. Using more verification tokens results in more experts being transferred from DRAM to the Neural Processing Unit (NPU), which increases the memory transfer cost. This negatively impacts model runtime, as memory transfer is typically the bottleneck…",
+    "fetched_at": 1794222436
   },
   "https://arxiv.org/html/2609.26368": {
     "checked_at": 1793252215,
@@ -1942,6 +2062,12 @@
     "title": "REMORY: Learning Residual Memory for Context Compaction",
     "description": "Long-horizon agents compact their history to continue within a finite context window, but a textual summary alone may not support every subsequent decision. We introduce REMORY, a neural memory network that supplements the summary with a bounded sequence of soft memory tokens. Given the history and summary, the network learns to generate tokens that help a frozen LLM approximate the continuation it would produce with the full history. The tokens are conditioned on the summary and appended after it, forming an analogue of a residual connection along the sequence dimension. On SummHay, REMORY i…",
     "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2610.15417v1": {
+    "checked_at": 1794222436,
+    "title": "SpecFit: Not All Draft Tokens Cost the Same in Offloaded MoE Inference",
+    "description": "Mixture-of-experts (MoE) models activate only a few experts per token, but when their expert weights are offloaded to host memory, host-to-device (H2D) expert transfers enter the critical path of decoding. Speculative decoding verifies several draft tokens in one forward pass, yet in an MoE model each verified token activates its own experts, so a larger draft tree transfers more experts. Because of this H2D cost, speculative decoding commits several tokens per verification cycle yet is sometimes even slower than autoregressive decoding. Based on this observation, we propose SpecFit, which ch…",
+    "fetched_at": 1794222436
   },
   "https://arxiv.org/html/2610.24766v1": {
     "checked_at": 1793212629,
@@ -2274,7 +2400,7 @@
     "fetched_at": 1793212629
   },
   "https://cdrdv2-public.intel.com/817486/gaudi-3-ai-accelerator-white-paper.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://cloud.google.com/tpu/docs/v5e": {
     "checked_at": 1793212629,
@@ -2283,7 +2409,7 @@
     "fetched_at": 1793212629
   },
   "https://crd.lbl.gov/assets/pubs_presos/parlab08-roofline-talk.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://cursor.com/blog/mixture-of-kittens": {
     "checked_at": 1793212629,
@@ -2358,10 +2484,10 @@
     "fetched_at": 1793212629
   },
   "https://dl.acm.org/doi/10.1145/3789240.3829201": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://dl.acm.org/doi/pdf/10.1145/3567955.3567959": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://docs.habana.ai/en/latest/PyTorch/PyTorch_FP8_Training/index.html": {
     "checked_at": 1793212629,
@@ -2394,16 +2520,16 @@
     "fetched_at": 1793212629
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/fp8_primer.html": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/features/low_precision_training/nvfp4/nvfp4.html": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/index.html": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://docs.nvidia.com/dgx-superpod-reference-architecture-dgx-h100.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://docs.nvidia.com/megatron-core/developer-guide/0.16.1/apidocs/core/core.transformer.moe.experts.html": {
     "checked_at": 1793212629,
@@ -2520,7 +2646,7 @@
     "fetched_at": 1793212629
   },
   "https://github.com/Introspective-Diffusion/I-DLM/tree/main/sglang": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://github.com/MINT-SJTU/Evo-1": {
     "checked_at": 1793212629,
@@ -2847,7 +2973,7 @@
     "fetched_at": 1793212629
   },
   "https://github.com/deepseek-ai/DeepEP/blob/main/docs/legacy.md": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://github.com/deepseek-ai/DeepSeek-OCR": {
     "checked_at": 1793212629,
@@ -2891,6 +3017,9 @@
     "description": "🤗 Transformers: the model-definition framework for state-of-the-art machine learning models in text, vision, audio, and multimodal models, for both inference and training. - huggingface/transformers",
     "fetched_at": 1793252215
   },
+  "https://github.com/inclusionAI/LLaDA2.X/blob/main/LLaDA2_2_tech_report.pdf": {
+    "checked_at": 1794222436
+  },
   "https://github.com/inclusionAI/Ling-V2": {
     "checked_at": 1793212629,
     "title": "GitHub - inclusionAI/Ling-V2: Ling-V2 is a MoE LLM provided and open-sourced by InclusionAI.",
@@ -2904,10 +3033,10 @@
     "fetched_at": 1793252215
   },
   "https://github.com/lil-lab/sps/blob/main/figures/attention_masks.png": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://github.com/lil-lab/sps/blob/main/figures/gradient_params_fp.png": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://github.com/meituan-longcat": {
     "checked_at": 1793212629,
@@ -3000,7 +3129,7 @@
     "fetched_at": 1793212629
   },
   "https://hc34.hotchips.org/assets/program/conference/day2/Network%20and%20Switches/NVSwitch%20HotChips%202022%20r5.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://horace.io/brrr_intro.html": {
     "checked_at": 1793212629,
@@ -3105,7 +3234,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/resolve/main/DeepSeek_V4.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://huggingface.co/docs/accelerate/usage_guides/gaudi": {
     "checked_at": 1793212629,
@@ -3118,6 +3247,18 @@
     "title": "ibm-granite/granite-3.1-3b-a800m-base · Hugging Face",
     "description": "Text Generation model with 3B parameters, built with Transformers. Download, explore files and run it on Hugging Face.",
     "fetched_at": 1793212629
+  },
+  "https://huggingface.co/inclusionAI/LLaDA2.2-flash/blob/9b78da3f9149f1e239fb6d15f20a326fde574b9f/config.json": {
+    "checked_at": 1794222436,
+    "title": "config.json · inclusionAI/LLaDA2.2-flash at 9b78da3",
+    "description": "We’re on a journey to advance and democratize artificial intelligence through open source and open science.",
+    "fetched_at": 1794222436
+  },
+  "https://huggingface.co/inclusionAI/LLaDA2.2-flash/blob/9b78da3f9149f1e239fb6d15f20a326fde574b9f/modeling_llada2_moe.py": {
+    "checked_at": 1794222436,
+    "title": "modeling_llada2_moe.py · inclusionAI/LLaDA2.2-flash at 9b78da3",
+    "description": "We’re on a journey to advance and democratize artificial intelligence through open source and open science.",
+    "fetched_at": 1794222436
   },
   "https://huggingface.co/inclusionAI/Ling-2.6-1T": {
     "checked_at": 1793212629,
@@ -3168,7 +3309,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/moonshotai/Kimi-K3/raw/main/config.json": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://huggingface.co/nvidia": {
     "checked_at": 1793212629,
@@ -3303,10 +3444,10 @@
     "fetched_at": 1793212629
   },
   "https://microsoft.ai/pdf/mai-thinking-1.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://mimo.xiaomi.com/blog/mimo-tilert-1000tps": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://mimo.xiaomi.com/mimo-v2-5": {
     "checked_at": 1793212629,
@@ -3321,10 +3462,10 @@
     "fetched_at": 1793212629
   },
   "https://moonshotai.github.io/Kimi-K2.5/": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://moonshotai.github.io/Kimi-K2.6/": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-gemma-4": {
     "checked_at": 1793212629,
@@ -3357,7 +3498,7 @@
     "fetched_at": 1793212629
   },
   "https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyworook.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://platform.kimi.ai/docs/guide/kimi-k3-quickstart": {
     "checked_at": 1793212629,
@@ -3420,31 +3561,31 @@
     "fetched_at": 1793212629
   },
   "https://qwenlm.github.io/blog/qwen3-vl/": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://raw.githubusercontent.com/QwenLM/Qwen3.8-Flash-Next/main/tech_report.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://raw.githubusercontent.com/XiaomiMiMo/MiMo/main/MiMo-7B-Technical-Report.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://raw.githubusercontent.com/jianc99/jianc99.github.io/master/images/dflash_system.png": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Flash-Prover/main/LongCat_Flash_Prover_Technical_Report.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Next/main/tech_report.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-3.5-Flash/main/step_3p5_flash_tech_report.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-Audio-R1/main/Step-Audio-R1.5.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step3/main/Step3-Sys-Tech-Report.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://research.nvidia.com/labs/cosmos-lab/infotok/": {
     "checked_at": 1793212629,
@@ -3459,7 +3600,7 @@
     "fetched_at": 1793212629
   },
   "https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://resources.nvidia.com/en-us-tensor-core": {
     "checked_at": 1793212629,
@@ -3486,7 +3627,7 @@
     "fetched_at": 1793212629
   },
   "https://sglang.readthedocs.io/": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://siboehm.com/articles/22/CUDA-MMM": {
     "checked_at": 1793212629,
@@ -3495,22 +3636,22 @@
     "fetched_at": 1793212629
   },
   "https://spaces.ac.cn/archives/10592": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://spaces.ac.cn/archives/10739": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://spaces.ac.cn/archives/11033": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://spaces.ac.cn/archives/11416": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://spaces.ac.cn/archives/7546": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://spaces.ac.cn/tag/attention/": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://sylvan820.github.io/D-MTP/": {
     "checked_at": 1793961809,
@@ -3645,12 +3786,12 @@
     "fetched_at": 1793252215
   },
   "https://z.ai/blog/glm-5.2": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://zhuanlan.zhihu.com/p/2013649391051896797": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   },
   "https://zhuanlan.zhihu.com/p/2067703296500954047": {
-    "checked_at": 1793961809
+    "checked_at": 1794222436
   }
 }
