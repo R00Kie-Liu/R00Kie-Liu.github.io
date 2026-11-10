@@ -371,7 +371,9 @@ SpecFit 将预计提交收益除以预计整轮时间，在小候选池内枚举
 
 *图 21：MoCE 先根据输入序列表示找到语义簇并激活对应专家组，再执行组内逐 token 路由。灰色分支是额外加入通用专家的变体。*
 
-### 6.2 Diffusion 模型的语义生成分组：DCDM
+<a id="62-diffusion-模型的语义生成分组dcdm"></a>
+
+### 6.2 Block Diffusion 的语义分组：DCDM
 
 [Dynamic Chunking Diffusion Model（DCDM）][dcdm]改变的是 block diffusion 的分组依据。固定块按“每连续若干个位置一组”划分，可能拆开相互依赖的代码位置或同一实体的不同提及。DCDM 根据隐藏状态学习分组，让相关位置有机会进入同一个去噪单元；一组可以大小不一，也可以包含不连续的位置。
 
@@ -456,7 +458,7 @@ $$
 | AR MoE 的投机解码 | S²-MoE、EcoSpec、EVICT、SpecFit、MoE-Spec、AcceptMoE、DraftExpert | 同一轮交给 AR target 验证的候选链或树 |
 | **Block diffusion MoE：块内选池** | **LLaDA2.2、DES、dMoE** | **一次去噪前向内，当前生成块所有位置共同使用的专家集合** |
 | **Block diffusion MoE：跨迭代复用** | **TEAM、Epoch** | **同一个生成块在多轮去噪间的专家支持集、位置状态与计算复用** |
-| Diffusion 模型的语义生成分组 | DCDM | 用学习到的 semantic chunk 替代固定位置块；MoE 变体另有 token-level 专家路由 |
+| Block diffusion 的语义生成分组 | DCDM | 用学习到的 semantic chunk 替代固定位置块；MoE 变体另有 token-level 专家路由 |
 | AR 指令模型的语义专家组 | MoCE | 根据已有输入的序列表示选专家组，再做组内 adapter expert 路由 |
 | AR MoE 的序列级计算分配 | SeqTopK | 在序列内分配 token–expert 调用预算，并为 AR 解码设计在线选择机制 |
 

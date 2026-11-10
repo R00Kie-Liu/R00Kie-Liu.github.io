@@ -72,7 +72,7 @@ S²-MoE 的 preferred-set `cap` 只限制被加 bias 的专家集合，池外专
 
 **MoCE（EMNLP 2025）** 用独立 encoder 的 sequence embedding 做聚类和专家组分配，再在组内执行 token-level adapter expert 路由。把语义专门化与权重工作集联系起来，同时交代独立 encoder 的成本和 adapter expert 的实验对象。
 
-**DCDM（2026 年 5 月）** 用学习到的语义 cluster 替代固定位置块，chunk 可不连续；chunk-causal attention 决定生成分组。其 DCDM-MoE 变体另有 token-level MoE。语义生成 chunk 与 FFN 专家集合没有自动一一对应关系。
+**DCDM（2026 年 5 月）** 推广 block diffusion 的分组方式，用学习到的语义 cluster 替代固定位置块，chunk 可不连续；chunk 内并行去噪，chunk 间由 chunk-causal attention 建立单向条件依赖。其 DCDM-MoE 变体另有 token-level MoE。语义生成 chunk 与 FFN 专家集合没有自动一一对应关系。
 
 **SeqTopK（2026 年 3 月修订）** 将序列的总 token–expert 调用预算重新分配给不同位置，主要目标是动态分配计算；它与限制 unique expert pool 的设计并列比较。AR 推理的在线实现必须单独解释。
 
