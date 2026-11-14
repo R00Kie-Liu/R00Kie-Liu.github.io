@@ -307,7 +307,7 @@ DP_dense = 256 / (8 * CP)
 
 上一篇：[第四篇：DeepEP 与 GroupedGEMM 如何拆解通信和计算瓶颈]({% post_url 2026-07-16-moe-deepep-groupedgemm %})
 
-下一篇：[第六篇：端侧 Active MoE 的推理瓶颈与设计取舍]({% post_url 2026-07-26-edge-moe-inference-design %})
+下一篇：[第六篇：端侧 MoE 的推理瓶颈与加速]({% post_url 2026-07-26-edge-moe-inference-design %})
 
 ## 参考资料
 

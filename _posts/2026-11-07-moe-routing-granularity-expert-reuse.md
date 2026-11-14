@@ -15,6 +15,8 @@ description: "从常见的 token-level routing 出发，梳理端侧卸载、投
 
 chunk-level、block-level 和 sentence-level 设计为这些共同需求增加了约束：限制一组位置可访问的专家，控制相邻位置引入的新专家，或根据输入语义分配专家组。
 
+[第六篇]({% post_url 2026-07-26-edge-moe-inference-design %})从端侧执行出发，讨论权重读取、卸载、投机解码与搬运流水。这里进一步比较这些场景中一组位置怎样共享或竞争专家，以及路由约束会怎样改变计算与生成依赖。
+
 ## 0. 哪些场景需要关心一组 Token 的路由
 
 | 场景 | 共同考虑的位置 | 主要问题 | 目的与预期收益 |
@@ -337,7 +339,7 @@ SpecFit 将预计提交收益除以预计整轮时间，在小候选池内枚举
 
 这里的 `cap` 限制获得 bias 的专家数，池外专家仍可被选择，所以它没有提供 $\lvert U\rvert\le\mathrm{cap}$ 的硬保证。这与 LLaDA2.2 的池外屏蔽不同，也与单独调整候选集合的方法不同：完整 S²-MoE 会改变 target 路由，其收益包含路由近似带来的质量取舍。
 
-[DraftExpert][draftexpert]把 drafter 自身的权重开销也纳入优化。它训练常驻的小型 draft expert，配合 shared、top-1 路径控制 drafter 占用，通过 router-agreement 蒸馏预测 target 专家。运行时结合置信度与新增专家需求截断多 token draft，并预取预计需要的权重；最终仍由完整 target 验证。
+[DraftExpert][draftexpert]用 draft 路由预测 target 的专家需求，结合候选置信度与新增专家数决定在哪里截断草稿。后续候选即使有一定接受机会，若需要引入过多专家，也可能不值得继续扩展。它的常驻草稿路径、训练与预取如何降低整轮执行成本，见[第六篇]({% post_url 2026-07-26-edge-moe-inference-design %}#34-降低-draft-成本按收益选择验证长度)。
 
 [![DraftExpert 的常驻草稿路径、自蒸馏与专家预取](/assets/img/blog/moe-routing-granularity/draftexpert-architecture.svg)](/assets/img/blog/moe-routing-granularity/draftexpert-architecture.svg)
 

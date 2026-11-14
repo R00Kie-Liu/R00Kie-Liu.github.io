@@ -134,7 +134,7 @@ output = sum(weights[e] * expert[e](hidden) for e in mask)
 
 ## 系列导航
 
-上一篇：[第六篇：端侧 Active MoE 的推理瓶颈与设计取舍]({% post_url 2026-07-26-edge-moe-inference-design %})
+上一篇：[第六篇：端侧 MoE 的推理瓶颈与加速]({% post_url 2026-07-26-edge-moe-inference-design %})
 
 下一篇：[第八篇：稀疏计算与参数复用的新方向]({% post_url 2026-07-23-moe-future-sparse-architecture %})
 

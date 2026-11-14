@@ -3,7 +3,7 @@ layout: post
 title: "MoE我们喜欢你（八）：稀疏计算与参数复用的新方向"
 series: moe-we-like-you
 series_order: 8
-last_modified_at: 2026-10-26
+last_modified_at: 2026-11-14
 date: 2026-07-23
 tags: [MoE, Architecture, Inference]
 description: "从 2025-2026 年的研究型架构工作出发，讨论 MoE 之后的稀疏计算轴：depth、attention、memory、跨层复用、专家执行和推理部署。"
@@ -163,9 +163,13 @@ DAG learning module 也增加实现开销。若比较结构化聚合与 weighted
 
 到这里，MoE inference 的问题已经不只在 top-k kernel。生成范式从 AR 变成 iterative refinement 后，router budget 的组织单位也会改变。
 
-## 8. 部署：专家子集、模块化后训练与推理复用
+<a id="8-部署专家子集模块化后训练与推理复用"></a>
 
-还有一组工作不直接改变 Transformer block，但会改变 MoE 怎么被训练、部署和压缩。
+## 8. 专家分工、模块化训练与部署形态
+
+专家复用还涉及模型怎样拆分和交付：预训练时形成可独立使用的领域子集，后训练时组合独立能力，或在部署前导出 Dense 模型。这几种路线保留的模块不同。
+
+### 8.1 预训练中形成领域子集：EMO
 
 [EMO][emo] 问的是：标准 MoE 的 expert 能不能按任务/领域拆出来单独用？EMO 作者将常规 MoE 子集部署时的质量损失与专家分工联系起来：一个文档的 token 可能访问分散的、承担低层语言功能的专家，领域子集因此不容易直接抽取。EMO 在预训练时让同一文档的 token 先共享一个 document-level expert pool，再在池内做 routing；这样专家子集更容易按语义/领域聚在一起。正文里 14B total / 1B active 的 EMO 在完整模型质量上接近普通 MoE，同时在只保留 25% 或 12.5% experts 时，domain subset 的掉点远小于普通 MoE。
 
@@ -174,16 +178,24 @@ DAG learning module 也增加实现开销。若比较结构化聚合与 weighted
 
 *图 8：EMO 把同一文档的 tokens 约束在共享 expert pool 内路由，让 experts 更容易形成领域级模块。*
 
-[BAR][bar] 把 MoE 当成 post-training 的组合机制，而不是预训练里的稀疏容量层。它先为 math、code、tool use、safety 等领域独立训练 domain experts，每个 expert 可以走自己的 mid-training / SFT / RL 流水线，最后合成一个 MoE 并只训练轻量 router。这个方向的价值在于工程组织：新增或升级一个能力时，不必把所有领域重新混在一起跑完整后训练。
+### 8.2 独立后训练，再组合能力：BAR
+
+[BAR][bar] 将 MoE 用作后训练的能力组合机制。它先为 math、code、tool use、safety 等领域独立训练 domain experts，每个 expert 可以走自己的 mid-training / SFT / RL 流水线，最后合成一个 MoE 并只训练轻量 router。这个方向的价值在于工程组织：新增或升级一个能力时，不必把所有领域重新混在一起跑完整后训练。
 
 ![BAR modular post-training](/assets/img/blog/moe-we-like-you/08-bar-modular-post-training.png)
 
 
 *图 9：BAR 将不同领域的后训练流水线拆成独立 experts，再合并成单一 MoE，并支持单 expert 升级。*
 
-[MoE-to-Dense][moe-to-dense] 则走相反方向：如果部署端根本放不下完整 expert pool，那就把已经训练好的 MoE 转成 dense。它先给 experts 打分、选择和分组，再把专家权重拼成 dense FFN，最后用 MoE teacher 做 distillation。这个方向不替代 MoE 训练，但可能替代一部分 MoE serving：训练时用 MoE 拿容量，交付时导出更小的 dense 学生模型。
+### 8.3 部署前导出 Dense：MoE-to-Dense
 
-Serving 侧还有更系统的 expert working set 复用。[XShare][xshare] 把 batch 内 token 的专家选择看成 batch-level 优化，目标是减少一个 batch 激活的 expert union；[DES][des] 把 diffusion LLM 的 parallel block 看成 sequence-level coreset selection，减少并行生成时的 expert explosion；[EcoSpec][ecospec] 则在 speculative decoding 选 draft token 时加入 marginal expert cost，让验证集合尽量复用已有 experts。这些工作不改模型权重，但会影响 MoE 在真实服务中的收益，因为 decode 阶段很多时候卡在 expert weight movement，而非 FLOPs。
+[MoE-to-Dense][moe-to-dense]面向放不下完整 expert pool 的部署端，将训练好的 MoE 转成 Dense。它先给 experts 打分、选择和分组，再把专家权重拼成 dense FFN，最后用 MoE teacher 做 distillation。训练阶段使用 MoE 容量，交付时则运行较小的 Dense 学生模型。
+
+### 8.4 推理时缩小专家工作集
+
+[XShare][xshare]按 batch 聚合专家效用，让多个 token 在共享专家池内选择 top-k，以减少一次前向涉及的独立权重。[DES][des]将类似的共享选池用于 diffusion LLM 的并行块；[EcoSpec][ecospec]则选择需要验证的 draft 候选，降低候选带来的新增专家成本。XShare、DES 会限制 token 的可选专家，EcoSpec 保留目标路由。
+
+这类方法沿位置维度组织工作集，与前面 MoRE 沿层维度共享权重的设计不同。块级选池与候选树选择的具体规则见[番外一]({% post_url 2026-11-07-moe-routing-granularity-expert-reuse %})；这些权重请求怎样在端侧转成读取与计算流水，见[第六篇]({% post_url 2026-07-26-edge-moe-inference-design %})。
 
 ![XShare batch-level expert pruning](/assets/img/blog/moe-we-like-you/08-xshare-batch-level-expert-pruning.png)
 

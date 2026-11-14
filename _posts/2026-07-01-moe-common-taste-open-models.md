@@ -18,7 +18,7 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 
 ## 1. 系列主题与阅读顺序
 
-前七篇沿着架构、训练实现和部署展开；后三篇是架构研究、EP 系统和视觉生成专题，可以按问题单独阅读。
+前七篇沿着架构、训练实现和部署展开；第八至十篇是架构研究、EP 系统和视觉生成专题。番外一继续讨论路由粒度，比较 AR、投机验证和 block diffusion 中多位置共享专家的设计。
 
 | 篇章 | 主题 | 重点问题 |
 |---|---|---|
@@ -27,11 +27,12 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 | 3 | [Megatron Core 源码]({% post_url 2026-07-11-megatron-core-moe-source %}) | router、负载控制、dispatcher 和 experts 如何衔接 |
 | 4 | [DeepEP 与 GroupedGEMM]({% post_url 2026-07-16-moe-deepep-groupedgemm %}) | 怎样从 profiling 判断通信、计算和重排瓶颈 |
 | 5 | [100B 配置推演]({% post_url 2026-07-21-moe-100b-parallel-memory %}) | 把参数、并行分组和显存放在同一个算例中 |
-| 6 | [端侧推理]({% post_url 2026-07-26-edge-moe-inference-design %}) | 设备如何执行小 active MoE，应该测什么 |
+| 6 | [端侧推理]({% post_url 2026-07-26-edge-moe-inference-design %}) | 相近 active compute 下为何仍有执行开销，怎样加速完整推理链 |
 | 7 | [RL 训推一致性]({% post_url 2026-07-31-moe-rl-train-serving-mismatch %}) | 怎样区分后端偏差、路由变化和策略更新 |
 | 8 | [MoE 的架构扩展]({% post_url 2026-07-23-moe-future-sparse-architecture %}) | 稀疏计算如何扩展到深度、attention、memory 和参数共享 |
 | 9 | [EP 通信与调度]({% post_url 2026-07-23-moe-ep-communication-optimization %}) | 怎样选择通信路径，何时需要专家副本和物理负载均衡 |
 | 10 | [视觉生成]({% post_url 2026-07-23-moe-visual-generation %}) | timestep、token、head 和控制接口分别怎样组织专家 |
+| 番外一 | [Block、Chunk 与投机树]({% post_url 2026-11-07-moe-routing-granularity-expert-reuse %}) | 为什么要共同约束一组位置的专家，哪些设计改变路由或生成依赖 |
 
 ## 2. 设计选择的证据分类
 
