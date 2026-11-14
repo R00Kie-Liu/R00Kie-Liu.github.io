@@ -155,7 +155,7 @@ serving 的短时热点未必适合通过更新 router 来修正。若保持模�
 
 上一篇：[第八篇：稀疏计算与参数复用的新方向]({% post_url 2026-07-23-moe-future-sparse-architecture %})
 
-下一篇：[第十篇：视觉生成中的专家分工]({% post_url 2026-07-23-moe-visual-generation %})
+下一篇：[第十篇：视觉生成与原生多模态中的专家设计]({% post_url 2026-07-23-moe-visual-generation %})
 
 ## 延伸阅读
 

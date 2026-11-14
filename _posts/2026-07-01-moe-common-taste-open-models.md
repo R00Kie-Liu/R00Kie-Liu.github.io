@@ -31,7 +31,7 @@ DeepSeekMoE / V3 之后，大规模开放 MoE 的设计开始出现一些重复�
 | 7 | [RL 训推一致性]({% post_url 2026-07-31-moe-rl-train-serving-mismatch %}) | 怎样区分后端偏差、路由变化和策略更新 |
 | 8 | [MoE 的架构扩展]({% post_url 2026-07-23-moe-future-sparse-architecture %}) | 稀疏计算如何扩展到深度、attention、memory 和参数共享 |
 | 9 | [EP 通信与调度]({% post_url 2026-07-23-moe-ep-communication-optimization %}) | 怎样选择通信路径，何时需要专家副本和物理负载均衡 |
-| 10 | [视觉生成]({% post_url 2026-07-23-moe-visual-generation %}) | timestep、token、head 和控制接口分别怎样组织专家 |
+| 10 | [视觉生成]({% post_url 2026-07-23-moe-visual-generation %}) | 噪声阶段、视觉位置与文本/视觉处理路径怎样组织专家 |
 | 番外一 | [Block、Chunk 与投机树]({% post_url 2026-11-07-moe-routing-granularity-expert-reuse %}) | 为什么要共同约束一组位置的专家，哪些设计改变路由或生成依赖 |
 
 ## 2. 设计选择的证据分类

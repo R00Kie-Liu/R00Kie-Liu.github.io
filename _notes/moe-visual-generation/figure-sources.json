@@ -1,0 +1,93 @@
+{
+  "post": "_posts/2026-07-23-moe-visual-generation.md",
+  "added_figures": [
+    {
+      "paper": "ecdit",
+      "figure_id": "S2.F2",
+      "source_url": "https://arxiv.org/html/2410.02098v2/arch.png",
+      "image": "/assets/img/blog/moe-visual-generation/ecdit-expert-choice.png",
+      "bytes": 330805,
+      "mime": "image/png"
+    },
+    {
+      "paper": "diffmoe",
+      "figure_id": "S1.F2",
+      "source_url": "https://arxiv.org/html/2503.14487v1/F1_2.png",
+      "image": "/assets/img/blog/moe-visual-generation/diffmoe-capacity-predictor.png",
+      "bytes": 252329,
+      "mime": "image/png"
+    },
+    {
+      "paper": "splitmoe",
+      "figure_id": "S3.F3",
+      "source_url": "https://arxiv.org/html/2609.38140v1/pipeline.png",
+      "image": "/assets/img/blog/moe-visual-generation/splitmoe-semantic-generic.png",
+      "bytes": 207004,
+      "mime": "image/png"
+    },
+    {
+      "paper": "pixelmoe",
+      "figure_id": "S3.F3",
+      "source_url": "https://arxiv.org/html/2610.18857v3/pixelmoe_framework.png",
+      "image": "/assets/img/blog/moe-visual-generation/pixelmoe-token-choice.png",
+      "bytes": 268100,
+      "mime": "image/png"
+    },
+    {
+      "paper": "hidream",
+      "figure_id": "S2.F3",
+      "source_url": "https://arxiv.org/html/2505.22705v1/framework.png",
+      "image": "/assets/img/blog/moe-visual-generation/hidream-dual-single-stream.png",
+      "bytes": 123657,
+      "mime": "image/png"
+    },
+    {
+      "paper": "hunyuan",
+      "figure_id": "S3.F3",
+      "source_url": "https://arxiv.org/html/2509.23951v2/assets/model/model.png",
+      "image": "/assets/img/blog/moe-visual-generation/hunyuanimage-multimodal.png",
+      "bytes": 187148,
+      "mime": "image/png"
+    },
+    {
+      "paper": "hunyuan",
+      "figure_id": "S3.F4",
+      "source_url": "https://arxiv.org/html/2509.23951v2/assets/model/attention.png",
+      "image": "/assets/img/blog/moe-visual-generation/hunyuanimage-attention-mask.png",
+      "bytes": 136118,
+      "mime": "image/png"
+    },
+    {
+      "paper": "mot",
+      "figure_id": "S2.F3",
+      "source_url": "https://arxiv.org/html/2411.04996v2/MoT-cropped.png",
+      "image": "/assets/img/blog/moe-visual-generation/mot-modality-parameters.png",
+      "bytes": 825920,
+      "mime": "image/png"
+    },
+    {
+      "paper": "symbiotic",
+      "figure_id": "S3.F3",
+      "source_url": "https://arxiv.org/html/2604.07753v2/pipeline.png",
+      "image": "/assets/img/blog/moe-visual-generation/symbiotic-understanding-generation.png",
+      "bytes": 517994,
+      "mime": "image/png"
+    },
+    {
+      "paper": "beyond",
+      "figure_id": "S6.F19.fig1",
+      "source_url": "https://arxiv.org/html/2603.03276v1/expert_type_per_layer_paper.svg",
+      "image": "/assets/img/blog/moe-visual-generation/beyond-modality-specialization.svg",
+      "bytes": 42891,
+      "mime": "image/svg+xml"
+    },
+    {
+      "paper": "beyond",
+      "figure_id": "S6.F19.fig2",
+      "source_url": "https://arxiv.org/html/2603.03276v1/timestep_spec_score_histogram_paper.svg",
+      "image": "/assets/img/blog/moe-visual-generation/beyond-timestep-specialization.svg",
+      "bytes": 40194,
+      "mime": "image/svg+xml"
+    }
+  ]
+}
