@@ -311,12 +311,6 @@
     "description": "Transformer-based language models (LMs) are powerful and widely-applicable tools, but their usefulness is constrained by a finite context window and the expensive computational cost of processing long text documents. We propose to adapt pre-trained LMs into AutoCompressors. These language models are capable of compressing long contexts into compact summary vectors, which are then accessible to the model as soft prompts. Summary vectors are trained with an unsupervised objective, whereby long documents are processed in segments, and summary vectors from all previous segments are used in langua…",
     "fetched_at": 1793252215
   },
-  "https://arxiv.org/abs/2305.18295": {
-    "checked_at": 1793212629,
-    "title": "RAPHAEL: Text-to-Image Generation via Large Mixture of Diffusion Paths",
-    "description": "Text-to-image generation has recently witnessed remarkable achievements. We introduce a text-conditional image diffusion model, termed RAPHAEL, to generate highly artistic images, which accurately portray the text prompts, encompassing multiple nouns, adjectives, and verbs. This is achieved by stacking tens of mixture-of-experts (MoEs) layers, i.e., space-MoE and time-MoE layers, enabling billions of diffusion paths (routes) from the network input to the output. Each path intuitively functions as a \"painter\" for depicting a particular textual concept onto a specified image region at a diffusi…",
-    "fetched_at": 1793212629
-  },
   "https://arxiv.org/abs/2306.07174": {
     "checked_at": 1793252215,
     "title": "Augmenting Language Models with Long-Term Memory",
@@ -1811,6 +1805,18 @@
     "description": "We introduce a decoder-decoder architecture, YOCO, for large language models, which only caches key-value pairs once. It consists of two components, i.e., a cross-decoder stacked upon a self-decoder. The self-decoder efficiently encodes global key-value (KV) caches that are reused by the cross-decoder via cross-attention. The overall model behaves like a decoder-only Transformer, although YOCO only caches once. The design substantially reduces GPU memory demands, yet retains global attention capability. Additionally, the computation flow enables prefilling to early exit without changing the f…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/html/2410.02098v2": {
+    "checked_at": 1794672892,
+    "title": "EC-DIT: Scaling Diffusion Transformers with Adaptive Expert-Choice Routing",
+    "description": "Diffusion transformers have been widely adopted for text-to-image synthesis. While scaling these models up to billions of parameters shows promise, the effectiveness of scaling beyond current sizes remains underexplored and challenging. By explicitly exploiting the computational heterogeneity of image generations, we develop a new family of Mixture-of-Experts (MoE) models (EC-DIT) for diffusion transformers with expert-choice routing. EC-DIT learns to adaptively optimize the compute allocated to understand the input texts and generate the respective image patches, enabling heterogeneous compu…",
+    "fetched_at": 1794672892
+  },
+  "https://arxiv.org/html/2411.04996v2": {
+    "checked_at": 1794672892,
+    "title": "Mixture-of-Transformers: A Sparse and Scalable Architecture for Multi-Modal Foundation Models",
+    "description": "The development of large language models (LLMs) has expanded to multi-modal systems capable of processing text, images, and speech within a unified framework. Training these models demands significantly larger datasets and computational resources compared to text-only LLMs. To address the scaling challenges, we introduce Mixture-of-Transformers (MoT), a sparse multi-modal transformer architecture that significantly reduces pretraining computational costs. MoT decouples non-embedding parameters of the model by modality -- including feed-forward networks, attention matrices, and layer normaliza…",
+    "fetched_at": 1794672892
+  },
   "https://arxiv.org/html/2412.19437v2": {
     "checked_at": 1793212629,
     "title": "DeepSeek-V3 Technical Report",
@@ -1835,6 +1841,12 @@
     "description": "Long-context models are essential for many applications but face inefficiencies in loading large KV caches during decoding. Prior methods enforce fixed token budgets for sparse attention, assuming a set number of tokens can approximate full attention. However, these methods overlook variations in the importance of attention across heads, layers, and contexts. To address these limitations, we propose Tactic, a sparsity-adaptive and calibration-free sparse attention mechanism that dynamically selects tokens based on their cumulative attention scores rather than a fixed token budget. By setting…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/html/2503.14487v1": {
+    "checked_at": 1794672892,
+    "title": "DiffMoE: Dynamic Token Selection for Scalable Diffusion Transformers",
+    "description": "Diffusion models have demonstrated remarkable success in various image generation tasks, but their performance is often limited by the uniform processing of inputs across varying conditions and noise levels. To address this limitation, we propose a novel approach that leverages the inherent heterogeneity of the diffusion process. Our method, DiffMoE, introduces a batch-level global token pool that enables experts to access global token distributions during training, promoting specialized expert behavior. To unleash the full potential of the diffusion process, DiffMoE incorporates a capacity p…",
+    "fetched_at": 1794672892
+  },
   "https://arxiv.org/html/2505.07608": {
     "checked_at": 1793212629,
     "title": "MiMo: Unlocking the Reasoning Potential of Language Model -- From Pretraining to Posttraining",
@@ -1858,6 +1870,12 @@
     "title": "BlockFFN: Towards End-Side Acceleration-Friendly Mixture-of-Experts with Chunk-Level Activation Sparsity",
     "description": "To alleviate the computational burden of large language models (LLMs), architectures with activation sparsity, represented by mixture-of-experts (MoE), have attracted increasing attention. However, the non-differentiable and inflexible routing of vanilla MoE hurts model performance. Moreover, while each token activates only a few parameters, these sparsely-activated architectures exhibit low chunk-level sparsity, indicating that the union of multiple consecutive tokens activates a large ratio of parameters. Such a sparsity pattern is unfriendly for acceleration under low-resource conditions (…",
     "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2509.23951v2": {
+    "checked_at": 1794672892,
+    "title": "HunyuanImage 3.0 Technical Report",
+    "description": "We present HunyuanImage 3.0, a native multimodal model that unifies multimodal understanding and generation within an autoregressive framework, with its image generation module publicly available. The achievement of HunyuanImage 3.0 relies on several key components, including meticulous data curation, advanced architecture design, a native Chain-of-Thoughts schema, progressive model pre-training, aggressive model post-training, and an efficient infrastructure that enables large-scale training and inference. With these advancements, we successfully trained a Mixture-of-Experts (MoE) model comp…",
+    "fetched_at": 1794672892
   },
   "https://arxiv.org/html/2511.05963v4": {
     "checked_at": 1793212629,
@@ -1906,6 +1924,18 @@
     "title": "MoE-Spec: Expert Budgeting for Efficient Speculative Decoding",
     "description": "Speculative decoding accelerates Large Language Model (LLM) inference by verifying multiple drafted tokens in parallel. However, for Mixture-of-Experts (MoE) models, this parallelism introduces a severe bottleneck: large draft trees activate many unique experts, significantly increasing memory pressure and diminishing speedups from speculative decoding relative to autoregressive decoding. Prior methods reduce speculation depth when MoE verification becomes expensive. We propose MoE-Spec, a training-free verification-time expert budgeting method that decouples speculation depth from memory cos…",
     "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2603.03276v1": {
+    "checked_at": 1794672892,
+    "title": "Beyond Language Modeling: An Exploration of Multimodal Pretraining",
+    "description": "The visual world offers a critical axis for advancing foundation models beyond language. Despite growing interest in this direction, the design space for native multimodal models remains opaque. We provide empirical clarity through controlled, from-scratch pretraining experiments, isolating the factors that govern multimodal pretraining without interference from language pretraining. We adopt the Transfusion framework, using next-token prediction for language and diffusion for vision, to train on diverse data including text, video, image-text pairs, and even action-conditioned video. Our expe…",
+    "fetched_at": 1794672892
+  },
+  "https://arxiv.org/html/2604.07753v2": {
+    "checked_at": 1794672892,
+    "title": "Symbiotic-MoE: Unlocking the Synergy between Generation and Understanding",
+    "description": "Empowering Large Multimodal Models (LMMs) with image generation often leads to catastrophic forgetting in understanding tasks due to severe gradient conflicts. While existing paradigms like Mixture-of-Transformers (MoT) mitigate this conflict through structural isolation, they fundamentally sever cross-modal synergy and suffer from capacity fragmentation. In this work, we present Symbiotic-MoE, a unified pre-training framework that resolves task interference within a native multimodal Mixture-of-Experts (MoE) Transformers architecture with zero-parameter overhead. We first identify that stand…",
+    "fetched_at": 1794672892
   },
   "https://arxiv.org/html/2604.12452": {
     "checked_at": 1793252215,
@@ -2051,6 +2081,12 @@
     "description": "Improving language model efficiency requires not only cheaper operations but also eliminating redundant computation. We argue that effective modeling requires information accessibility and computational depth, but not repeated historical retrieval across layers. Guided by this principle, we introduce the Global State Model (GSM), a causal encoder--decoder architecture that separates historical information acquisition from deep computation. The encoder progressively aggregates long-range information through multi-stage sparse retrieval into a fixed-size shared state, while decoder layers perfo…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/html/2609.38140v1": {
+    "checked_at": 1794672892,
+    "title": "Breaking the Uniformity Trap: Scaling Video Diffusion Model via SplitMoE",
+    "description": "Mixture-of-Experts (MoE), popularized by large language models, is a promising paradigm for scaling visual generative models. However, conventional token-wise MoE routes tokens independently within a homogeneous expert pool and regularizes expert usage toward uniformity, making it poorly matched to video data that is spatiotemporally redundant and semantically long-tailed. We show that existing visual MoEs fall into a uniformity trap: semantically under-organized routing, compounded by uniform expert-usage regularization, scatters coherent patches across disparate experts, causing routing fra…",
+    "fetched_at": 1794672892
+  },
   "https://arxiv.org/html/2610.04635v1": {
     "checked_at": 1793252215,
     "title": "LatentIndex: Cross-Layer Sharing with Layer-Specific Selection for Sparse Attention",
@@ -2074,6 +2110,12 @@
     "title": "SpecFit: Not All Draft Tokens Cost the Same in Offloaded MoE Inference",
     "description": "Mixture-of-experts (MoE) models activate only a few experts per token, but when their expert weights are offloaded to host memory, host-to-device (H2D) expert transfers enter the critical path of decoding. Speculative decoding verifies several draft tokens in one forward pass, yet in an MoE model each verified token activates its own experts, so a larger draft tree transfers more experts. Because of this H2D cost, speculative decoding commits several tokens per verification cycle yet is sometimes even slower than autoregressive decoding. Based on this observation, we propose SpecFit, which ch…",
     "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2610.18857v3": {
+    "checked_at": 1794672892,
+    "title": "PixelMoE: Scaling Pixel-Space Diffusion with LLM-Style Mixture-of-Experts",
+    "description": "Pixel-space diffusion models provide an appealing alternative to latent-space diffusion models by directly modeling raw images without relying on a learned tokenizer. However, scaling pixel-space models has predominantly followed dense strategies, tightly coupling model capacity with active computation. In this work, we show that standard LLM-style Mixture-of-Experts (MoE) architectures can be effectively transferred to pixel-space diffusion. Building on this finding, we introduce PixelMoE, a pixel-space generative framework that sparsely scales model capacity with standard LLM-style MoE, wit…",
+    "fetched_at": 1794672892
   },
   "https://arxiv.org/html/2610.24766v1": {
     "checked_at": 1793212629,
@@ -2633,23 +2675,17 @@
     "description": "The first MoE-based framework for unified and scalable world modeling. - EmbodiedCity/Worldscape-MoE.code",
     "fetched_at": 1793212629
   },
-  "https://github.com/EmbodiedCity/Worldscape-MoE.code/blob/main/docs/ARCHITECTURE.md": {
-    "checked_at": 1793212629,
-    "title": "Worldscape-MoE.code/docs/ARCHITECTURE.md at main · EmbodiedCity/Worldscape-MoE.code",
-    "description": "The first MoE-based framework for unified and scalable world modeling. - EmbodiedCity/Worldscape-MoE.code",
-    "fetched_at": 1793212629
-  },
   "https://github.com/EricQiu6/MoRE": {
     "checked_at": 1793212629,
     "title": "GitHub - EricQiu6/MoRE: Official Implementation of paper MoRE: Mixture of Reused Experts",
     "description": "Official Implementation of paper MoRE: Mixture of Reused Experts - EricQiu6/MoRE",
     "fetched_at": 1793212629
   },
-  "https://github.com/HiDream-ai/HiDream-I1": {
-    "checked_at": 1793212629,
-    "title": "GitHub - HiDream-ai/HiDream-I1",
+  "https://github.com/HiDream-ai/HiDream-I1/blob/5f92bab45f1dfb1e794ee357286a5b837eaf4400/hi_diffusers/models/transformers/transformer_hidream_image.py": {
+    "checked_at": 1794672892,
+    "title": "HiDream-I1/hi_diffusers/models/transformers/transformer_hidream_image.py at 5f92bab45f1dfb1e794ee357286a5b837eaf4400 · HiDream-ai/HiDream-I1",
     "description": "Contribute to HiDream-ai/HiDream-I1 development by creating an account on GitHub.",
-    "fetched_at": 1793212629
+    "fetched_at": 1794672892
   },
   "https://github.com/Introspective-Diffusion/I-DLM/tree/main/sglang": {
     "checked_at": 1794670854
@@ -2840,12 +2876,6 @@
     "description": "Omni inference in C/C++. Contribute to OpenBMB/llama.cpp-omni development by creating an account on GitHub.",
     "fetched_at": 1793212629
   },
-  "https://github.com/OpenMOSS/MOVA": {
-    "checked_at": 1793212629,
-    "title": "GitHub - OpenMOSS/MOVA: A foundation model that generates synchronized video and audio in a single model",
-    "description": "A foundation model that generates synchronized video and audio in a single model - OpenMOSS/MOVA",
-    "fetched_at": 1793212629
-  },
   "https://github.com/OpenNLPLab/lightning-attention": {
     "checked_at": 1793252215,
     "title": "GitHub - OpenNLPLab/lightning-attention: Lightning Attention-2: A Free Lunch for Handling Unlimited Sequence Lengths in Large Language Models",
@@ -2881,18 +2911,6 @@
     "title": "GitHub - RUCAIBox/GDN-SpectralShift: Megatron-LM patch for SpectralShift: extending Gated DeltaNet's effective context window via spectral reparameterization and learning-rate scaling.",
     "description": "Megatron-LM patch for SpectralShift: extending Gated DeltaNet's effective context window via spectral reparameterization and learning-rate scaling. - RUCAIBox/GDN-SpectralShift",
     "fetched_at": 1793252215
-  },
-  "https://github.com/Robbyant/lingbot-video": {
-    "checked_at": 1793212629,
-    "title": "GitHub - Robbyant/lingbot-video: Scaling Mixture-of-Experts Video Pretraining for Embodied Intelligence",
-    "description": "Scaling Mixture-of-Experts Video Pretraining for Embodied Intelligence - Robbyant/lingbot-video",
-    "fetched_at": 1793212629
-  },
-  "https://github.com/SandAI-org/MAGI-2-preview": {
-    "checked_at": 1793212629,
-    "title": "GitHub - SandAI-org/MAGI-2-preview: MAGI-2-preview: Scaling Video Generation Models Efficiently",
-    "description": "MAGI-2-preview: Scaling Video Generation Models Efficiently - SandAI-org/MAGI-2-preview",
-    "fetched_at": 1793212629
   },
   "https://github.com/THUDM/slime": {
     "checked_at": 1793212629,
