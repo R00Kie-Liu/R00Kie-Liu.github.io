@@ -1799,11 +1799,35 @@
     "description": "Multi-Token Prediction (MTP) is now a common ingredient in language-model pre-training, as it improves downstream performance and enables faster inference through speculative decoding. We identify a flaw in standard MTP training, in which a residual component of the MTP gradient interferes with both next-token and multi-token learning, increasingly so with scale. Specifically, the MTP cross-entropy gradient can be decomposed exactly into a KL self-distillation term that pulls each MTP head toward the model's own next-token prediction (NTP) distribution and improves speculative decoding, and a…",
     "fetched_at": 1793961809
   },
+  "https://arxiv.org/html/2305.18295v2": {
+    "checked_at": 1794827952,
+    "title": "RAPHAEL: Text-to-Image Generation via Large Mixture of Diffusion Paths",
+    "description": "Text-to-image generation has recently witnessed remarkable achievements. We introduce a text-conditional image diffusion model, termed RAPHAEL, to generate highly artistic images, which accurately portray the text prompts, encompassing multiple nouns, adjectives, and verbs. This is achieved by stacking tens of mixture-of-experts (MoEs) layers, i.e., space-MoE and time-MoE layers, enabling billions of diffusion paths (routes) from the network input to the output. Each path intuitively functions as a \"painter\" for depicting a particular textual concept onto a specified image region at a diffusi…",
+    "fetched_at": 1794827952
+  },
+  "https://arxiv.org/html/2310.07138v3": {
+    "checked_at": 1794827952,
+    "title": "Denoising Task Routing for Diffusion Models",
+    "description": "Diffusion models generate highly realistic images by learning a multi-step denoising process, naturally embodying the principles of multi-task learning (MTL). Despite the inherent connection between diffusion models and MTL, there remains an unexplored area in designing neural architectures that explicitly incorporate MTL into the framework of diffusion models. In this paper, we present Denoising Task Routing (DTR), a simple add-on strategy for existing diffusion model architectures to establish distinct information pathways for individual tasks within a single architecture by selectively act…",
+    "fetched_at": 1794827952
+  },
+  "https://arxiv.org/html/2403.09176v2": {
+    "checked_at": 1794827952,
+    "title": "Switch Diffusion Transformer: Synergizing Denoising Tasks with Sparse Mixture-of-Experts",
+    "description": "Diffusion models have achieved remarkable success across a range of generative tasks. Recent efforts to enhance diffusion model architectures have reimagined them as a form of multi-task learning, where each task corresponds to a denoising task at a specific noise level. While these efforts have focused on parameter isolation and task routing, they fall short of capturing detailed inter-task relationships and risk losing semantic information, respectively. In response, we introduce Switch Diffusion Transformer (Switch-DiT), which establishes inter-task relationships between conflicting tasks…",
+    "fetched_at": 1794827952
+  },
   "https://arxiv.org/html/2405.05254v2": {
     "checked_at": 1793252215,
     "title": "You Only Cache Once: Decoder-Decoder Architectures for Language Models",
     "description": "We introduce a decoder-decoder architecture, YOCO, for large language models, which only caches key-value pairs once. It consists of two components, i.e., a cross-decoder stacked upon a self-decoder. The self-decoder efficiently encodes global key-value (KV) caches that are reused by the cross-decoder via cross-attention. The overall model behaves like a decoder-only Transformer, although YOCO only caches once. The design substantially reduces GPU memory demands, yet retains global attention capability. Additionally, the computation flow enables prefilling to early exit without changing the f…",
     "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2409.15557v1": {
+    "checked_at": 1794827952,
+    "title": "Mixture of Efficient Diffusion Experts Through Automatic Interval and Sub-Network Selection",
+    "description": "Diffusion probabilistic models can generate high-quality samples. Yet, their sampling process requires numerous denoising steps, making it slow and computationally intensive. We propose to reduce the sampling cost by pruning a pretrained diffusion model into a mixture of efficient experts. First, we study the similarities between pairs of denoising timesteps, observing a natural clustering, even across different datasets. This suggests that rather than having a single model for all time steps, separate models can serve as ``experts'' for their respective time intervals. As such, we separately…",
+    "fetched_at": 1794827952
   },
   "https://arxiv.org/html/2410.02098v2": {
     "checked_at": 1794672892,
@@ -1841,6 +1865,12 @@
     "description": "Long-context models are essential for many applications but face inefficiencies in loading large KV caches during decoding. Prior methods enforce fixed token budgets for sparse attention, assuming a set number of tokens can approximate full attention. However, these methods overlook variations in the importance of attention across heads, layers, and contexts. To address these limitations, we propose Tactic, a sparsity-adaptive and calibration-free sparse attention mechanism that dynamically selects tokens based on their cumulative attention scores rather than a fixed token budget. By setting…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/html/2503.07416v1": {
+    "checked_at": 1794827952,
+    "title": "TimeStep Master: Asymmetrical Mixture of Timestep LoRA Experts for Versatile and Efficient Diffusion Models in Vision",
+    "description": "Diffusion models have driven the advancement of vision generation over the past years. However, it is often difficult to apply these large models in downstream tasks, due to massive fine-tuning cost. Recently, Low-Rank Adaptation (LoRA) has been applied for efficient tuning of diffusion models. Unfortunately, the capabilities of LoRA-tuned diffusion models are limited, since the same LoRA is used for different timesteps of the diffusion process. To tackle this problem, we introduce a general and concise TimeStep Master (TSM) paradigm with two key fine-tuning stages. In the fostering stage (1-…",
+    "fetched_at": 1794827952
+  },
   "https://arxiv.org/html/2503.14487v1": {
     "checked_at": 1794672892,
     "title": "DiffMoE: Dynamic Token Selection for Scalable Diffusion Transformers",
@@ -1858,6 +1888,12 @@
     "title": "Not All Models Suit Expert Offloading: On Local Routing Consistency of Mixture-of-Expert Models",
     "description": "Mixture-of-Experts (MoE) enables efficient scaling of large language models (LLMs) with sparsely activated experts during inference. To effectively deploy large MoE models on memory-constrained devices, many systems introduce *expert offloading* that caches a subset of experts in fast memory, leaving others on slow memory to run on CPU or load on demand. While some research has exploited the locality of expert activations, where consecutive tokens activate similar experts, the degree of this **local routing consistency** varies across models and remains understudied. In this paper, we propose…",
     "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2505.21817v1": {
+    "checked_at": 1794827952,
+    "title": "ALTER: All-in-One Layer Pruning and Temporal Expert Routing for Efficient Diffusion Generation",
+    "description": "Diffusion models have demonstrated exceptional capabilities in generating high-fidelity images. However, their iterative denoising process results in significant computational overhead during inference, limiting their practical deployment in resource-constrained environments. Existing acceleration methods often adopt uniform strategies that fail to capture the temporal variations during diffusion generation, while the commonly adopted sequential pruning-then-fine-tuning strategy suffers from sub-optimality due to the misalignment between pruning decisions made on pretrained weights and the mo…",
+    "fetched_at": 1794827952
   },
   "https://arxiv.org/html/2506.14038v1": {
     "checked_at": 1794222436,
@@ -1888,6 +1924,12 @@
     "title": "Route Experts by Sequence, not by Token",
     "description": "Mixture-of-Experts (MoE) architectures scale large language models (LLMs) by activating only a subset of experts per token, but the standard TopK routing assigns the same fixed number of experts to all tokens, ignoring their varying complexity. Prior adaptive routing methods introduce additional modules and hyperparameters, often requiring costly retraining from scratch. We propose Sequence-level TopK (SeqTopK), a minimal modification that shifts the expert budget from the token level to the sequence level. By selecting the top $T \\cdot K$ experts across all $T$ tokens, SeqTopK enables end-to…",
     "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2511.12207v2": {
+    "checked_at": 1794827952,
+    "title": "Mixture of States: Routing Token-Level Dynamics for Multimodal Generation",
+    "description": "We introduce MoS (Mixture of States), a novel fusion paradigm for multimodal diffusion models that merges modalities using flexible, state-based interactions. The core of MoS is a learnable, token-wise router that creates denoising timestep- and input-dependent interactions between modalities' hidden states, precisely aligning token-level features with the diffusion trajectory. This router sparsely selects the top-$k$ hidden states and is trained with an $ε$-greedy strategy, efficiently selecting contextual features with minimal learnable parameters and negligible computational overhead. We v…",
+    "fetched_at": 1794827952
   },
   "https://arxiv.org/html/2512.12087": {
     "checked_at": 1793252215,
@@ -2074,6 +2116,12 @@
     "title": "HySparse2: Hybrid Sparse Attention with Two-Level KV Sharing",
     "description": "Long-horizon and multi-turn agents typically generate short actions and process long observations from tools and environments. This growing context demands efficient prefill, compact KV-cache storage, and accurate long-context retrieval. To meet these demands, we introduce HySparse2, a hybrid sparse attention architecture with two-level KV sharing. At the outer level, KV Bridging adopts a YOCO-style self-decoder and cross-decoder structure, but bridges only full-attention layers. The self-decoder uses hybrid sliding-window attention (SWA), while the cross-decoder uses hybrid sparse attention.…",
     "fetched_at": 1793252215
+  },
+  "https://arxiv.org/html/2609.30096v1": {
+    "checked_at": 1794827952,
+    "title": "Accelerating Video Diffusion via Training-Free Trajectory Routing",
+    "description": "Video diffusion is computationally expensive, as it requires executing a large model across many denoising steps. Even with step-distillation, inference remains expensive because every distilled step still requires a costly model evaluation. We present TRACK: TRajectory-Aware Capacity routing via top-K selection, a heterogeneous denoising strategy that switches between compatible large and small models at selected steps, reducing the average cost per denoising evaluation. The switching steps are determined using a calibration process. TRACK first rolls out a reference trajectory with the larg…",
+    "fetched_at": 1794827952
   },
   "https://arxiv.org/html/2609.33465v3": {
     "checked_at": 1793252215,
@@ -2448,7 +2496,7 @@
     "fetched_at": 1793212629
   },
   "https://cdrdv2-public.intel.com/817486/gaudi-3-ai-accelerator-white-paper.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://cloud.google.com/tpu/docs/v5e": {
     "checked_at": 1793212629,
@@ -2457,7 +2505,7 @@
     "fetched_at": 1793212629
   },
   "https://crd.lbl.gov/assets/pubs_presos/parlab08-roofline-talk.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://cursor.com/blog/mixture-of-kittens": {
     "checked_at": 1793212629,
@@ -2532,10 +2580,10 @@
     "fetched_at": 1793212629
   },
   "https://dl.acm.org/doi/10.1145/3789240.3829201": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://dl.acm.org/doi/pdf/10.1145/3567955.3567959": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://docs.habana.ai/en/latest/PyTorch/PyTorch_FP8_Training/index.html": {
     "checked_at": 1793212629,
@@ -2568,16 +2616,16 @@
     "fetched_at": 1793212629
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/fp8_primer.html": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/features/low_precision_training/nvfp4/nvfp4.html": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/index.html": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://docs.nvidia.com/dgx-superpod-reference-architecture-dgx-h100.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://docs.nvidia.com/megatron-core/developer-guide/0.16.1/apidocs/core/core.transformer.moe.experts.html": {
     "checked_at": 1793212629,
@@ -2688,7 +2736,7 @@
     "fetched_at": 1794672892
   },
   "https://github.com/Introspective-Diffusion/I-DLM/tree/main/sglang": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://github.com/MINT-SJTU/Evo-1": {
     "checked_at": 1793212629,
@@ -2997,7 +3045,7 @@
     "fetched_at": 1793212629
   },
   "https://github.com/deepseek-ai/DeepEP/blob/main/docs/legacy.md": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://github.com/deepseek-ai/DeepSeek-OCR": {
     "checked_at": 1793212629,
@@ -3042,7 +3090,7 @@
     "fetched_at": 1793252215
   },
   "https://github.com/inclusionAI/LLaDA2.X/blob/main/LLaDA2_2_tech_report.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://github.com/inclusionAI/Ling-V2": {
     "checked_at": 1793212629,
@@ -3057,10 +3105,10 @@
     "fetched_at": 1793252215
   },
   "https://github.com/lil-lab/sps/blob/main/figures/attention_masks.png": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://github.com/lil-lab/sps/blob/main/figures/gradient_params_fp.png": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://github.com/meituan-longcat": {
     "checked_at": 1793212629,
@@ -3153,7 +3201,7 @@
     "fetched_at": 1793212629
   },
   "https://hc34.hotchips.org/assets/program/conference/day2/Network%20and%20Switches/NVSwitch%20HotChips%202022%20r5.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://horace.io/brrr_intro.html": {
     "checked_at": 1793212629,
@@ -3258,7 +3306,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/resolve/main/DeepSeek_V4.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://huggingface.co/docs/accelerate/usage_guides/gaudi": {
     "checked_at": 1793212629,
@@ -3333,7 +3381,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/moonshotai/Kimi-K3/raw/main/config.json": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://huggingface.co/nvidia": {
     "checked_at": 1793212629,
@@ -3468,10 +3516,10 @@
     "fetched_at": 1793212629
   },
   "https://microsoft.ai/pdf/mai-thinking-1.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://mimo.xiaomi.com/blog/mimo-tilert-1000tps": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://mimo.xiaomi.com/mimo-v2-5": {
     "checked_at": 1793212629,
@@ -3486,10 +3534,10 @@
     "fetched_at": 1793212629
   },
   "https://moonshotai.github.io/Kimi-K2.5/": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://moonshotai.github.io/Kimi-K2.6/": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-gemma-4": {
     "checked_at": 1793212629,
@@ -3522,7 +3570,7 @@
     "fetched_at": 1793212629
   },
   "https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyworook.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://platform.kimi.ai/docs/guide/kimi-k3-quickstart": {
     "checked_at": 1793212629,
@@ -3541,6 +3589,12 @@
     "title": "Various Lengths, Constant Speed: Efficient Language Modeling with Lightning Attention",
     "description": "We present Lightning Attention, the first linear attention implementation that maintains a constant training speed for various sequence lengths under fixed memory consumption. Due to the issue with...",
     "fetched_at": 1793252215
+  },
+  "https://proceedings.mlr.press/v267/cheng25d.html": {
+    "checked_at": 1794827952,
+    "title": "Diff-MoE: Diffusion Transformer with Time-Aware and Space-Adaptive Experts",
+    "description": "Diffusion models have transformed generative modeling but suffer from scalability limitations due to computational overhead and inflexible architectures that process all generative stages and token...",
+    "fetched_at": 1794827952
   },
   "https://pytorch.org/blog/flash-decoding/": {
     "checked_at": 1793212629,
@@ -3585,31 +3639,31 @@
     "fetched_at": 1793212629
   },
   "https://qwenlm.github.io/blog/qwen3-vl/": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://raw.githubusercontent.com/QwenLM/Qwen3.8-Flash-Next/main/tech_report.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://raw.githubusercontent.com/XiaomiMiMo/MiMo/main/MiMo-7B-Technical-Report.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://raw.githubusercontent.com/jianc99/jianc99.github.io/master/images/dflash_system.png": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Flash-Prover/main/LongCat_Flash_Prover_Technical_Report.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Next/main/tech_report.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-3.5-Flash/main/step_3p5_flash_tech_report.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-Audio-R1/main/Step-Audio-R1.5.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step3/main/Step3-Sys-Tech-Report.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://research.nvidia.com/labs/cosmos-lab/infotok/": {
     "checked_at": 1793212629,
@@ -3624,7 +3678,7 @@
     "fetched_at": 1793212629
   },
   "https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://resources.nvidia.com/en-us-tensor-core": {
     "checked_at": 1793212629,
@@ -3651,7 +3705,7 @@
     "fetched_at": 1793212629
   },
   "https://sglang.readthedocs.io/": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://siboehm.com/articles/22/CUDA-MMM": {
     "checked_at": 1793212629,
@@ -3660,22 +3714,22 @@
     "fetched_at": 1793212629
   },
   "https://spaces.ac.cn/archives/10592": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://spaces.ac.cn/archives/10739": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://spaces.ac.cn/archives/11033": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://spaces.ac.cn/archives/11416": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://spaces.ac.cn/archives/7546": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://spaces.ac.cn/tag/attention/": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://sylvan820.github.io/D-MTP/": {
     "checked_at": 1793961809,
@@ -3810,12 +3864,12 @@
     "fetched_at": 1793252215
   },
   "https://z.ai/blog/glm-5.2": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://zhuanlan.zhihu.com/p/2013649391051896797": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   },
   "https://zhuanlan.zhihu.com/p/2067703296500954047": {
-    "checked_at": 1794670854
+    "checked_at": 1794827952
   }
 }
