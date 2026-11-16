@@ -1,6 +1,6 @@
 <div class="topnav">
   <div class="nav-inner">
-  <a class="site-name" href="{{ '/' | relative_url }}"{% if page.layout == 'homepage' %} aria-current="page"{% endif %}>{{ site.title }}</a>
+  <a class="site-name" href="{{ '/' | relative_url }}"{% if page.layout == 'homepage' %} aria-current="page"{% endif %}>{% if page.layout == 'blog' or page.layout == 'post' %}Research Notes{% else %}{{ site.title }}{% endif %}</a>
   <nav id="myLinks" aria-label="Main navigation">
     {% include navigation.md %}
   </nav>
