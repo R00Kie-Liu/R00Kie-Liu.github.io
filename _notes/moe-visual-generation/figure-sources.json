@@ -7,7 +7,8 @@
       "source_url": "https://arxiv.org/html/2410.02098v2/arch.png",
       "image": "/assets/img/blog/moe-visual-generation/ecdit-expert-choice.png",
       "bytes": 330805,
-      "mime": "image/png"
+      "mime": "image/png",
+      "figure_number": 12
     },
     {
       "paper": "diffmoe",
@@ -15,7 +16,8 @@
       "source_url": "https://arxiv.org/html/2503.14487v1/F1_2.png",
       "image": "/assets/img/blog/moe-visual-generation/diffmoe-capacity-predictor.png",
       "bytes": 252329,
-      "mime": "image/png"
+      "mime": "image/png",
+      "figure_number": 13
     },
     {
       "paper": "splitmoe",
@@ -23,7 +25,8 @@
       "source_url": "https://arxiv.org/html/2609.38140v1/pipeline.png",
       "image": "/assets/img/blog/moe-visual-generation/splitmoe-semantic-generic.png",
       "bytes": 207004,
-      "mime": "image/png"
+      "mime": "image/png",
+      "figure_number": 15
     },
     {
       "paper": "pixelmoe",
@@ -31,7 +34,8 @@
       "source_url": "https://arxiv.org/html/2610.18857v3/pixelmoe_framework.png",
       "image": "/assets/img/blog/moe-visual-generation/pixelmoe-token-choice.png",
       "bytes": 268100,
-      "mime": "image/png"
+      "mime": "image/png",
+      "figure_number": 16
     },
     {
       "paper": "hidream",
@@ -39,7 +43,8 @@
       "source_url": "https://arxiv.org/html/2505.22705v1/framework.png",
       "image": "/assets/img/blog/moe-visual-generation/hidream-dual-single-stream.png",
       "bytes": 123657,
-      "mime": "image/png"
+      "mime": "image/png",
+      "figure_number": 18
     },
     {
       "paper": "hunyuan",
@@ -47,7 +52,8 @@
       "source_url": "https://arxiv.org/html/2509.23951v2/assets/model/model.png",
       "image": "/assets/img/blog/moe-visual-generation/hunyuanimage-multimodal.png",
       "bytes": 187148,
-      "mime": "image/png"
+      "mime": "image/png",
+      "figure_number": 19
     },
     {
       "paper": "hunyuan",
@@ -55,7 +61,8 @@
       "source_url": "https://arxiv.org/html/2509.23951v2/assets/model/attention.png",
       "image": "/assets/img/blog/moe-visual-generation/hunyuanimage-attention-mask.png",
       "bytes": 136118,
-      "mime": "image/png"
+      "mime": "image/png",
+      "figure_number": 20
     },
     {
       "paper": "mot",
@@ -63,7 +70,8 @@
       "source_url": "https://arxiv.org/html/2411.04996v2/MoT-cropped.png",
       "image": "/assets/img/blog/moe-visual-generation/mot-modality-parameters.png",
       "bytes": 825920,
-      "mime": "image/png"
+      "mime": "image/png",
+      "figure_number": 21
     },
     {
       "paper": "symbiotic",
@@ -71,7 +79,8 @@
       "source_url": "https://arxiv.org/html/2604.07753v2/pipeline.png",
       "image": "/assets/img/blog/moe-visual-generation/symbiotic-understanding-generation.png",
       "bytes": 517994,
-      "mime": "image/png"
+      "mime": "image/png",
+      "figure_number": 25
     },
     {
       "paper": "beyond",
@@ -79,7 +88,8 @@
       "source_url": "https://arxiv.org/html/2603.03276v1/expert_type_per_layer_paper.svg",
       "image": "/assets/img/blog/moe-visual-generation/beyond-modality-specialization.svg",
       "bytes": 42891,
-      "mime": "image/svg+xml"
+      "mime": "image/svg+xml",
+      "figure_number": 23
     },
     {
       "paper": "beyond",
@@ -87,7 +97,117 @@
       "source_url": "https://arxiv.org/html/2603.03276v1/timestep_spec_score_histogram_paper.svg",
       "image": "/assets/img/blog/moe-visual-generation/beyond-timestep-specialization.svg",
       "bytes": 40194,
-      "mime": "image/svg+xml"
+      "mime": "image/svg+xml",
+      "figure_number": 24
+    },
+    {
+      "paper": "raphael",
+      "paper_url": "https://arxiv.org/html/2305.18295v2",
+      "figure_id": "S7.F8",
+      "source_url": "https://arxiv.org/html/2305.18295v2/overview_appendix.png",
+      "image": "/assets/img/blog/moe-visual-generation/raphael-time-space.png",
+      "added_on": "2026-11-16",
+      "bytes": 262474,
+      "mime": "image/png",
+      "figure_number": 3
+    },
+    {
+      "paper": "dtr",
+      "paper_url": "https://arxiv.org/html/2310.07138v3",
+      "figure_id": "S4.F2",
+      "source_url": "https://arxiv.org/html/2310.07138v3/routing_mask_vis.png",
+      "image": "/assets/img/blog/moe-visual-generation/dtr-timestep-channel-mask.png",
+      "added_on": "2026-11-16",
+      "bytes": 95149,
+      "mime": "image/png",
+      "figure_number": 4
+    },
+    {
+      "paper": "switch",
+      "paper_url": "https://arxiv.org/html/2403.09176v2",
+      "figure_id": "S4.F1",
+      "source_url": "https://arxiv.org/html/2403.09176v2/switch-dit.svg",
+      "image": "/assets/img/blog/moe-visual-generation/switch-dit-time-gating.svg",
+      "added_on": "2026-11-16",
+      "bytes": 218073,
+      "mime": "image/svg+xml",
+      "figure_number": 5
+    },
+    {
+      "paper": "tsm",
+      "paper_url": "https://arxiv.org/html/2503.07416v1",
+      "figure_id": "S3.F3",
+      "source_url": "https://arxiv.org/html/2503.07416v1/Stage2.svg",
+      "image": "/assets/img/blog/moe-visual-generation/timestep-master-core-context.svg",
+      "added_on": "2026-11-16",
+      "bytes": 315909,
+      "mime": "image/svg+xml",
+      "figure_number": 6
+    },
+    {
+      "paper": "diffpruning",
+      "paper_url": "https://arxiv.org/html/2409.15557v1",
+      "figure_id": "S1.F2",
+      "source_url": "https://arxiv.org/html/2409.15557v1/PruningScheme.png",
+      "image": "/assets/img/blog/moe-visual-generation/diffpruning-routing-agent.png",
+      "added_on": "2026-11-16",
+      "bytes": 441963,
+      "mime": "image/png",
+      "figure_number": 7
+    },
+    {
+      "paper": "alter",
+      "paper_url": "https://arxiv.org/html/2505.21817v1",
+      "figure_id": "S3.F2",
+      "source_url": "https://arxiv.org/html/2505.21817v1/architecture.png",
+      "image": "/assets/img/blog/moe-visual-generation/alter-temporal-pruning.png",
+      "added_on": "2026-11-16",
+      "bytes": 172947,
+      "mime": "image/png",
+      "figure_number": 8
+    },
+    {
+      "paper": "track",
+      "paper_url": "https://arxiv.org/html/2609.30096v1",
+      "figure_id": "S0.F1",
+      "source_url": "https://arxiv.org/html/2609.30096v1/Figures/tfems_method_overview.png",
+      "image": "/assets/img/blog/moe-visual-generation/track-trajectory-routing.png",
+      "added_on": "2026-11-16",
+      "bytes": 31440,
+      "mime": "image/png",
+      "figure_number": 9
+    },
+    {
+      "paper": "mos",
+      "paper_url": "https://arxiv.org/html/2511.12207v2",
+      "figure_id": "S3.F7",
+      "source_url": "https://arxiv.org/html/2511.12207v2/mos_detail.png",
+      "image": "/assets/img/blog/moe-visual-generation/mos-dynamic-text-states.png",
+      "added_on": "2026-11-16",
+      "bytes": 118221,
+      "mime": "image/png",
+      "figure_number": 22
+    },
+    {
+      "paper": "diff-moe",
+      "paper_url": "https://proceedings.mlr.press/v267/cheng25d.html",
+      "figure_id": "Figure 3",
+      "source_url": "https://raw.githubusercontent.com/mlresearch/v267/main/assets/cheng25d/cheng25d.pdf",
+      "source_type": "pdf_crop",
+      "page": 3,
+      "clip": [
+        54.0,
+        65.0,
+        543.0,
+        275.0
+      ],
+      "scale": 3,
+      "image": "/assets/img/blog/moe-visual-generation/diff-moe-time-conditioned-experts.png",
+      "bytes": 121992,
+      "mime": "image/png",
+      "added_on": "2026-11-16",
+      "figure_number": 14
     }
-  ]
+  ],
+  "current_figure_count": 26
 }

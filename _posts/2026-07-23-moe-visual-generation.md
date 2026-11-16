@@ -3,7 +3,7 @@ layout: post
 title: "MoE我们喜欢你（十）：视觉生成与原生多模态中的专家设计"
 series: moe-we-like-you
 series_order: 10
-last_modified_at: 2026-11-15
+last_modified_at: 2026-11-16
 date: 2026-07-23
 tags: [MoE, Diffusion, Video, WorldModel]
 description: "从噪声阶段、视觉 token 与文本/视觉处理路径出发，比较图像和视频 MoE 的专家选择、计算分配、语义引导与跨模态共享。"
@@ -22,17 +22,20 @@ description: "从噪声阶段、视觉 token 与文本/视觉处理路径出发�
 
 | 设计问题 | 可以使用的信号 | 改变什么 | 对应目的 |
 |---|---|---|---|
-| 哪个去噪模型处理当前阶段 | timestep、噪声强度 | 整套 denoiser | 分开训练不同噪声阶段，扩大总容量 |
+| 哪些参数处理当前噪声阶段 | timestep、噪声强度 | 整套 denoiser、block 路径或 LoRA | 扩大阶段容量，调整共享程度 |
+| 各阶段运行多少主干计算 | 时间区间、步骤敏感度 | 子网络深宽、大小模型调用 | 降低完整采样成本 |
 | 每个视觉位置使用哪些 FFN | 当前 hidden state、文本条件、空间与时间上下文 | token–expert 分派 | 在局部内容之间分配容量 |
 | 每个位置分到多少计算 | expert-choice 竞争、容量预测 | 专家调用数量 | 将计算转向需求更高的位置与采样阶段 |
 | 专家应怎样形成分工 | 语义原型、专家分组、模态或任务约束 | 路由训练与候选范围 | 减少无效重复或任务干扰 |
 | 文本、视觉共享哪些参数 | 模态类型、理解/生成路径 | FFN、router 或更完整的 Transformer 参数 | 保留各自处理能力，同时交换语义信息 |
 
-下面沿这些问题讨论具体实现。视觉生成中的 timestep 指扩散或 flow matching 的噪声阶段；视频自身的帧时间是另一条轴，同一个噪声阶段会同时处理许多视频帧。
+下面沿这些问题讨论具体实现。视觉生成中的 timestep 指扩散或 flow matching 的噪声阶段；视频自身的帧时间是另一条轴，同一个噪声阶段会同时处理许多视频帧。固定单调噪声日程下，timestep 与噪声强度相互对应；采样循环中的第几次迭代，则随 solver 和步数配置变化。讨论时间路由时，需要明确使用的是当前噪声状态还是循环序号。
 
 <a id="2-模型级选择按-timestep-换-denoiser"></a>
 
-## 1. 按噪声阶段切换整套 Denoiser
+<a id="1-按噪声阶段切换整套-denoiser"></a>
+
+## 1. 噪声阶段怎样选择参数与执行路径
 
 ### 1.1 Wan2.2：按噪声区间选择模型
 
@@ -92,7 +95,77 @@ else:
 
 这一划分也影响训练。MOVA 为适配 FSDP 的计算图要求，在奇数训练步为整个 batch 采样高噪声区间并更新 high-noise DiT，偶数步采样低噪声区间并更新 low-noise DiT；音频塔和 Bridge 每步都更新。音视频各自的噪声采样还可以解耦，不要求两个模态始终处于相同噪声状态。
 
-模型级切换为不同阶段提供了独立容量，却让同一步的所有视觉位置使用同一套参数。若希望主体、背景或不同运动区域在一轮中获得不同处理，就要把路由放进 denoiser 内部。
+模型级切换为不同阶段保存完整权重。若希望保留更多公共参数，也可以把时间选择下移到 block、通道或 adapter；这些结构还能进一步与逐位置的内容路由组合。
+
+### 1.3 Block 内的时间门控：RAPHAEL、DTR 与 Switch-DiT
+
+[RAPHAEL（NeurIPS 2023）][raphael]在 U-Net 的 Transformer block 中同时设置 space-MoE 和 time-MoE。space-MoE 根据文本概念及其对应的图像区域组织特征，time-MoE 则用时间门控为当前噪声阶段选择专家。相邻 block 可以选择不同的专家，整条采样轨迹因而由多层局部选择共同构成，不需要每个阶段都切换完整 U-Net。
+
+[![RAPHAEL 的空间专家与时间专家](/assets/img/blog/moe-visual-generation/raphael-time-space.png)](/assets/img/blog/moe-visual-generation/raphael-time-space.png)
+
+*图 3：RAPHAEL 在同一个 block 中分别处理文本区域与噪声阶段。右下的时间门控根据 timestep 选择处理视觉特征的专家。*
+
+[Denoising Task Routing（DTR，ICLR 2024）][dtr]从共享程度出发：为各 timestep 预设通道 mask，让相邻时间步的激活窗口重叠，距离更远的任务共享更少通道。它用非均匀的窗口移动速度，为不同噪声阶段安排任务专属通道。这属于单一网络内的通道路径设计，没有增加一组独立 FFN 专家；固定激活比例与随时间变化的通道重叠也应分开理解。
+
+[![DTR 的时间步通道掩码](/assets/img/blog/moe-visual-generation/dtr-timestep-channel-mask.png)](/assets/img/blog/moe-visual-generation/dtr-timestep-channel-mask.png)
+
+*图 4：横轴为通道、纵轴为 timestep。黄色窗口随时间移动，窗口位置与移动速度决定不同任务共享多少通道。*
+
+[Switch-DiT（ECCV 2024）][switch-dit]将时间选择变成可训练门控。第 $\ell$ 个 block 的 gate 只接收 timestep embedding $e_t$，输出专家分数并取 top-$k$；论文的主要配置为三个专家选两个。因此，同一噪声阶段的不同样本和空间位置使用同一组门控权重，而专家仍处理各自的输入特征。
+
+[![Switch-DiT 的时间门控与通道调制](/assets/img/blog/moe-visual-generation/switch-dit-time-gating.svg)](/assets/img/blog/moe-visual-generation/switch-dit-time-gating.svg)
+
+*图 5：Switch-DiT 用 timestep embedding 选择 MLP experts，再将加权输出用于 block 输入的逐元素调制，并保留互补残差路径。*
+
+它比较了直接传递专家输出与通道调制等接法，优选设计用专家输出生成调制值，并通过残差保留另一部分信息。训练还用 diffusion prior loss 对齐 DTR 式的任务关系：相近阶段保留公共路径，冲突阶段允许分开。这样可缓解所有 timestep 挤到相同专家的退化，并稳定 EMA 模型的门控。
+
+这里的“时间专用”来自显式输入 $e_t$ 和路径先验。普通 token router 即使不直接接收 $t$，也可能从已经包含噪声信息的 hidden state 中学到阶段偏好；两种现象不能仅凭最终路由图判成相同机制。
+
+<a id="time-lora"></a>
+
+### 1.4 TimeStep Master：共享主干上的时间 LoRA
+
+[TimeStep Master（TSM，ICML 2025）][tsm]面向扩散模型的参数高效微调。若所有时间步只用同一份 LoRA，它必须同时适应多个噪声分布；为每段复制完整模型，又会扩大存储和训练成本。
+
+TSM 先将时间轴分段，在不同区间分别训练 LoRA experts，再把不同尺度的区间专家组合起来。对于当前 $t$，最细区间对应的 LoRA 作为 core expert，直接加入更新；覆盖这个 $t$ 的较粗区间 LoRA 作为 context experts，其贡献由时间相关的 gate 加权。
+
+[![TimeStep Master 的多尺度 core 与 context LoRA](/assets/img/blog/moe-visual-generation/timestep-master-core-context.svg)](/assets/img/blog/moe-visual-generation/timestep-master-core-context.svg)
+
+*图 6：图中用 8、4、2、1 段四种区间尺度演示组合。当前最细区间的 core expert 不经门控，较粗尺度的 context experts 提供加权补充。*
+
+主干权重因此继续共享，阶段差异由低秩更新表达。core 不经过 gate，保证细粒度阶段适配始终存在；context 则补充更大时间范围的共性。它扩展的是 adapter 的表达能力，不能把其微调收益直接解释成“每轮少执行几个完整 FFN”的加速。
+
+<a id="temporal-budget"></a>
+
+### 1.5 时间区间的计算预算：DiffPruning 与 ALTER
+
+阶段专家也可以具有不同深度或宽度。[DiffPruning（ECCV 2024）][diffpruning]先比较各 timestep 训练目标的梯度相似性，据此划分区间；再为区间专家提供可裁剪的深度和宽度，由 Expert Routing Agent 在计算预算下选择网络配置，最后微调选定的专家。
+
+[![DiffPruning 的专家网络配置选择](/assets/img/blog/moe-visual-generation/diffpruning-routing-agent.png)](/assets/img/blog/moe-visual-generation/diffpruning-routing-agent.png)
+
+*图 7：Expert Routing Agent 选择各阶段专家的宽度与深度配置。推理使用选定的区间模型，而非每个 prompt 重新搜索网络。*
+
+[ALTER（2025）][alter]将层剪枝、时间路由与权重微调放进同一优化过程。其 hypernetwork 同时学习各专家子网络的逐层保留决策，以及 timestep 到这些子网络的选择，减少先剪枝、后微调之间的不一致。
+
+[![ALTER 的时间路由与层剪枝联合优化](/assets/img/blog/moe-visual-generation/alter-temporal-pruning.png)](/assets/img/blog/moe-visual-generation/alter-temporal-pruning.png)
+
+*图 8：ALTER 联合学习时间步的专家选择和各专家的层级剪枝配置，再按当前阶段执行对应子网络。*
+
+两者把阶段分工落实到了执行量：当前阶段既选择参数，也选择需要运行的层或通道。与固定 top-k 的时间专家相比，这类方法需要额外回答各阶段应该分到多少预算，以及剪掉某一步的计算会怎样影响后续采样轨迹。
+
+<a id="track-routing"></a>
+
+### 1.6 TRACK：用轨迹分歧选择大小模型
+
+[TRACK（2026 年 9 月）][track]不重新训练阶段专家，而是在兼容的大、小视频模型之间选择。校准时先用大模型生成参考轨迹，再让两个模型在相同的 latent、timestep、条件与 guidance 下预测，统计各步骤的归一化分歧。给定大模型调用预算，分歧较大的步骤优先保留大模型，其余步骤交给小模型。
+
+[![TRACK 的离线轨迹校准与在线模型切换](/assets/img/blog/moe-visual-generation/track-trajectory-routing.png)](/assets/img/blog/moe-visual-generation/track-trajectory-routing.png)
+
+*图 9：上半部分在参考轨迹上校准分歧并形成切换策略；下半部分推理时每步只执行选中的一个模型。*
+
+这些分歧在校准集上汇总，在线不需要先运行两个模型再决定选谁。它是模型级的阶段预算策略，和在 FFN 内训练 sparse MoE 有不同的部署形态。分歧也只是步骤敏感度的代理：后续混合轨迹会偏离全大模型参考，最终生成质量仍由混合采样实验验证。
+
+这使时间设计包含了几种不同动作：选择整套模型、选择 block 路径、混合低秩更新，或改变当前阶段的实际计算量。接下来再引入空间位置，讨论同一步内的 token 怎样使用专家。
 
 <a id="3-token-级选择在-dit-block-内替换-mlp"></a>
 
@@ -113,7 +186,7 @@ $E_e$ 是 routed FFN，$S_s$ 是 shared FFN。每个位置独立选择 top-$k$ �
 
 [![DiT-MoE 的 shared 与 routed FFN 路径](/assets/img/blog/moe-we-like-you/10-dit-moe-framework.png)](/assets/img/blog/moe-we-like-you/10-dit-moe-framework.png)
 
-*图 3：DiT-MoE 将 FFN 容量拆为共享部分与按 token 选择的专家部分。*
+*图 10：DiT-MoE 将 FFN 容量拆为共享部分与按 token 选择的专家部分。*
 
 论文在 ImageNet 条件生成上扩展到 16B 级别，并分析路由随空间位置、网络深度和噪声阶段的变化。被测模型中，专家对位置和 timestep 的偏好比类别条件更明显，深层路由也更分散。这里的 timestep 信息可以通过主干的条件调制进入 hidden state，router 并不需要一个显式的“阶段专家编号”。
 
@@ -121,7 +194,7 @@ $E_e$ 是 routed FFN，$S_s$ 是 shared FFN。每个位置独立选择 top-$k$ �
 
 [![LingBot-Video 的多模态 attention 与 sparse MoE](/assets/img/blog/moe-we-like-you/10-lingbot-video-architecture.png)](/assets/img/blog/moe-we-like-you/10-lingbot-video-architecture.png)
 
-*图 4：LingBot-Video 的 single-stream diffusion Transformer 在 attention 之后执行 shared 与 top-k routed experts。*
+*图 11：LingBot-Video 的 single-stream diffusion Transformer 在 attention 之后执行 shared 与 top-k routed experts。*
 
 它支持 T2I、T2V、TI2V，训练中加入 70,000+ 小时具身数据，MoE 版本还配有 refiner。物理合理性与任务完成率的结果对应这一整套训练和生成流程；专家分工本身应根据路由与消融分析。refiner 的额外 forward 也属于最终采样时间。
 
@@ -133,7 +206,7 @@ $E_e$ 是 routed FFN，$S_s$ 是 shared FFN。每个位置独立选择 top-$k$ �
 
 [![EC-DiT 的专家选位置与异构计算分配](/assets/img/blog/moe-visual-generation/ecdit-expert-choice.png)](/assets/img/blog/moe-visual-generation/ecdit-expert-choice.png)
 
-*图 5：EC-DiT 中多个专家可以共同选择细节较多的位置，部分背景位置则不进入 routed expert 分支。*
+*图 12：EC-DiT 中多个专家可以共同选择细节较多的位置，部分背景位置则不进入 routed expert 分支。*
 
 用四个位置、两个专家、每专家容量为二的示例：专家 A 选位置 1、2，专家 B 选位置 2、3。四次调用中，位置 2 得到两次，位置 1、3 各一次，位置 4 为零。容量相同，分配到各位置的计算不同；未被选择的位置仍保留 Transformer 的其它路径。
 
@@ -145,11 +218,25 @@ EC-DiT 将文本条件和 timestep 信息融入视觉表示，再据此选择专
 
 [![DiffMoE 的训练全局池与推理容量预测](/assets/img/blog/moe-visual-generation/diffmoe-capacity-predictor.png)](/assets/img/blog/moe-visual-generation/diffmoe-capacity-predictor.png)
 
-*图 6：左侧按全局 token pool 进行专家选择，同时训练 capacity predictor；右侧用预测值与专家阈值决定推理中的选择。*
+*图 13：左侧按全局 token pool 进行专家选择，同时训练 capacity predictor；右侧用预测值与专家阈值决定推理中的选择。*
 
 推理时的样本组合未必复现训练时的全局竞争。DiffMoE 用训练路由产生的选择标签，通过二元交叉熵监督一个 capacity predictor；推理时根据预测输出和每专家阈值，确定当前输入需要的 token–expert 项。因此不同样本、采样阶段可以使用不同的实际容量，阈值也提供计算量与生成质量的调节接口。
 
 这三类分配需要分开理解：固定 token-choice 保证每位置 top-k，expert-choice 固定每专家接收量，DiffMoE 则进一步学习推理时的动态选择。专家负载更整齐与每个位置计算相同，是两种不同约束。
+
+<a id="diff-moe-conditioning"></a>
+
+### 2.4 Diff-MoE：让专家自己适应时间条件
+
+前面的 DiffMoE 调整 token–expert 选择；[Diff-MoE（ICML 2025）][diff-moe-time]则给每个专家增加独立的 timestep conditioning。两篇名称接近，改动位置却不同：Diff-MoE 保留空间 token 路由，同时让被选专家通过专属条件映射适应当前噪声阶段。
+
+[![Diff-MoE 的专家专属时间条件与全局特征调制](/assets/img/blog/moe-visual-generation/diff-moe-time-conditioned-experts.png)](/assets/img/blog/moe-visual-generation/diff-moe-time-conditioned-experts.png)
+
+*图 14：router 分配空间 token，专家内的独立时间条件路径负责阶段适应；全局上下文还参与通道特征重标定。*
+
+若把普通专家写成 $E_e(h)$，这里更接近 $E_e(h;t)$：同一专家在两个噪声阶段被选中，仍能对输入执行不同的条件变换。论文用 expert-specific 条件路径调制专家，并以空间池化得到的全局表示重标定特征通道；新增映射再通过低秩分解控制参数开销。
+
+作者希望由专家内部承担时间适应，让 router 更专注于空间特征分工。时间调制仍可能间接改变后续路由，但这与 Switch-DiT 直接用 $g_\ell(e_t)$ 选择专家不同。因此，分析时既要统计专家 ID，也要检查同一专家内部的条件计算，单看激活频率会遗漏后一类变化。
 
 ## 3. 视觉专家需要显式的语义分工吗
 
@@ -161,7 +248,7 @@ EC-DiT 将文本条件和 timestep 信息融入视觉表示，再据此选择专
 
 [![SplitMoE 的语义原型监督与两组专家](/assets/img/blog/moe-visual-generation/splitmoe-semantic-generic.png)](/assets/img/blog/moe-visual-generation/splitmoe-semantic-generic.png)
 
-*图 7：训练时由干净 VAE 特征与原型构造语义路由目标；带噪 token 的语义 router 学习这些目标，通用分支负责其余表示需求。*
+*图 15：训练时由干净 VAE 特征与原型构造语义路由目标；带噪 token 的语义 router 学习这些目标，通用分支负责其余表示需求。*
 
 训练中，干净视频的 VAE 特征与可学习原型计算相似度，形成语义专家的软目标，带噪状态的 router 用对齐损失学习这个分布。原型的 pull 项让它们覆盖当前与近期 VAE 特征，push 项避免不同原型挤在一起。干净特征承担训练监督，生成时路由仍来自当前带噪 hidden state。
 
@@ -173,7 +260,7 @@ EC-DiT 将文本条件和 timestep 信息融入视觉表示，再据此选择专
 
 [![PixelMoE 的普通 token-choice MoE 与分辨率阶段](/assets/img/blog/moe-visual-generation/pixelmoe-token-choice.png)](/assets/img/blog/moe-visual-generation/pixelmoe-token-choice.png)
 
-*图 8：右侧 MoE 使用固定 top-k 与共享专家；左侧先低分辨率生成整体结构，再在全分辨率继续细化，两阶段复用主干。*
+*图 16：右侧 MoE 使用固定 top-k 与共享专家；左侧先低分辨率生成整体结构，再在全分辨率继续细化，两阶段复用主干。*
 
 PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分辨率 token，后期再增加空间分辨率。这会改变位置总数；固定 top-k 路由则决定每个位置调用哪些专家。二者一起影响计算，但不是同一个机制。
 
@@ -189,7 +276,7 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 
 [![MAGI-2 Multi-Head LatentMoE](/assets/img/blog/moe-we-like-you/10-magi-2-multi-head-latentmoe.png)](/assets/img/blog/moe-we-like-you/10-magi-2-multi-head-latentmoe.png)
 
-*图 9：MAGI-2 将完整 hidden 拆成多个 latent heads，各 head 独立路由到 head-local experts。*
+*图 17：MAGI-2 将完整 hidden 拆成多个 latent heads，各 head 独立路由到 head-local experts。*
 
 这条路来自 [Multi-Head LatentMoE and Head Parallel][latentmoe-hp] 的想法：把完整 hidden 拆成多个 latent heads，让不同子空间独立路由。通信也随之变化。普通 EP 的通信量随 top-k 增长，而且每个 batch 的 send/recv shape 由 routing 结果决定；Head Parallel 先按 head 做固定形状分发，再在 head owner 内部完成 routing 和 expert compute。跨设备通信边界更规则，动态 routing 的不规则性被留在本地。
 
@@ -205,7 +292,7 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 
 [![HiDream-I1 的双流、单流和 MoE 结构](/assets/img/blog/moe-visual-generation/hidream-dual-single-stream.png)](/assets/img/blog/moe-visual-generation/hidream-dual-single-stream.png)
 
-*图 10：双流 block 中，文本使用 SwiGLU FFN，视觉使用 MoE；单流 block 在拼接序列上执行 MoE。底部展开 routed 与 shared expert 的计算。*
+*图 18：双流 block 中，文本使用 SwiGLU FFN，视觉使用 MoE；单流 block 在拼接序列上执行 MoE。底部展开 routed 与 shared expert 的计算。*
 
 [官方实现][hidream-code]的双流 `HiDreamImageTransformerBlock` 中，`ff_i` 是 MoE，`ff_t` 是普通 SwiGLU。两种 token 先用各自的 Q/K/V 投影，拼接后做 attention，再回到各自的 FFN。文本可以影响视觉 hidden state，进而影响视觉路由，但文本本身在这个阶段不经过图像的 routed experts。
 
@@ -217,7 +304,7 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 
 [![HunyuanImage-3.0 的统一文本与视觉主干](/assets/img/blog/moe-visual-generation/hunyuanimage-multimodal.png)](/assets/img/blog/moe-visual-generation/hunyuanimage-multimodal.png)
 
-*图 11：文本与连续视觉表示进入统一 MoE 主干，再分别用于语言和视觉预测。*
+*图 19：文本与连续视觉表示进入统一 MoE 主干，再分别用于语言和视觉预测。*
 
 文本使用离散 tokenizer。生成图像的带噪 VAE 特征经 timestep-modulated projector 映射到主干宽度，timestep embedding 也进入序列；条件图像则结合 VAE 与 vision encoder 的特征，让语义信息和可生成的视觉表示一起参与上下文。
 
@@ -225,7 +312,7 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 
 [![HunyuanImage-3.0 的广义因果 attention mask](/assets/img/blog/moe-visual-generation/hunyuanimage-attention-mask.png)](/assets/img/blog/moe-visual-generation/hunyuanimage-attention-mask.png)
 
-*图 12：文本保持因果可见性，图像段内部使用双向可见性。多张带噪生成图像共同训练时，还会屏蔽其作为后续上下文的连接。*
+*图 20：文本保持因果可见性，图像段内部使用双向可见性。多张带噪生成图像共同训练时，还会屏蔽其作为后续上下文的连接。*
 
 报告统计了 1,000 个 prompt 的生成路由：文本与图像激活专家的分布随深度逐渐拉开。这说明该配置中出现了模态偏好；候选专家并没有因此被定义成固定的“文本一半、图像一半”。模态专门化是训练后观察到的分布，与显式按模态限制专家资格是两种设计。
 
@@ -235,9 +322,25 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 
 [![MoT 的模态专用参数与全局 attention](/assets/img/blog/moe-visual-generation/mot-modality-parameters.png)](/assets/img/blog/moe-visual-generation/mot-modality-parameters.png)
 
-*图 13：不同模态使用各自的 Transformer 参数，但 attention 仍跨模态计算。*
+*图 21：不同模态使用各自的 Transformer 参数，但 attention 仍跨模态计算。*
 
 因此，参数分开不等于信息隔离。HiDream 的双流和单流安排、HunyuanImage 的共享 MoE，以及 MoT 的固定模态分支，分别选择了不同的共享位置。比较它们时，问题应落实到哪些变换需要专用容量、语义交互发生在哪里，以及训练目标是否争用同一组参数。
+
+<a id="mos-state-routing"></a>
+
+### 5.4 MoS：去噪阶段决定读取哪些文本层
+
+文本条件与噪声阶段还可以在特征融合处结合。[Mixture of States（MoS，CVPR 2026）][mos]保留理解塔各层的 hidden states，让生成塔在每轮去噪中重新选择需要的条件表示。这里被路由的是特征来源，而非一组 FFN 参数专家。
+
+理解塔先对 prompt 执行一次前向，得到不同深度的文本表示。轻量 router 接收文本、当前带噪 latent 和 timestep，经两个 Transformer blocks 处理后，为每个文本 token 预测一张“理解层 × 生成层”的分数矩阵。对每个生成层，它沿理解层维度取 top-k，再加权聚合对应文本 token 的隐藏状态。
+
+[![MoS 的带噪状态条件与逐 token 跨层路由](/assets/img/blog/moe-visual-generation/mos-dynamic-text-states.png)](/assets/img/blog/moe-visual-generation/mos-dynamic-text-states.png)
+
+*图 22：理解塔的多层状态可重复使用，router 根据当前视觉状态和 timestep，决定各生成层接收哪些文本层的表示。*
+
+聚合后的文本序列与该生成层的视觉 token 拼接，参与联合计算。下一个去噪步仍可复用理解塔已经算好的状态，但重新计算路由，从而改变条件信息的来源和权重。训练时还用少量随机选层鼓励探索，推理时使用确定的 top-k。
+
+论文比较了只输入 prompt、加入 latent、再加入 timestep 的配置，完整状态方案在被测设置中最好。它提供了一个可检验的问题：生成不同噪声阶段是否需要不同层次的文本信息，以及相同时间步的不同内容是否应该共享融合方式。它改变的是每个生成层接收的条件表示；FFN 内是否使用 MoE，仍是另一项架构选择。
 
 ## 6. 视觉理解与生成应该共用哪些专家
 
@@ -247,13 +350,13 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 
 [![统一多模态预训练中逐层形成的专家模态偏好](/assets/img/blog/moe-visual-generation/beyond-modality-specialization.svg)](/assets/img/blog/moe-visual-generation/beyond-modality-specialization.svg)
 
-*图 14：被测模型中，浅层以文本偏好的专家为主，深层视觉和多模态专家的比例增加。*
+*图 23：被测模型中，浅层以文本偏好的专家为主，深层视觉和多模态专家的比例增加。*
 
 论文分析了一个 13.5B total、1.5B active、256 experts 的模型，观察到明显的文本/视觉专家分工；同一模型的视觉理解与生成却使用高度重叠的专家，各层选择率相关系数达到 $r\geq0.90$。视觉专家跨十个 timestep 区间的选择率变化也较小，变异系数集中在约 0.15。
 
 [![同一模型中视觉专家跨噪声阶段的选择率变化](/assets/img/blog/moe-visual-generation/beyond-timestep-specialization.svg)](/assets/img/blog/moe-visual-generation/beyond-timestep-specialization.svg)
 
-*图 15：跨噪声阶段的选择率变异较小。这里统计的是专家选择频率，不表示逐 token 的专家 ID 完全不变。*
+*图 24：跨噪声阶段的选择率变异较小。这里统计的是专家选择频率，不表示逐 token 的专家 ID 完全不变。*
 
 这个结果与显式阶段专家、PixelMoE 中的阶段偏好形成对照：模态分工、理解/生成分工和噪声阶段分工，需要各自分析，不能由其中一种直接推出另外两种。
 
@@ -263,7 +366,7 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 
 [![Symbiotic-MoE 的理解组、生成组与共享专家桥梁](/assets/img/blog/moe-visual-generation/symbiotic-understanding-generation.png)](/assets/img/blog/moe-visual-generation/symbiotic-understanding-generation.png)
 
-*图 16：专用专家分担理解与生成的不同需求，共享专家接受两类数据的训练，保留共用的语义变换。*
+*图 25：专用专家分担理解与生成的不同需求，共享专家接受两类数据的训练，保留共用的语义变换。*
 
 它还采用渐进训练、差异化学习率和早期梯度屏蔽，先保护预训练路径，再逐步引入生成学习。
 
@@ -279,7 +382,7 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 
 [![Worldscape-MoE architecture](/assets/img/blog/moe-we-like-you/10-worldscape-moe-architecture.png)](/assets/img/blog/moe-we-like-you/10-worldscape-moe-architecture.png)
 
-*图 17：Worldscape-MoE 用 shared expert 和 control-specific experts 吸收多种控制接口。*
+*图 26：Worldscape-MoE 用 shared expert 和 control-specific experts 吸收多种控制接口。*
 
 在这里，已知的 control mask 先限制候选分支，router 再决定混合权重。它与完全开放的 patch-token top-k 不同，也与按 timestep 切换整套模型不同。专家分工的接口含义来自控制信号约束。
 
@@ -287,7 +390,7 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 
 <a id="7-专家选择粒度对应的质量与性能指标"></a>
 
-图像和视频 MoE 的设计由此包含几种独立选择：按噪声阶段增加模型容量，按视觉位置分配专家与调用数，用语义或任务约束组织分工，再选择文本、视觉和控制路径之间共享哪些参数。选出的专家最终还要落到矩阵计算与数据传输上；完整采样时间包含这些开销，也包含 attention、VAE、CFG 和可能的 refiner。较小的 active 参数量能否转成更快的生成，取决于被减少的工作是否位于实际耗时的环节。
+图像和视频 MoE 的设计由此包含几种独立选择：按噪声阶段选择参数与计算预算，按视觉位置分配专家与调用数，用语义或任务约束组织分工，再选择文本、视觉和控制路径之间共享哪些参数。选出的专家最终还要落到矩阵计算与数据传输上；完整采样时间包含这些开销，也包含 attention、VAE、CFG 和可能的 refiner。较小的 active 参数量能否转成更快的生成，取决于被减少的工作是否位于实际耗时的环节。
 
 ## 系列导航
 
@@ -315,6 +418,16 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 - [Mixture-of-Transformers: A Sparse and Scalable Architecture for Multi-Modal Foundation Models][mot]
 - [Beyond Language Modeling: An Exploration of Multimodal Pretraining][beyond]
 - [Symbiotic-MoE: Unlocking the Synergy between Generation and Understanding][symbiotic]
+
+- [RAPHAEL: Text-to-Image Generation via Large Mixture of Diffusion Paths][raphael]
+- [Denoising Task Routing for Diffusion Models][dtr]
+- [Switch Diffusion Transformer: Synergizing Denoising Tasks with Sparse Mixture-of-Experts][switch-dit]
+- [TimeStep Master: Asymmetrical Mixture of Timestep LoRA Experts for Versatile and Efficient Diffusion Models in Vision][tsm]
+- [Mixture of Efficient Diffusion Experts Through Automatic Interval and Sub-Network Selection][diffpruning]
+- [ALTER: All-in-One Layer Pruning and Temporal Expert Routing for Efficient Diffusion Generation][alter]
+- [Accelerating Video Diffusion via Training-Free Trajectory Routing][track]
+- [Diff-MoE: Diffusion Transformer with Time-Aware and Space-Adaptive Experts][diff-moe-time]
+- [Mixture of States: Routing Token-Level Dynamics for Multimodal Generation][mos]
 
 [ediffi]: https://arxiv.org/abs/2211.01324
 [ernie-vilg]: https://arxiv.org/abs/2210.15257
@@ -344,3 +457,13 @@ PixelMoE 同时使用分层 flow matching，让早期采样处理较少的低分
 [mot]: https://arxiv.org/html/2411.04996v2
 [beyond]: https://arxiv.org/html/2603.03276v1
 [symbiotic]: https://arxiv.org/html/2604.07753v2
+
+[raphael]: https://arxiv.org/html/2305.18295v2
+[dtr]: https://arxiv.org/html/2310.07138v3
+[switch-dit]: https://arxiv.org/html/2403.09176v2
+[tsm]: https://arxiv.org/html/2503.07416v1
+[diffpruning]: https://arxiv.org/html/2409.15557v1
+[alter]: https://arxiv.org/html/2505.21817v1
+[track]: https://arxiv.org/html/2609.30096v1
+[diff-moe-time]: https://proceedings.mlr.press/v267/cheng25d.html
+[mos]: https://arxiv.org/html/2511.12207v2
