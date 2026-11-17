@@ -3101,6 +3101,12 @@
     "description": "Expert Parallelism Load Balancer. Contribute to deepseek-ai/EPLB development by creating an account on GitHub.",
     "fetched_at": 1793212629
   },
+  "https://github.com/facebookresearch/DiT/blob/main/models.py": {
+    "checked_at": 1794913600,
+    "title": "DiT/models.py at main · facebookresearch/DiT",
+    "description": "Official PyTorch Implementation of \"Scalable Diffusion Models with Transformers\" - facebookresearch/DiT",
+    "fetched_at": 1794913600
+  },
   "https://github.com/google/JetStream": {
     "checked_at": 1793212629,
     "title": "GitHub - AI-Hypercomputer/JetStream: JetStream is a throughput and memory optimized engine for LLM inference on XLA devices, starting with TPUs (and GPUs in future -- PRs welcome).",
@@ -3580,6 +3586,12 @@
     "title": "ForestPrune: High-ratio Visual Token Compression for Video Multimodal Large Language Models Via Spatial-Temporal Forest Modeling",
     "description": "",
     "fetched_at": 1793212629
+  },
+  "https://openaccess.thecvf.com/content/ICCV2023/html/Peebles_Scalable_Diffusion_Models_with_Transformers_ICCV_2023_paper.html": {
+    "checked_at": 1794913600,
+    "title": "Scalable Diffusion Models with Transformers",
+    "description": "",
+    "fetched_at": 1794913600
   },
   "https://openreview.net/forum?id=JEYWpFGzvn": {
     "checked_at": 1793212629,
