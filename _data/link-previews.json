@@ -1835,6 +1835,12 @@
     "description": "Diffusion models have achieved remarkable success across a range of generative tasks. Recent efforts to enhance diffusion model architectures have reimagined them as a form of multi-task learning, where each task corresponds to a denoising task at a specific noise level. While these efforts have focused on parameter isolation and task routing, they fall short of capturing detailed inter-task relationships and risk losing semantic information, respectively. In response, we introduce Switch Diffusion Transformer (Switch-DiT), which establishes inter-task relationships between conflicting tasks…",
     "fetched_at": 1794827952
   },
+  "https://arxiv.org/html/2404.19737v1": {
+    "checked_at": 1794914364,
+    "title": "Better & Faster Large Language Models via Multi-token Prediction",
+    "description": "Large language models such as GPT and Llama are trained with a next-token prediction loss. In this work, we suggest that training language models to predict multiple future tokens at once results in higher sample efficiency. More specifically, at each position in the training corpus, we ask the model to predict the following n tokens using n independent output heads, operating on top of a shared model trunk. Considering multi-token prediction as an auxiliary training task, we measure improved downstream capabilities with no overhead in training time for both code and natural language models.…",
+    "fetched_at": 1794914364
+  },
   "https://arxiv.org/html/2405.05254v2": {
     "checked_at": 1793252215,
     "title": "You Only Cache Once: Decoder-Decoder Architectures for Language Models",
@@ -2520,7 +2526,7 @@
     "fetched_at": 1793212629
   },
   "https://cdrdv2-public.intel.com/817486/gaudi-3-ai-accelerator-white-paper.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://cloud.google.com/tpu/docs/v5e": {
     "checked_at": 1793212629,
@@ -2529,7 +2535,7 @@
     "fetched_at": 1793212629
   },
   "https://crd.lbl.gov/assets/pubs_presos/parlab08-roofline-talk.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://cursor.com/blog/mixture-of-kittens": {
     "checked_at": 1793212629,
@@ -2604,10 +2610,10 @@
     "fetched_at": 1793212629
   },
   "https://dl.acm.org/doi/10.1145/3789240.3829201": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://dl.acm.org/doi/pdf/10.1145/3567955.3567959": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://docs.habana.ai/en/latest/PyTorch/PyTorch_FP8_Training/index.html": {
     "checked_at": 1793212629,
@@ -2640,16 +2646,16 @@
     "fetched_at": 1793212629
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/fp8_primer.html": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/features/low_precision_training/nvfp4/nvfp4.html": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/index.html": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://docs.nvidia.com/dgx-superpod-reference-architecture-dgx-h100.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://docs.nvidia.com/megatron-core/developer-guide/0.16.1/apidocs/core/core.transformer.moe.experts.html": {
     "checked_at": 1793212629,
@@ -2760,7 +2766,7 @@
     "fetched_at": 1794672892
   },
   "https://github.com/Introspective-Diffusion/I-DLM/tree/main/sglang": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://github.com/MINT-SJTU/Evo-1": {
     "checked_at": 1793212629,
@@ -3069,7 +3075,7 @@
     "fetched_at": 1793212629
   },
   "https://github.com/deepseek-ai/DeepEP/blob/main/docs/legacy.md": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://github.com/deepseek-ai/DeepSeek-OCR": {
     "checked_at": 1793212629,
@@ -3120,7 +3126,7 @@
     "fetched_at": 1793252215
   },
   "https://github.com/inclusionAI/LLaDA2.X/blob/main/LLaDA2_2_tech_report.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://github.com/inclusionAI/Ling-V2": {
     "checked_at": 1793212629,
@@ -3135,10 +3141,10 @@
     "fetched_at": 1793252215
   },
   "https://github.com/lil-lab/sps/blob/main/figures/attention_masks.png": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://github.com/lil-lab/sps/blob/main/figures/gradient_params_fp.png": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://github.com/meituan-longcat": {
     "checked_at": 1793212629,
@@ -3231,7 +3237,7 @@
     "fetched_at": 1793212629
   },
   "https://hc34.hotchips.org/assets/program/conference/day2/Network%20and%20Switches/NVSwitch%20HotChips%202022%20r5.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://horace.io/brrr_intro.html": {
     "checked_at": 1793212629,
@@ -3323,6 +3329,12 @@
     "description": "Text Generation model with 684B parameters, built with Transformers. Download, explore files and run it on Hugging Face.",
     "fetched_at": 1793212629
   },
+  "https://huggingface.co/deepseek-ai/DeepSeek-V3/blob/main/config.json": {
+    "checked_at": 1794914364,
+    "title": "config.json · deepseek-ai/DeepSeek-V3 at main",
+    "description": "We’re on a journey to advance and democratize artificial intelligence through open source and open science.",
+    "fetched_at": 1794914364
+  },
   "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro": {
     "checked_at": 1793212629,
     "title": "deepseek-ai/DeepSeek-V4-Pro · Hugging Face",
@@ -3336,7 +3348,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/resolve/main/DeepSeek_V4.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://huggingface.co/docs/accelerate/usage_guides/gaudi": {
     "checked_at": 1793212629,
@@ -3411,7 +3423,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/moonshotai/Kimi-K3/raw/main/config.json": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://huggingface.co/nvidia": {
     "checked_at": 1793212629,
@@ -3448,6 +3460,12 @@
     "title": "zai-org (Z.ai)",
     "description": "AGI, LLMs, ChatGLM",
     "fetched_at": 1793212629
+  },
+  "https://huggingface.co/zai-org/GLM-5/blob/main/config.json": {
+    "checked_at": 1794914364,
+    "title": "config.json · zai-org/GLM-5 at main",
+    "description": "We’re on a journey to advance and democratize artificial intelligence through open source and open science.",
+    "fetched_at": 1794914364
   },
   "https://hy.tencent.com/hy3-preview": {
     "checked_at": 1793212629,
@@ -3546,10 +3564,10 @@
     "fetched_at": 1793212629
   },
   "https://microsoft.ai/pdf/mai-thinking-1.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://mimo.xiaomi.com/blog/mimo-tilert-1000tps": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://mimo.xiaomi.com/mimo-v2-5": {
     "checked_at": 1793212629,
@@ -3564,10 +3582,10 @@
     "fetched_at": 1793212629
   },
   "https://moonshotai.github.io/Kimi-K2.5/": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://moonshotai.github.io/Kimi-K2.6/": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-gemma-4": {
     "checked_at": 1793212629,
@@ -3606,7 +3624,7 @@
     "fetched_at": 1793212629
   },
   "https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyworook.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://platform.kimi.ai/docs/guide/kimi-k3-quickstart": {
     "checked_at": 1793212629,
@@ -3675,31 +3693,31 @@
     "fetched_at": 1793212629
   },
   "https://qwenlm.github.io/blog/qwen3-vl/": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://raw.githubusercontent.com/QwenLM/Qwen3.8-Flash-Next/main/tech_report.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://raw.githubusercontent.com/XiaomiMiMo/MiMo/main/MiMo-7B-Technical-Report.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://raw.githubusercontent.com/jianc99/jianc99.github.io/master/images/dflash_system.png": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Flash-Prover/main/LongCat_Flash_Prover_Technical_Report.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Next/main/tech_report.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-3.5-Flash/main/step_3p5_flash_tech_report.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-Audio-R1/main/Step-Audio-R1.5.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step3/main/Step3-Sys-Tech-Report.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://research.nvidia.com/labs/cosmos-lab/infotok/": {
     "checked_at": 1793212629,
@@ -3714,7 +3732,7 @@
     "fetched_at": 1793212629
   },
   "https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://resources.nvidia.com/en-us-tensor-core": {
     "checked_at": 1793212629,
@@ -3741,7 +3759,7 @@
     "fetched_at": 1793212629
   },
   "https://sglang.readthedocs.io/": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://siboehm.com/articles/22/CUDA-MMM": {
     "checked_at": 1793212629,
@@ -3750,22 +3768,22 @@
     "fetched_at": 1793212629
   },
   "https://spaces.ac.cn/archives/10592": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://spaces.ac.cn/archives/10739": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://spaces.ac.cn/archives/11033": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://spaces.ac.cn/archives/11416": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://spaces.ac.cn/archives/7546": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://spaces.ac.cn/tag/attention/": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://sylvan820.github.io/D-MTP/": {
     "checked_at": 1793961809,
@@ -3900,12 +3918,12 @@
     "fetched_at": 1793252215
   },
   "https://z.ai/blog/glm-5.2": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://zhuanlan.zhihu.com/p/2013649391051896797": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   },
   "https://zhuanlan.zhihu.com/p/2067703296500954047": {
-    "checked_at": 1794827952
+    "checked_at": 1794914364
   }
 }
