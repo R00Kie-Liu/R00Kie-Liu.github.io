@@ -14,7 +14,7 @@ description: "沿多步预训练与投机草拟两条脉络，梳理 DeepSeek-V3
 
 这两个问题有交集，也各自发展出了不少工作。相似的辅助头可以服务于不同目标，多 token 输出也可以来自不同的推理过程。下面按它们解决的问题组织这段脉络。
 
-主体资料整理于 **2026 年 10 月 23 日**；**2026 年 11 月 6 日**补入 Soft-MTP 与 DMTP 的讨论。 **2026 年 11 月 17 日**补入辅助预测与 NTP 的训练干扰、AR–diffusion 协同及生成与验证对齐。
+主体资料整理于 **2026 年 10 月 23 日**；**2026 年 11 月 6 日**补入 Soft-MTP 与 DMTP 的讨论。 **2026 年 11 月 17 日**补入辅助预测与 NTP 的训练干扰、AR–diffusion 协同及生成与验证对齐；展开 Meta MTP、DeepSeek-V3 与 GLM-5 的结构、输入输出及训推时序。
 
 ## 1. 两个起点：多步预测用于解码，还是用于预训练
 
@@ -24,54 +24,118 @@ description: "沿多步预训练与投机草拟两条脉络，梳理 DeepSeek-V3
 
 2024 年 1 月的 [Medusa](https://arxiv.org/abs/2401.10774) 在主干上附加多个 decoding heads，提出不同未来位置的候选，再用树状结构批量验证。它提供冻结主干和联合微调两类方案，主要评价解码加速；从预训练开始加入未来监督，是接下来另一条线的问题。
 
-### 1.2 Meta MTP：把未来预测放进预训练目标
+### 1.2 Meta MTP：从一个预测头分成多个分支
 
-普通 next-token prediction（NTP）在位置 $t$ 上，根据前缀 $x_{\leq t}$ 预测 $x_{t+1}$。早期 MTP 最直接的扩展，是让同一个主干表示 $h_t$ 接多个预测头：
+普通 NTP 模型可以拆成 embedding、Transformer 主干和词表输出层。为了说明分支接在哪里，把最后一层 Transformer 单独记为 $F_1$，其余层记为 $F_{\mathrm{trunk}}$：
+
+```text
+输入 x≤t → embedding → shared trunk → F₁ → 词表投影 W → 预测 xₜ₊₁
+```
+
+[Meta MTP](https://arxiv.org/abs/2404.19737) 在这个共同的 trunk 后接多个分支。以预测四个位置为例，$F_1,\ldots,F_4$ 各有一层独立参数的 causal Transformer，最后复用同一个词表投影 $W$：
+
+```text
+                                   ┌→ F₁ → W → q₁，标签 xₜ₊₁
+输入 x≤t → embedding → shared trunk ├→ F₂ → W → q₂，标签 xₜ₊₂
+                                   ├→ F₃ → W → q₃，标签 xₜ₊₃
+                                   └→ F₄ → W → q₄，标签 xₜ₊₄
+```
+
+所以这里的“独立 head”包括独立的 Transformer 计算，并不只是四个 linear classifier。各分支接收同一段 trunk hidden，输出各自未来位置上的词表分布；$F_2$ 不读取 $F_1$ 选出的 token，也不读取它的输出 hidden。原论文为了保持总参数量一致，增加 $n-1$ 个分支层时，会相应减少 trunk 的层数；这与在完整 checkpoint 后直接加层的参数预算不同。[结构与参数对照](https://arxiv.org/html/2404.19737v1#S2)
+
+普通 next-token prediction（NTP）根据前缀 $x_{\leq t}$ 预测 $x_{t+1}$。令 $h_t$ 表示共同 trunk 的位置 $t$ 表示，把每个分支的 causal 计算记入 $q_k$，训练目标写成：
 
 $$
 \mathcal L_{\mathrm{MTP}}
 =-\sum_t\sum_{k=1}^{n}\lambda_k
-\log q_k(x_{t+k}\mid h_t).
+\log q_k(x_{t+k}\mid h_{\leq t}).
 $$
 
-第一个头预测下一 token，第二个头预测下下个 token，以此类推。这里的 $n$ 包括普通 next-token 位置。
-
-[Meta 的 Better & Faster Large Language Models via Multi-token Prediction](https://arxiv.org/abs/2404.19737) 是这条路线的重要起点：共享 trunk、独立未来预测头，从预训练阶段引入多位置监督。原论文主方案的每个 head 包含额外的 Transformer 层，附录另有线性头变体。它报告了代码等生成任务上的收益，也展示了将预测头用于推理加速的可能性。
+这里的 $n$ 包括普通 next-token 位置。一次训练 forward 中，四组标签分别相对输入移位 1、2、3、4 个 token，所有有效位置都参与监督；不需要先采样出第一个 token，才能计算第二个分支的 loss。
 
 ![Meta MTP 的共享 trunk 与多位置预测头](https://arxiv.org/html/2404.19737v1/img/main_fig_col.png)
 
 *图 1：Meta MTP 的总览原图（论文 Figure 1）。上半部分是共享 trunk 与独立未来预测头，下半部分是论文的 MBPP 实验。结构图说明多个 offset 如何得到监督；图中的能力结果对应原论文实验配置。来源：[Gloeckle et al., 2024](https://arxiv.org/abs/2404.19737)。*
 
-多出来的目标会约束 $h_t$：这个表示既要支持当前预测，也要对后面的序列有用。独立头的分布乘积可以定义一个联合分布，但没有显式建模未来 token 之间的条件依赖。
+从数据依赖上，几个分支可以并行计算。实际训练为了降低 logits 的显存峰值，论文采用逐个 head 做 forward/backward、在 trunk 处累积梯度的调度。因此，“结构上可并行”和“实现中同时执行所有 head”是两回事。[显存优化](https://arxiv.org/html/2404.19737v1#S2)
+
+推理时可以只保留 $F_1$ 做普通 NTP，也可以同时调用多个分支，提出不同位置的候选，再交给 NTP 路径验证。候选并行产生，不代表可以直接整块提交。
 
 举个例子，前缀是 `def`。未来可能是不同函数名、括号、参数。几个独立头分别猜后续位置，很可能各自给出了合理答案，拼在一起却不对应同一条 continuation。问题在于，第二个头没有显式看到第一个头实际选了什么。
 
-两条线在这里已经分开了。Medusa 主要问额外预测头能否减少解码轮数，Meta MTP 还问未来监督能否改善 backbone。后面的因果预测、参数共享和递归训练，都会同时影响这两个目标，但影响未必同向。
+Medusa 主要问额外预测头能否减少解码轮数，Meta MTP 还问未来监督能否改善 backbone。接下来的 DeepSeek-V3 则把前一步 token 接入后一步预测。
 
 ## 2. EAGLE 与 DeepSeek-V3：两种训练制度下的因果预测
 
 并行多头的一个限制，是后续预测没有显式依赖前面实际选出的 token。2024 年 1 月的原始 [EAGLE](https://arxiv.org/abs/2401.15077) 从草拟一侧处理这个问题：在 feature 层面自回归，并加入向前错开一步的 token 序列，减少未来 feature 的不确定性。
 
-到了 2024 年底，DeepSeek-V3 将因果多步预测作为联合预训练目标。二者的输入结构和递归思路有联系，训练制度不同：专用 drafter 围绕既有目标模型学习，联合 MTP 则让未来 loss 参与主干优化。下面用 V3 的结构把这件事写具体。
+到了 2024 年底，DeepSeek-V3 将因果多步预测作为联合预训练目标。二者的输入结构和递归思路有联系，训练制度不同：专用 drafter 围绕既有目标模型学习，联合 MTP 则让未来 loss 参与主干优化。
 
-[DeepSeek-V3](https://arxiv.org/html/2412.19437v2) 的 MTP 保留了因果链。每个额外预测模块接收前一步表示和移位后的 token embedding，再预测更后一个位置。
+**DeepSeek-V3 的实际预训练配置只有一个额外 MTP 模块。** 报告先介绍可扩展到 $D$ 层的通用结构，再在超参数中设定 $D=1$。其公开配置中，主干是 61 层、hidden size 为 7,168，`num_nextn_predict_layers` 为 1。因而实际监督包括主头的 $x_{t+1}$ 和额外模块的 $x_{t+2}$。[报告 §4.2](https://arxiv.org/html/2412.19437v2#S4.SS2)、[官方配置](https://huggingface.co/deepseek-ai/DeepSeek-V3/blob/main/config.json)
 
-为了避免不同论文的深度编号混在一起，下面用 $h_t^{(0)}$ 表示主干输出，它负责预测 $x_{t+1}$；$k\geq1$ 表示额外的 MTP 深度。省略 attention mask 等实现细节，可以写成：
+原有 embedding、61 层主干和 NTP 输出路径保留。新增部分接在主干 hidden 之后：分别归一化 hidden 与下一个 token 的 embedding，拼成 $2d$ 维向量，经过 $2d\to d$ 的融合投影，再送入一个额外 Transformer block。输出 hidden 经主模型的词表投影得到未来分布。
+
+![DeepSeek-V3 的原模型路径与一个额外 MTP 模块](/assets/img/blog/mtp-survey/deepseek-v3-mtp-flow.svg)
+
+*结构示意 A：按 DeepSeek-V3 报告重绘，展示训练时同一个锚点 $t$ 的两条路径。蓝色保留主模型计算，紫色为新增 MTP 计算；两处 $W$ 表示复用同一份词表投影。图中只画一个锚点，Transformer 实际处理整段 causal 序列，读出归一化等细节省略。*
+
+为了沿用同一套编号，记主干 hidden 为 $h_t^{(0)}$，$k\geq1$ 为额外 MTP 深度。通用结构是：
 
 $$
 \begin{aligned}
 u_t^{(k)} &= M_k\left[
 \operatorname{RMSNorm}(h_t^{(k-1)});\,
-\operatorname{RMSNorm}(e(x_{t+k}))
+\operatorname{RMSNorm}(E(x_{t+k}))
 \right],\\
-h_t^{(k)} &= T_k(u^{(k)})_t,\\
+h_t^{(k)} &= T_k(u_{\leq t}^{(k)})_t,\\
 q_t^{(k)} &= \operatorname{softmax}(W_{\mathrm{out}}h_t^{(k)}).
 \end{aligned}
 $$
 
-$q_t^{(k)}$ 的标签是 $x_{t+k+1}$。也就是说，第一个额外模块看到 $x_{t+1}$，预测 $x_{t+2}$。embedding 和 output head 与主干共享，融合投影和 Transformer block 承担额外的预测计算。[结构见报告 §2.2](https://arxiv.org/html/2412.19437v2#S2.SS2)。
+$M_k\in\mathbb R^{d\times2d}$，$T_k$ 是 causal Transformer block，$q_t^{(k)}$ 的标签为 $x_{t+k+1}$。$E$ 与 $W_{\mathrm{out}}$ 各自复用主模型的 embedding 和词表投影；这不要求 embedding 矩阵与输出矩阵彼此 tied。V3 实际训练只取 $k=1$。[结构见报告 §2.2](https://arxiv.org/html/2412.19437v2#S2.SS2)
 
-训练时这里用 ground-truth token 做 teacher forcing；推理时，递归输入的 token 来自 draft。前一个 token 会影响后一个预测，未来依赖接上了，训推之间的差异也跟着进来了。
+第一层 MTP 的输入可以逐项列出：
+
+| 项目 | 位置 $t$ 上的内容 |
+|---|---|
+| 主干输入 | 已知前缀 $x_{\leq t}$ |
+| 主干输出 | $h_t^{(0)}$；主头据此预测 $x_{t+1}$ |
+| MTP 补充输入 | 训练时的真实 token $x_{t+1}$，经过共享 embedding |
+| MTP 模块输出 | $h_t^{(1)}\in\mathbb R^d$，再投影为 $V$ 维 logits |
+| MTP 监督标签 | $x_{t+2}$ |
+
+训练时已提供真实的 $x_{t+1}$，所以 MTP 分支无需等待主头生成它。它读取 $x_{t+1}$，监督标签却是更后面的 $x_{t+2}$，索引相差一位。
+
+把完整训练片段记为 $x_{1:T}$，只保留片段内有效标签，张量关系可以写成下面的伪代码。它省略了读出归一化、RoPE 和 packed-document 边界处理：
+
+```python
+# x: [B, T]，hidden size 为 d，词表大小为 V
+H = backbone(E(x), causal=True)                  # [B, T, d]
+logits_ntp = W_out(H[:, :-1])                    # [B, T-1, V]
+loss_ntp = CE(logits_ntp, x[:, 1:])              # 标签 x₂ … x_T
+
+# 第一层 MTP：hidden 锚点、补充 token、标签分别错开一位
+h_prev = H[:, :-2]                              # h₁ … h_{T-2}
+e_next = E(x[:, 1:-1])                           # x₂ … x_{T-1}
+U = M_1(cat([norm_h(h_prev), norm_e(e_next)], dim=-1))  # [B, T-2, d]
+H_mtp = T_1(U, causal=True)                      # [B, T-2, d]
+logits_mtp = W_out(H_mtp)                        # [B, T-2, V]
+loss_mtp = CE(logits_mtp, x[:, 2:])              # 标签 x₃ … x_T
+
+loss = loss_ntp + lambda_mtp * loss_mtp
+```
+
+这里要区分两个方向：**同一深度内，整段序列的位置可以在 teacher forcing 下批量计算；不同 MTP 深度之间，后一层依赖前一层 hidden，必须按深度展开。** $T_k$ 的 causal mask 限制每个位置可读取的范围，不要求训练时逐 token 调用模型。
+
+推理时，真实未来 token 尚未给定。假设主干从 $h_t^{(0)}$ 采样得到 $a=x_{t+1}$，MTP 再以 $[h_t^{(0)},E(a)]$ 为输入提出 $b$，作为 $x_{t+2}$ 的候选。若继续复用模块草拟 $c$，就需要前一步 MTP hidden 和 $E(b)$，形成串行依赖：
+
+```text
+主干 hₜ⁽⁰⁾ → 主头 → a
+(hₜ⁽⁰⁾, E(a)) → MTP → hₜ⁽¹⁾ → W → 候选 b
+(hₜ⁽¹⁾, E(b)) → MTP → hₜ⁽²⁾ → W → 候选 c
+```
+
+最后一行表示同一份 MTP 参数的第二次递归调用。候选仍需由原主干的 NTP 路径验证，推理引擎可以把多个候选放进一次 causal forward 批量验证；草拟链的串行依赖与验证的批量执行可以同时存在。训练结束后也可以丢掉 MTP 模块，保留主模型独立生成。
 
 ### 2.1 MTP loss 本来就能更新主干
 
@@ -105,15 +169,44 @@ DeepSeek-V3 之后，一个实际问题浮出来：为了训练主干值得加�
 
 在 MiMo 的实验里，增加预测层的预训练收益与草拟收益并不同步：预训练没有继续受益，专门适配推理时却用得上。这个观察的范围是该报告的实验设置。
 
-### 3.2 GLM-5：共享辅助参数，多步展开训练
+### 3.2 GLM-5：同一个 MTP 模块，在训练中连续用三次
 
-[GLM-5 的做法](https://arxiv.org/html/2602.15763) 很直接：训练展开 3 个 MTP 层，但共享参数。用上面的记号，就是把各深度独立的 $T_k$ 改成共享的 $T_{\mathrm{aux}}$。
+[GLM-5](https://arxiv.org/html/2602.15763#S2.SS1) 保留因果 MTP 的输入输出关系，把训练中的三个额外 MTP 深度改为共享参数。其[官方配置](https://huggingface.co/zai-org/GLM-5/blob/main/config.json)也只声明一层 `num_nextn_predict_layers`；三次训练展开与一份物理参数可以同时成立。
 
-这样，同一模块在训练里会接触不同深度的输入，部署时也不需要为每个深度保存一份预测模块。报告在私有 prompt 集、相同 4 个 speculative steps 下，对比了 GLM-5 与 DeepSeek-V3.2，接受长度分别为 2.76 和 2.55。这是跨模型比较，接受长度的差距也包含主干和其他训练差异；参数共享的单独作用还需要同模型消融。[报告 §2.1](https://arxiv.org/html/2602.15763#S2.SS1)
+把一次“融合 hidden 与移位 token embedding，再经过 Transformer”的计算合记为 $F_{\mathrm{aux}}$，并省略内部 norm 与投影，数据依赖可以写成：
 
-参数共享也有边界。它省掉多份权重和 optimizer state，不会让多步 forward/backward 免费。不同递归深度的 activation、attention 状态如何保留，仍取决于实现；共享权重也不自动意味着可以共享 KV cache。
+$$
+\begin{aligned}
+h_t^{(1)} &= F_{\mathrm{aux}}(h_t^{(0)},E(x_{t+1})),
+& q_t^{(1)} &\to x_{t+2},\\
+h_t^{(2)} &= F_{\mathrm{aux}}(h_t^{(1)},E(x_{t+2})),
+& q_t^{(2)} &\to x_{t+3},\\
+h_t^{(3)} &= F_{\mathrm{aux}}(h_t^{(2)},E(x_{t+3})),
+& q_t^{(3)} &\to x_{t+4}.
+\end{aligned}
+$$
 
-从这里往后，“MTP 有几层”就不太够用了。至少要把物理参数份数、训练展开深度和推理 draft 长度分别记下来。
+这里逐项写出锚点 $t$ 上的输入，causal 历史输入省略；每步的 $q$ 由该步 hidden 经过词表输出层得到。它把第 2 节中的深度独立模块改成反复调用同一个辅助模块，训练时各步仍注入对应的真实 token。
+
+![GLM-5 的共享 MTP 模块与三次训练展开](/assets/img/blog/mtp-survey/glm5-shared-mtp-flow.svg)
+
+*结构示意 B：按 GLM-5 报告的参数共享关系绘制。三个紫色方框代表同一模块的三次调用，横向箭头传递前一步 hidden，上方是每步补入的真实 token。图中 $k=1,2,3$ 均为额外预测深度，普通 NTP 分支省略；不展开报告未逐项披露的 attention 和 cache 实现。*
+
+这三步是串行计算：第二步要等 $h_t^{(1)}$，第三步要等 $h_t^{(2)}$。在每一步内部，不同序列位置仍可批量处理。推理时，补入的真实 token 换成当前草稿链选出的 token，同一组参数继续递归使用。
+
+训练展开三次，使同一模块既接触主干 hidden，也接触它自己变换后的 hidden。参数共享省掉多份权重和 optimizer state，forward/backward 仍需做三次。不同调用产生的 activation 和 K/V 也不会因为权重相同就自动变成一份；缓存怎样管理，需要另行设计。
+
+报告在私有 prompt 集、相同 4 个 speculative steps 下，对比了 GLM-5 与 DeepSeek-V3.2，接受长度分别为 2.76 和 2.55。这是跨模型比较，接受长度的差距也包含主干和其他训练差异；参数共享的单独作用还需要同模型消融。[报告 §2.1](https://arxiv.org/html/2602.15763#S2.SS1)
+
+把这三个例子放在一起，差别就落到了具体的计算依赖上：
+
+| 例子 | 接在主干后面的计算 | 一个锚点上的未来预测怎样执行 |
+|---|---|---|
+| Meta MTP，以四头为例 | 四个独立 Transformer 分支，共享词表投影 | 各分支从同一 trunk hidden 出发，可并行提出四个位置的候选 |
+| DeepSeek-V3 | 一份融合投影与额外 Transformer，复用 embedding、词表投影 | 实际预训练一个额外深度；继续递归草拟时，后一步依赖前一步 hidden 与 token |
+| GLM-5 | 一份共享 MTP 模块，训练展开三个额外深度 | 三次调用按深度串行；同一深度内的训练位置可以批量处理 |
+
+“MTP 有几层”需要拆成物理参数份数、训练展开深度和推理 draft 长度。GLM-5 用一套辅助参数完成三次串行训练调用；推理草拟长度再由部署配置决定。
 
 ### 3.3 IQuest-Q1：联合训练以后，转换成递归 drafter
 
@@ -157,7 +250,7 @@ V4.1-Flash 的报告明确说，backbone 预训练阶段省去了 MTP 模块。�
 
 这里有两种 token 要分开：$A=x_a$ 是 target 已输出、尚未处理的 pending token；$T_1=x_{a+1}$ 是 MTP 提出的候选，仍可能被拒绝。target 特征只到 $x_{a-1}$，传给 DFlash 的是**预测 $T_1$ 时**的 MTP hidden，既不需要 target 提前处理 $T_1$，也不是把 MTP 的 KV 拼进历史缓存。[方法与时序](https://sylvan820.github.io/D-MTP/)
 
-这个分工可以接上第 7 节的 prefix survival。把各位置条件接受率记为 $a_i$，则
+这个分工可以接上第 8 节的 prefix survival。把各位置条件接受率记为 $a_i$，则
 
 $$
 \mathbb E[N_{\mathrm{commit}}]
