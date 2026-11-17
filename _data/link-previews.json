@@ -773,6 +773,12 @@
     "description": "We introduce InternVL 3.5, a new family of open-source multimodal models that significantly advances versatility, reasoning capability, and inference efficiency along the InternVL series. A key innovation is the Cascade Reinforcement Learning (Cascade RL) framework, which enhances reasoning through a two-stage process: offline RL for stable convergence and online RL for refined alignment. This coarse-to-fine training strategy leads to substantial improvements on downstream reasoning tasks, e.g., MMMU and MathVista. To optimize efficiency, we propose a Visual Resolution Router (ViR) that dynam…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2508.19228": {
+    "checked_at": 1794908711,
+    "title": "Predicting the Order of Upcoming Tokens Improves Language Modeling",
+    "description": "Multi-token prediction (MTP) has been proposed as an auxiliary objective to improve next-token prediction (NTP) in language model training but shows inconsistent improvements, underperforming in standard NLP benchmarks. We found MTP's exact future token prediction to be too difficult as an auxiliary loss. Instead, we propose token order prediction (TOP), which trains models to order upcoming tokens by their proximity using a learning-to-rank loss. TOP requires only a single additional unembedding layer compared to MTP's multiple transformer layers. We pretrain models of 340M, 1.8B, and 7B par…",
+    "fetched_at": 1794908711
+  },
   "https://arxiv.org/abs/2509.01322": {
     "checked_at": 1793212629,
     "title": "LongCat-Flash Technical Report",
@@ -1439,6 +1445,12 @@
     "description": "Speculative decoding accelerates Large Language Model (LLM) inference by decoupling draft generation from target verification. While recent parallel drafters efficiently propose long token sequences in a single forward pass, they suffer from rapid acceptance decay due to a lack of inter-token dependencies. Furthermore, indiscriminately verifying these extended blocks wastes critical batch capacity on tokens with high rejection risks, severely degrading throughput in high-concurrency serving systems. We introduce DSpark, a speculative decoding framework that unifies high-throughput parallel ge…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2607.05722": {
+    "checked_at": 1794908711,
+    "title": "Nemotron-Labs-Diffusion: A Tri-Mode Language Model Unifying Autoregressive, Diffusion, and Self-Speculation Decoding",
+    "description": "We introduce Nemotron-Labs-Diffusion, a tri-mode language model (LM) that unifies AR, diffusion, and self-speculation decoding within a single architecture. Trained with a joint AR-diffusion objective, Nemotron-Labs-Diffusion can switch modes to sustain high throughput across deployment settings and concurrency levels. Our study shows that (1) AR and diffusion objectives are complementary: diffusion improves lookahead planning, while AR provides left-to-right linguistic priors. (2) In self-speculation mode, diffusion drafts while AR verifies, outperforming multi-token prediction (MTP) methods…",
+    "fetched_at": 1794908711
+  },
   "https://arxiv.org/abs/2607.05969": {
     "checked_at": 1793252215,
     "title": "MemDefrag: Latent Memory Defragmentation for Large Language Models",
@@ -1498,6 +1510,12 @@
     "title": "Chimera: Designing and Chinchilla-Scaling Hybrid Visual Diffusion Transformers",
     "description": "Visual generation increasingly requires high-resolution images, long videos, and multimodal context, making the quadratic cost of full attention prohibitive. We introduce Chimera, a hybrid visual diffusion backbone with a principled scaling recipe. Chimera processes text, image, and video tokens in one raster-ordered stream without positional embeddings. It combines Kimi Delta Attention (KDA) for long-context state tracking with O(N) complexity, interleaved Multi-head Latent Attention (MLA) for direct global interaction, and modality-aware short convolutions for local spatiotemporal context.…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2608.00434": {
+    "checked_at": 1794908711,
+    "title": "AdaMTP: An Adaptive Training Paradigm for Multi-Token Prediction",
+    "description": "Multi-Token Prediction (MTP) has emerged as an effective paradigm that augments a shared Large Language Model backbone with auxiliary heads, training the model to predict several future tokens in parallel to enrich its supervision signal and accelerate inference. However, existing training frameworks adopt a rigid, fixed-length prediction horizon, disregarding the highly non-uniform information density of natural language and code. Forcing the auxiliary heads to predict across high-entropy semantic boundaries injects noisy, conflicting training signals; because these heads share the backbone'…",
+    "fetched_at": 1794908711
   },
   "https://arxiv.org/abs/2608.01630": {
     "checked_at": 1793252215,
@@ -2032,6 +2050,12 @@
     "title": "The State-Prediction Separation Hypothesis",
     "description": "Transformers use the same forward computation stream to both predict the next token and store useful state for future token predictions. We formulate the \\emph{state-prediction separation hypothesis}: disentangling the two roles yields better language modeling performance. We design a Transformer variant that uses two computation streams to separate the two functions, and conduct pretraining experiments across various scales. Our experiments show that state-prediction separation consistently offers better data and compute efficiencies, improving validation loss and outperforming standard Tran…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/html/2607.05722": {
+    "checked_at": 1794908711,
+    "title": "Nemotron-Labs-Diffusion: A Tri-Mode Language Model Unifying Autoregressive, Diffusion, and Self-Speculation Decoding",
+    "description": "We introduce Nemotron-Labs-Diffusion, a tri-mode language model (LM) that unifies AR, diffusion, and self-speculation decoding within a single architecture. Trained with a joint AR-diffusion objective, Nemotron-Labs-Diffusion can switch modes to sustain high throughput across deployment settings and concurrency levels. Our study shows that (1) AR and diffusion objectives are complementary: diffusion improves lookahead planning, while AR provides left-to-right linguistic priors. (2) In self-speculation mode, diffusion drafts while AR verifies, outperforming multi-token prediction (MTP) methods…",
+    "fetched_at": 1794908711
   },
   "https://arxiv.org/html/2607.08780v1": {
     "checked_at": 1794222436,
