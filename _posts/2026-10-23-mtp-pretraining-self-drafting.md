@@ -14,7 +14,7 @@ description: "沿多步预训练与投机草拟两条脉络，梳理 DeepSeek-V3
 
 这两个问题有交集，也各自发展出了不少工作。相似的辅助头可以服务于不同目标，多 token 输出也可以来自不同的推理过程。下面按它们解决的问题组织这段脉络。
 
-主体资料整理于 **2026 年 10 月 23 日**；**2026 年 11 月 6 日**补入 Soft-MTP 与 DMTP 的讨论。
+主体资料整理于 **2026 年 10 月 23 日**；**2026 年 11 月 6 日**补入 Soft-MTP 与 DMTP 的讨论。 **2026 年 11 月 17 日**补入辅助预测与 NTP 的训练干扰、AR–diffusion 协同及生成与验证对齐。
 
 ## 1. 两个起点：多步预测用于解码，还是用于预训练
 
@@ -274,7 +274,56 @@ AMTP 把草拟长度变成在线决策。它从验证反馈中估计草稿前缀
 
 还有两条边界路线。[ESP](https://arxiv.org/abs/2603.17942) 用 embedding-space probing 在冻结模型上构造未来候选，再批量验证；[MTP via Self-Distillation](https://arxiv.org/abs/2602.06019) 则通过在线蒸馏改造模型，不依赖额外 verifier，接受一定质量变化。它们都涉及多 token 生成，但训练约束和质量保证不同，适合单列比较。
 
-## 6. 2026 年开放模型里的设计选择
+## 6. 辅助预测如何影响 NTP
+
+未来预测任务可以通过不同路径约束共享主干。新增监督可能帮助主干形成更有用的表示，也可能让它花更多能力拟合难以确定的未来。要判断这份监督是否值得，NTP 能力与草拟质量需要分别测量。
+
+### 6.1 总 loss 下降，NTP 仍可能退化
+
+[Your LLM Knows the Future](https://arxiv.org/abs/2507.11851) 的 Figure 6 给了一个直观例子：普通 LoRA 与 gated LoRA 的总训练 loss 几乎重合，普通 LoRA 下的 NTP loss 却逐渐升高，ARC-Challenge 准确率下降。作者冻结基础权重，让 gated LoRA 只在未来预测的 mask 位置启用，保持 NTP 路径输出。这个实验展示了负迁移，也展示了怎样隔离它。保护原有 NTP 路径的效果已有对照，共享主干能否从辅助任务中获益则需要联合训练实验。
+
+对共享参数 $\theta$，令 $g_{\mathrm N}=\nabla_\theta\mathcal L_{\mathrm{NTP}}$，$g_{\mathrm A}=\nabla_\theta\mathcal L_{\mathrm{aux}}$。从同一个参数点出发，比较 NTP-only 与加入 $\lambda\mathcal L_{\mathrm{aux}}$ 的一步普通 SGD 更新，一阶近似为：
+
+$$
+\Delta\mathcal L_{\mathrm{NTP}}
+\approx-\eta\lambda\langle g_{\mathrm N},g_{\mathrm A}\rangle.
+$$
+
+负内积意味着辅助更新在局部妨碍 NTP 下降。实际使用 Adam 或 Muon 时，还要检查优化器更新后的 NTP loss，以及完整训练的结果。梯度夹角是诊断量，不能单独代替最终能力。
+
+第 5.5 节的 Soft-MTP 更进一步，把 MTP 梯度拆成 KL 自蒸馏与 residual。论文测量了参数梯度的信噪比，并在主干输出表征上做局部更新，观察不同成分对 NTP loss 的影响。这些结果把干扰定位到具体梯度成分；表征更新实验与完整参数优化的效果仍需分别衡量。
+
+监督难度也值得单独讨论。[AdaMTP](https://arxiv.org/abs/2608.00434) 根据 NTP 预测熵的变化划分片段，动态决定各位置的预测跨度，减轻固定 horizon 跨越高不确定性边界的问题。它主要通过已有模型上的微调和跨度消融支持这一解释，与第 5.7 节只调整推理长度的 AMTP 是不同工作。
+
+[Token Order Prediction（TOP）](https://arxiv.org/abs/2508.19228) 则放宽任务：学习未来 token 出现的远近顺序，替代逐位置的精确分类，并在 340M、1.8B、7B 模型上比较预训练结果。这里比较的是任务设计及最终性能，梯度之间的相互作用还需单独测量。高熵也不等于无学习价值；要检验的是这些位置上额外辅助监督的收益，主 NTP 任务仍需学习它们。
+
+### 6.2 AR 与 diffusion 可以协同，生成与验证仍需对齐
+
+[Nemotron-Labs-Diffusion §2.4](https://arxiv.org/html/2607.05722#S2.SS4) 专门研究两种 loss 的相互影响。它联合优化 $\mathcal L_{\mathrm{AR}}+\alpha\mathcal L_{\mathrm{diff}}$：在该实验中，两个模式在 $\alpha=0.3$ 附近同时达到较好表现；diffusion 权重过大时，AR loss 升高。加入 diffusion loss 后，base 与 instruct 的平均 AR 任务准确率分别提高约 0.14、0.43 个百分点，个别任务下降。
+
+这些消融基于已有 AR 初始化，控制训练 token 数，给出了两种模式可以协同的实例。从零预训练、等 FLOPs 对照仍需另外验证；合适的系数也取决于 loss 的归一化与采样方式。
+
+另一类问题发生在生成与验证之间。[I-DLM](https://arxiv.org/abs/2604.11035) 研究 generation–introspection gap：模型在 masked 状态下生成一个 token，换成 token 已揭示的 causal 路径复查时，未必认可自己的生成。论文结合 causal attention、logit shift 与 all-masked 训练，使生成和验证更一致。这里测量的是预测分布的一致性，与共享参数上的梯度负内积属于不同证据。
+
+对第 4 节 DFlash 这类冻结 target、单独训练 drafter 的方法，target 不接收 draft loss 的更新，主干上没有这项辅助梯度冲突。接受率仍可能偏低，因为 drafter 使用的信息、预测方式或训练分布与 AR verifier 不匹配。只调整辅助 loss 权重，未必能补上这些差异。
+
+### 6.3 把监督送到哪份表示
+
+这些工作对应几种不同的干预，实验中可以逐项比较：
+
+| 要处理的问题 | 对应设计 | 需要验证的结果 |
+|---|---|---|
+| 辅助更新损伤 NTP | 冻结、detach、gated adapter，或 Soft-MTP 式梯度路由 | NTP 退化是否减少；是否仍有主干收益 |
+| 远期监督过难 | AdaMTP 的动态跨度、TOP 的替代任务 | 同预算下的 NTP 能力与草拟能力怎样变化 |
+| 草稿与验证路径不一致 | 调整条件信息、attention、训练样本与部署路径 | 相同 verifier 和采样配置下的接受长度 |
+
+SPS 则从表示职责入手：持久状态负责留下供后文读取的信息，预测流负责当前决策。它分离了激活和可见性，权重仍然共享，预测 loss 也仍能更新状态流。因此 SPS 可以启发 MTP 架构设计，它自身的 NTP 实验并未直接验证 MTP–NTP 冲突。
+
+如果要从当前 prefix 的 KV 预测未来位置的表示，还需要问：监督中哪些信息可以由当前上下文确定，哪些依赖尚未出现的 token？当目标表示含有当前 prefix 无法确定的信息时，硬回归会保留相应的不可约误差。这类误差是否会损伤历史状态，以及专门的 reader 能吸收多少，需要与停止辅助梯度的版本对照。
+
+对预训练类 MTP loss，更有说服力的结果是：在控制训练预算后，辅助监督改善了 NTP，同时让后续 drafter 更容易训练。只保护 NTP 路径、只提高接受率、只降低辅助 loss，分别回答了其中一部分。
+
+## 7. 2026 年开放模型里的设计选择
 
 前面是方法与训练流程，下面回到模型发布，把能核实的策略放在同一张表里。这里的开放模型包含开放权重发布，具体许可证仍以对应仓库为准。
 
@@ -292,7 +341,7 @@ AMTP 把草拟长度变成在线决策。它从验证反馈中估计草稿前缀
 
 因果递归 MTP、并行 diffusion-style draft、半自回归 head 和后装 drafter 仍然并存。多份报告共同强调的是，在 SFT/RL 或部署前维护 draft 与最终 policy 的一致性。
 
-## 7. 接受长度怎样变成实际加速
+## 8. 接受长度怎样变成实际加速
 
 MTP 的部署指标不能停在“第几个头准确率多高”。投机解码提交的是连续前缀，前面拒绝以后，后面猜得再好也通常用不上。
 
@@ -317,7 +366,7 @@ $$
 
 这只是便于拆问题的近似，真实 serving 还有 batching 和流水重叠。它至少提醒我们：增加深度会改分子，也会改分母。权重共享能省参数，SWA 能压上下文开销，block draft 能减串行调用，动态 verify 能少花无效 target compute；它们改善的是不同部分。
 
-### 7.1 接受率还取决于怎样采样
+### 8.1 接受率还取决于怎样采样
 
 对同一已接受前缀，若草稿 token 从 $q$ 采样，采用标准严格接受规则，则平均单步接受概率为：
 
@@ -331,7 +380,7 @@ $$
 
 数学、代码、自由文本和 RL rollout 的分布不同，greedy 下的接受长度不能直接搬到非零温度的 rollout 上。对 reasoning model 做完 SFT/RL 以后，除了问主干能力涨了多少，还应该再问一次：旧 MTP 现在与新 policy 对得上吗？
 
-## 8. 如果要做一轮实验
+## 9. 如果要做一轮实验
 
 我会先定清楚额外 compute 的用途。如果主要目标是 backbone 能力，先做 NTP、独立辅助层、共享辅助层三组，再加 ECHO 式最后层共享；如果主要目标是给现成 checkpoint 加速，就从冻结主干、单独训练 drafter 开始。两条实验都能做，但不必一开始就混成同一张收益表。
 
@@ -342,6 +391,7 @@ $$
 | 递归使用是否稳定 | 每个位置的条件接受率、prefix survival，区分训练深度内外 |
 | 加速有没有兑现 | 同硬件、同 engine，记录 draft / verify / runtime 延迟及真实吞吐 |
 | 梯度路由是否有益 | 同架构 hard CE、显式 KL、Soft-MTP；同时检查主干与输出头的梯度 |
+| 辅助训练是否损伤 NTP | 分层梯度夹角与范数、实际一步更新后的 NTP loss；冻结或停止辅助梯度的对照 |
 | 首位与后缀怎样分工 | 同候选预算下，整块 DFlash、MTP 首位 + token、再加入 MTP hidden；统一 verifier |
 | 后训练是否破坏对齐 | base、SFT、RL checkpoint 分阶段测；实际采样设置与请求类型 |
 
@@ -349,7 +399,7 @@ $$
 
 做这轮实验时，loss 权重、展开深度和共享范围要一起记录。先跑稳基线，再一次只改一个关键变量，才能分辨收益来自哪里。
 
-## 9. 把架构与训练流程放在一起
+## 10. 把架构与训练流程放在一起
 
 沿这两条线看下来，MTP 的几个基本选择可以独立讨论：未来位置是否显式依赖前面的 token，辅助模块是否跨深度共享，未来 loss 是否更新主干，以及训练结束后是否需要重新适配 drafter。
 
@@ -391,3 +441,8 @@ $$
 
 - [Multi-Token Prediction Done Right（Soft-MTP）](https://arxiv.org/abs/2610.38331)
 - [DMTP: A Better First Token for Block Drafting via MTP（技术博客）](https://sylvan820.github.io/D-MTP/)
+- [Your LLM Knows the Future: Uncovering Its Multi-Token Prediction Potential](https://arxiv.org/abs/2507.11851)
+- [AdaMTP: An Adaptive Training Paradigm for Multi-Token Prediction](https://arxiv.org/abs/2608.00434)
+- [Predicting the Order of Upcoming Tokens Improves Language Modeling（TOP）](https://arxiv.org/abs/2508.19228)
+- [Nemotron-Labs-Diffusion: A Tri-Mode Language Model Unifying Autoregressive, Diffusion, and Self-Speculation Decoding](https://arxiv.org/abs/2607.05722)
+- [Introspective Diffusion Language Models（I-DLM）](https://arxiv.org/abs/2604.11035)
