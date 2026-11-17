@@ -2,13 +2,33 @@
   "post": "_posts/2026-07-23-moe-visual-generation.md",
   "added_figures": [
     {
+      "paper": "dit",
+      "paper_url": "https://openaccess.thecvf.com/content/ICCV2023/html/Peebles_Scalable_Diffusion_Models_with_Transformers_ICCV_2023_paper.html",
+      "figure_id": "Figure 3, latent DiT and adaLN-Zero panels",
+      "source_url": "https://openaccess.thecvf.com/content/ICCV2023/papers/Peebles_Scalable_Diffusion_Models_with_Transformers_ICCV_2023_paper.pdf",
+      "source_type": "pdf_crop",
+      "page": 3,
+      "clip": [
+        48,
+        70,
+        302,
+        279
+      ],
+      "scale": 3,
+      "image": "/assets/img/blog/moe-visual-generation/dit-adaln-zero-conditioning.png",
+      "bytes": 68646,
+      "mime": "image/png",
+      "added_on": "2026-11-17",
+      "figure_number": 1
+    },
+    {
       "paper": "ecdit",
       "figure_id": "S2.F2",
       "source_url": "https://arxiv.org/html/2410.02098v2/arch.png",
       "image": "/assets/img/blog/moe-visual-generation/ecdit-expert-choice.png",
       "bytes": 330805,
       "mime": "image/png",
-      "figure_number": 12
+      "figure_number": 13
     },
     {
       "paper": "diffmoe",
@@ -17,7 +37,7 @@
       "image": "/assets/img/blog/moe-visual-generation/diffmoe-capacity-predictor.png",
       "bytes": 252329,
       "mime": "image/png",
-      "figure_number": 13
+      "figure_number": 14
     },
     {
       "paper": "splitmoe",
@@ -26,7 +46,7 @@
       "image": "/assets/img/blog/moe-visual-generation/splitmoe-semantic-generic.png",
       "bytes": 207004,
       "mime": "image/png",
-      "figure_number": 15
+      "figure_number": 16
     },
     {
       "paper": "pixelmoe",
@@ -35,7 +55,7 @@
       "image": "/assets/img/blog/moe-visual-generation/pixelmoe-token-choice.png",
       "bytes": 268100,
       "mime": "image/png",
-      "figure_number": 16
+      "figure_number": 17
     },
     {
       "paper": "hidream",
@@ -44,7 +64,7 @@
       "image": "/assets/img/blog/moe-visual-generation/hidream-dual-single-stream.png",
       "bytes": 123657,
       "mime": "image/png",
-      "figure_number": 18
+      "figure_number": 19
     },
     {
       "paper": "hunyuan",
@@ -53,7 +73,7 @@
       "image": "/assets/img/blog/moe-visual-generation/hunyuanimage-multimodal.png",
       "bytes": 187148,
       "mime": "image/png",
-      "figure_number": 19
+      "figure_number": 20
     },
     {
       "paper": "hunyuan",
@@ -62,7 +82,7 @@
       "image": "/assets/img/blog/moe-visual-generation/hunyuanimage-attention-mask.png",
       "bytes": 136118,
       "mime": "image/png",
-      "figure_number": 20
+      "figure_number": 21
     },
     {
       "paper": "mot",
@@ -71,7 +91,7 @@
       "image": "/assets/img/blog/moe-visual-generation/mot-modality-parameters.png",
       "bytes": 825920,
       "mime": "image/png",
-      "figure_number": 21
+      "figure_number": 22
     },
     {
       "paper": "symbiotic",
@@ -80,7 +100,7 @@
       "image": "/assets/img/blog/moe-visual-generation/symbiotic-understanding-generation.png",
       "bytes": 517994,
       "mime": "image/png",
-      "figure_number": 25
+      "figure_number": 26
     },
     {
       "paper": "beyond",
@@ -89,7 +109,7 @@
       "image": "/assets/img/blog/moe-visual-generation/beyond-modality-specialization.svg",
       "bytes": 42891,
       "mime": "image/svg+xml",
-      "figure_number": 23
+      "figure_number": 24
     },
     {
       "paper": "beyond",
@@ -98,7 +118,7 @@
       "image": "/assets/img/blog/moe-visual-generation/beyond-timestep-specialization.svg",
       "bytes": 40194,
       "mime": "image/svg+xml",
-      "figure_number": 24
+      "figure_number": 25
     },
     {
       "paper": "raphael",
@@ -109,7 +129,7 @@
       "added_on": "2026-11-16",
       "bytes": 262474,
       "mime": "image/png",
-      "figure_number": 3
+      "figure_number": 4
     },
     {
       "paper": "dtr",
@@ -120,7 +140,7 @@
       "added_on": "2026-11-16",
       "bytes": 95149,
       "mime": "image/png",
-      "figure_number": 4
+      "figure_number": 5
     },
     {
       "paper": "switch",
@@ -131,7 +151,7 @@
       "added_on": "2026-11-16",
       "bytes": 218073,
       "mime": "image/svg+xml",
-      "figure_number": 5
+      "figure_number": 6
     },
     {
       "paper": "tsm",
@@ -142,7 +162,7 @@
       "added_on": "2026-11-16",
       "bytes": 315909,
       "mime": "image/svg+xml",
-      "figure_number": 6
+      "figure_number": 7
     },
     {
       "paper": "diffpruning",
@@ -153,7 +173,7 @@
       "added_on": "2026-11-16",
       "bytes": 441963,
       "mime": "image/png",
-      "figure_number": 7
+      "figure_number": 8
     },
     {
       "paper": "alter",
@@ -164,7 +184,7 @@
       "added_on": "2026-11-16",
       "bytes": 172947,
       "mime": "image/png",
-      "figure_number": 8
+      "figure_number": 9
     },
     {
       "paper": "track",
@@ -175,7 +195,7 @@
       "added_on": "2026-11-16",
       "bytes": 31440,
       "mime": "image/png",
-      "figure_number": 9
+      "figure_number": 10
     },
     {
       "paper": "mos",
@@ -186,7 +206,7 @@
       "added_on": "2026-11-16",
       "bytes": 118221,
       "mime": "image/png",
-      "figure_number": 22
+      "figure_number": 23
     },
     {
       "paper": "diff-moe",
@@ -206,8 +226,8 @@
       "bytes": 121992,
       "mime": "image/png",
       "added_on": "2026-11-16",
-      "figure_number": 14
+      "figure_number": 15
     }
   ],
-  "current_figure_count": 26
+  "current_figure_count": 27
 }
