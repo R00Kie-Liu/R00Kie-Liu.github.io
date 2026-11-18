@@ -298,9 +298,22 @@ GQA 减少独立 KV heads 数；MLA 减少每个 token 缓存的表示维度。�
 
 ### 5.3 RoPE 解耦为什么重要
 
-上述换序要求历史内容 key 形如“固定上投影 × latent”。若在展开后的每个历史 key 上直接施加随位置变化的 RoPE，变换就不再是对所有历史通用的一份固定矩阵，无法直接按原方式吸收到当前 query。
+设历史位置 $$t$$ 的 latent 为 $$c_t$$，固定的 key 上投影为 $$W$$，当前位置 $$s$$ 旋转前的 query 为 $$q_s$$。不加 RoPE 时，内容点积可以换序为：
 
-MLA 因而把内容与位置分支拆开：内容点积走 latent 路径，位置点积使用独立的 RoPE query/key，再组合分数。cache 保存 latent 与位置 key，而不是整套展开后的每头 K/V。
+$$
+q_s^\top(Wc_t)=(W^\top q_s)^\top c_t.
+$$
+
+这样只需对当前 query 计算一次 $$W^\top q_s$$，随后直接与各历史 latent 打分。若用 $$R_p$$ 表示位置 $$p$$ 的 RoPE 旋转矩阵，对 query 和展开后的 key 都施加旋转，点积变为：
+
+$$
+(R_s q_s)^\top(R_t Wc_t)
+=\left(W^\top R_t^\top R_s q_s\right)^\top c_t.
+$$
+
+固定当前 query 位置 $$s$$ 后，右侧的 query 变换仍依赖每个历史位置 $$t$$。对于一般的 $$W$$，无法像前一个等式那样，只变换一次当前 query 就直接扫描未旋转的 latent cache。
+
+MLA 因而把内容与位置分支拆开：内容点积走 latent 路径，位置点积使用独立的 RoPE query/key，再组合分数。cache 保存 latent 与位置 key，而不是整套展开后的每头 K/V。这一设计见 [DeepSeek-V2 §2.1.3](https://arxiv.org/html/2405.04434v5)。
 
 ### 5.4 压缩的是表示，不是序列
 

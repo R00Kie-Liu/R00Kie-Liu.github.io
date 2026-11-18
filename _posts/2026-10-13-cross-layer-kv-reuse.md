@@ -502,7 +502,15 @@ $$
 
 $$w^{(\ell)}_{s,h}$$ 是各 indexer head 的权重。bias 项虽然对所有历史位置相同，却位于 ReLU 之前，不能因为“top-k 对统一平移不敏感”就删去。各层对自己的 $$u^{(\ell)}$$ 取 top-k，最终读取的仍是本层 main KV。
 
-完整方法把 latent 分为 RoPE 与 NoPE 两部分；RoPE decoder 还必须与位置旋转相容。上面的简式只说明投影吸收，不表示任意跨频率线性映射都能直接用于 RoPE。
+完整方法把 latent 分为 RoPE 与 NoPE 两部分。设 $$Q_t$$ 是 latent 空间的位置旋转，$$R_t$$ 是原 key 空间的位置旋转，RoPE 分支的 decoder 为 $$D_\ell^R$$。[论文 §3.1 与附录 A.2](https://arxiv.org/html/2610.04635v1)要求：
+
+$$
+R_tD_\ell^R=D_\ell^RQ_t,\qquad \forall t.
+$$
+
+左侧是先解码再旋转 key，右侧是先旋转 latent 再解码。这个条件保证共享 latent 可以先带上位置信息写入 cache，各层仍用固定 decoder 得到自己的 key；在 query 的 RoPE 分支完成原有旋转后，decoder 也仍可按上面的等式吸收到 query 一侧。
+
+论文通过同一旋转频率内的复数线性组合满足这一条件：RoPE 分支不跨频率混合，也不加输出 bias，bias 只作用于 NoPE 分支。这样，前面的投影吸收等式才与完整方法的位置处理对应起来。
 
 ### 6.3 共享 latent 省存储，缩小候选池才减少全历史扫描
 

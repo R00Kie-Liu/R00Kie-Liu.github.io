@@ -97,7 +97,7 @@ Megatron 语境里的 Sequence Parallelism 通常和 Tensor Parallelism 绑定�
 
 这个区分很重要。SP、CP、Ulysses、Ring Attention 不是同一层概念。SP 是一类 activation sharding；CP 是长上下文 attention 的语义切分；Ulysses 和 Ring Attention 是 softmax attention 下实现 CP 的两种通信方案。到了 linear attention 或 KDA 这类 recurrent state attention，CP 的通信对象又会变。
 
-还有一个细节常被忽略：CP rank 上的位置不能从 0 重新开始。如果一个 256K sequence 被切成 8 段，第 5 个 rank 的第一个 token 位置应该是全局位置 128K 附近，而不是本地位置 0。前面写 RoPE 实现时已经提到过这个问题；在训练侧，它会和 packed sequence、`cu_seqlens`、block-diagonal mask 一起出现。
+CP 切分后，同一条序列的 position IDs 仍应保持切分前的位置关系。例如，一个从位置 0 开始的 256K sequence 按顺序均分为 8 段，第 5 段首 token 的位置应为 128K。若各 rank 都把本地片段重新编号为 0，跨 rank 的 RoPE 相对位置就会出错。packed batch 中彼此隔离的子序列是否从 0 开始，应由各自的样本语义决定，见 §7.1；不能把每个 rank 的切分边界当作样本边界。
 
 <a id="3-softmax-attention-的-cp交换-kv还是重排-head"></a>
 
@@ -250,7 +250,7 @@ cu_seqlens  = [0, 8K, 72K, 200K]
 mask        = block diagonal causal mask
 ```
 
-这个格式本身不难，难的是它携带了数据语义。`cu_seqlens` 一错，错误不会总是立刻 OOM 或 NaN。更危险的情况是训练还能跑，但样本之间发生信息泄漏，或者 RoPE/NoPE 之外的位置假设被悄悄破坏。
+这个格式本身不难，难的是它携带了数据语义。`cu_seqlens` 一错，训练未必立刻 OOM 或 NaN；错误的子序列边界可能让本应隔离的样本互相可见，造成信息泄漏。若 position IDs 在同一条序列内部被错误重置，RoPE 编码的相对位置也会改变。因此要分别核对样本起止、causal mask 和 position IDs，确认三者符合相同的样本语义。
 
 大 CP size 会放大另一个问题：短子序列太多。每个 rank 拿到的是全局 packed sequence 的一段，本地可能包含大量很短的 fragments。朴素实现会触发很多小 kernel launch，GPU 没忙起来，CPU 先被 launch overhead 卡住。[Ling/Ring 2.6 技术报告](https://arxiv.org/abs/2606.15079)在 256K context 的 varlen 场景下，把 per-sub-sequence correction 融合成 Triton kernel，并报告了约 68% 的 end-to-end speedup。这个数字属于他们报告里的实验条件，不应直接外推；但它提示了一个方向：长上下文训练的数据管线、mask 表示和 kernel fusion 要一起看。
 

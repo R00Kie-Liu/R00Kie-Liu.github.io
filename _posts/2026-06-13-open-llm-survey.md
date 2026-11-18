@@ -73,7 +73,7 @@ description: "梳理 2025-2026 年开源、开放权重和开放报告 LLM 在 M
 
 第三，数据工程从通用语料清洗转向可生成、可验证、可执行的数据系统。MiniMax-M2 的 SWE/AppDev/Terminal/Cowork 管线、Kimi K2 的 agentic data synthesis、Kimi K2.5 的 GUI/action trajectories 与 Agent Swarm prompts、LongCat-Flash 的 multi-agent synthesis、Qwen3 的 query-verifier pairs、Qwen3.5-Omni 的跨模态 teacher distillation 与 Interaction-Aligned RL、MiMo-V2-Flash 的 teacher reward 和 outcome reward，都表明“任务环境 + verifier + rollout”正在成为高价值数据来源。
 
-第四，长上下文设计从 RoPE scaling 转向架构与系统联合优化。DeepSeek-V4 用 CSA/HCA 将 1M context 下的 FLOPs 和 KV cache 大幅压缩；GLM-5 用 DSA 进行 continued pretraining；MiMo-V2-Flash 用 5:1 的 SWA/global hybrid attention 和 128-token window；Nemotron 用 hybrid Mamba-Transformer；MiniMax 和 LongCat 则从训练、推理和 agent workload 角度优化长上下文成本。
+第四，长上下文设计需要联合优化位置扩展、attention 架构和系统成本。DeepSeek-V4 用 CSA/HCA 将 1M context 下的 FLOPs 和 KV cache 大幅压缩；GLM-5 用 DSA 进行 continued pretraining；MiMo-V2-Flash 用 5:1 的 SWA/global hybrid attention 和 128-token window；Nemotron 用 hybrid Mamba-Transformer；MiniMax 和 LongCat 则从训练、推理和 agent workload 角度优化长上下文成本。
 
 第五，多模态从 VLM 进入 omni/agent 阶段。Qwen3.5-Omni、Qwen3-Omni、LongCat-Omni、Step-Audio、MiMo-Audio、LongCat-Video、Step-Video、GLM-5V、STEP3-VL、MiMo-VL 等模型说明，多模态已经不只是输入扩展，而是在扩展 agent 的感知、交互和动作空间。ERNIE 5.0 进一步提供了一个非 open-weight 但报告细节丰富的统一自回归对照：它将 text、image、video、audio 的理解和生成放进同一个 Next-Group-of-Tokens 目标和同一个 MoE backbone 中，而不是只给语言模型外挂模态 decoder。
 
