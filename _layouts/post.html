@@ -13,6 +13,7 @@
     <noscript><style>img[data-deferred-src] { display: none !important; }</style></noscript>
     <title>{{ page.title }} | {{ site.title }}</title>
     <meta name="description" content="{{ page.excerpt | strip_html | truncate: 160 }}">
+    {% if page.visibility == 'unlisted' %}<meta name="robots" content="noindex, nofollow">{% endif %}
 
     <link rel="canonical" href="{{ page.url | absolute_url }}"/>
     <link rel="icon" media="(prefers-color-scheme:dark)" href="{{ site.favicon_dark | remove_first: './' | relative_url }}" type="image/png" />
@@ -53,9 +54,14 @@
     <div class="blog-container has-toc">
       <article class="blog-post">
         <div class="post-header">
+          {% if page.visibility == 'unlisted' %}
+          <a href="{{ '/workbench/' | relative_url }}" class="back-link"><i class="fas fa-arrow-left" aria-hidden="true"></i> Workbench</a>
+          {% else %}
           <a href="{{ '/blog/' | relative_url }}" class="back-link"><i class="fas fa-arrow-left"></i> All Notes</a>
+          {% endif %}
           <h1 class="post-title">{{ page.title }}</h1>
           <div class="post-meta">
+            {% if page.visibility == 'unlisted' %}<span>Unlisted · Work in progress</span>{% endif %}
             <span><i class="fas fa-calendar-alt"></i> {{ page.date | date: "%B %d, %Y" }}</span>
             {% if page.categories.size > 0 %}
             <span><i class="fas fa-folder"></i> {{ page.categories | join: ", " }}</span>
@@ -95,21 +101,27 @@
         </script>
 
         <div class="post-footer">
-          {% assign nav_previous = page.previous %}
-          {% assign nav_next = page.next %}
-          {% if page.series and page.series_order %}
-            {% assign nav_previous = nil %}
-            {% assign nav_next = nil %}
-            {% assign series_posts = site.posts | where: "series", page.series | sort: "series_order" %}
-            {% for series_post in series_posts %}
-              {% if series_post.series_order < page.series_order %}
-                {% assign nav_previous = series_post %}
-              {% elsif series_post.series_order > page.series_order %}
-                {% assign nav_next = series_post %}
-                {% break %}
-              {% endif %}
-            {% endfor %}
+          {% if page.visibility == 'unlisted' %}
+            {% assign navigation_posts = site.posts | where: "visibility", "unlisted" | sort: "date" %}
+          {% else %}
+            {% assign navigation_posts = site.posts | where_exp: "post", "post.visibility != 'unlisted'" | sort: "date" %}
           {% endif %}
+          {% if page.series and page.series_order %}
+            {% assign navigation_posts = navigation_posts | where: "series", page.series | sort: "series_order" %}
+          {% endif %}
+          {% assign nav_previous = nil %}
+          {% assign nav_next = nil %}
+          {% assign found_current = false %}
+          {% for navigation_post in navigation_posts %}
+            {% if navigation_post.url == page.url %}
+              {% assign found_current = true %}
+            {% elsif found_current %}
+              {% assign nav_next = navigation_post %}
+              {% break %}
+            {% else %}
+              {% assign nav_previous = navigation_post %}
+            {% endif %}
+          {% endfor %}
           <div class="post-nav">
             {% if nav_previous.url %}
             <a href="{{ nav_previous.url | relative_url }}" class="post-nav-prev">
@@ -124,6 +136,7 @@
           </div>
         </div>
 
+        {% unless page.visibility == 'unlisted' %}
         <div class="giscus-wrapper">
           <script src="https://giscus.app/client.js"
             data-repo="R00Kie-Liu/R00Kie-Liu.github.io"
@@ -142,6 +155,7 @@
             async>
           </script>
         </div>
+        {% endunless %}
       </article>
 
       <aside class="post-toc" id="postToc">

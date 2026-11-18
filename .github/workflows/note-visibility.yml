@@ -1,0 +1,35 @@
+name: Check note visibility
+
+on:
+  pull_request:
+    paths:
+      - '_layouts/blog.html'
+      - '_layouts/post.html'
+      - '_includes/**'
+      - '_config.yml'
+      - 'workbench.md'
+      - 'sitemap.xml'
+      - 'feed*'
+      - 'rss*'
+      - 'tests/check_note_visibility.py'
+      - '.github/workflows/note-visibility.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare temporary public and unlisted notes
+        run: python3 tests/check_note_visibility.py prepare
+      - name: Build the fixture site
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_visibility_site
+      - name: Check discovery and article navigation
+        run: python3 tests/check_note_visibility.py check --site _visibility_site
