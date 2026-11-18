@@ -10,8 +10,9 @@
     </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Blog | {{ site.title }}</title>
-    <meta name="description" content="{{ site.title }}'s learning notes and blog">
+    <title>{% if page.workbench %}Workbench{% else %}Blog{% endif %} | {{ site.title }}</title>
+    <meta name="description" content="{% if page.workbench %}Notes in progress. Anyone with the link can read them.{% else %}{{ site.title }}'s learning notes and blog{% endif %}">
+    {% if page.workbench %}<meta name="robots" content="noindex, nofollow">{% endif %}
 
     <link rel="canonical" href="{{ page.url | absolute_url }}"/>
     <link rel="icon" media="(prefers-color-scheme:dark)" href="{{ site.favicon_dark | remove_first: './' | relative_url }}" type="image/png" />
@@ -26,10 +27,22 @@
 
     {% include site-navigation.html %}
 
+    {% if page.workbench %}
+      {% assign listing_posts = site.posts | where: "visibility", "unlisted" %}
+    {% else %}
+      {% assign listing_posts = site.posts | where_exp: "post", "post.visibility != 'unlisted'" %}
+    {% endif %}
+
     <div class="blog-container">
       <div class="blog-header">
+        {% if page.workbench %}
+        <a href="{{ '/blog/' | relative_url }}" class="back-link"><i class="fas fa-arrow-left" aria-hidden="true"></i> Public notes</a>
+        <h1>Workbench</h1>
+        <p>Notes in progress. Anyone with the link can read them.</p>
+        {% else %}
         <h1>Learning Notes</h1>
         <p>Notes on language models, training, and inference.</p>
+        {% endif %}
       </div>
 
       <div class="blog-search">
@@ -39,7 +52,7 @@
       </div>
 
       {% assign all_tags = "" | split: "" %}
-      {% for post in site.posts %}
+      {% for post in listing_posts %}
         {% for tag in post.tags %}
           {% unless all_tags contains tag %}
             {% assign all_tags = all_tags | push: tag %}
@@ -73,11 +86,11 @@
       </div>
       {% endif %}
       <div class="filter-status">
-        <span id="blogResultCount" role="status" aria-live="polite" aria-atomic="true">{{ site.posts.size }} notes</span>
+        <span id="blogResultCount" role="status" aria-live="polite" aria-atomic="true">{{ listing_posts.size }} notes</span>
         <button type="button" class="text-button" data-reset-filters hidden>Clear filters</button>
       </div>
 
-      {% assign posts_by_year = site.posts | group_by_exp: "post", "post.date | date: '%Y'" %}
+      {% assign posts_by_year = listing_posts | group_by_exp: "post", "post.date | date: '%Y'" %}
       {% for year in posts_by_year %}
       <div class="blog-year">
         <h2 class="year-title">{{ year.name }}</h2>
@@ -108,10 +121,10 @@
       </div>
       {% endfor %}
 
-      {% if site.posts.size == 0 %}
+      {% if listing_posts.size == 0 %}
       <div class="blog-empty">
         <i class="fas fa-pen-fancy"></i>
-        <p>No notes yet. Coming soon!</p>
+        <p>{% if page.workbench %}No notes in progress yet.{% else %}No notes yet. Coming soon!{% endif %}</p>
       </div>
       {% endif %}
       <div class="blog-empty blog-no-results" id="blogNoResults" hidden>

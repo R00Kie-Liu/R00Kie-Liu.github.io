@@ -15,6 +15,33 @@ bundle exec jekyll server
 View the live page using `localhost`:
 <http://localhost:4000>. You can get the html files in the `_site` folder.
 
+### Workbench and unlisted notes
+
+Open `/workbench/` directly and bookmark it. The Workbench is deliberately
+absent from the public navigation. Existing notes remain public.
+
+To put a note in the Workbench, keep it in `_posts/` and add this field to its
+YAML front matter:
+
+```yaml
+visibility: unlisted
+```
+
+Remove that field (or set `visibility: public`) when the note is ready for the
+public Blog. Its URL stays the same. Unlisted notes are rendered normally but
+excluded from the public list, search, topic counts, and public previous/next
+navigation. Series navigation stays within the same visibility group.
+Their back link returns to the Workbench and comments are disabled.
+
+The Workbench and unlisted article pages declare `noindex, nofollow`. The
+current static sitemap has no article entries and no feed is configured;
+do not add unlisted notes or the Workbench to either if those are changed later.
+
+This is an unlisted area, not authentication: anyone with a direct link can
+read it, and this public GitHub repository still exposes its Markdown sources.
+`published: false` and `_drafts/` prevent a note from being rendered and will
+not make it appear in the online Workbench.
+
 ### Blog link previews
 
 External links in articles show a preview before opening a new tab. Internal
