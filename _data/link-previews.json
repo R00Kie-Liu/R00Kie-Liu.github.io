@@ -131,6 +131,12 @@
     "description": "Large pre-trained language models have been shown to store factual knowledge in their parameters, and achieve state-of-the-art results when fine-tuned on downstream NLP tasks. However, their ability to access and precisely manipulate knowledge is still limited, and hence on knowledge-intensive tasks, their performance lags behind task-specific architectures. Additionally, providing provenance for their decisions and updating their world knowledge remain open research problems. Pre-trained models with a differentiable access mechanism to explicit non-parametric memory can overcome this issue,…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/abs/2006.11239": {
+    "checked_at": 1795065614,
+    "title": "Denoising Diffusion Probabilistic Models",
+    "description": "We present high quality image synthesis results using diffusion probabilistic models, a class of latent variable models inspired by considerations from nonequilibrium thermodynamics. Our best results are obtained by training on a weighted variational bound designed according to a novel connection between diffusion probabilistic models and denoising score matching with Langevin dynamics, and our models naturally admit a progressive lossy decompression scheme that can be interpreted as a generalization of autoregressive decoding. On the unconditional CIFAR10 dataset, we obtain an Inception scor…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2006.16236": {
     "checked_at": 1793252215,
     "title": "Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention",
@@ -142,6 +148,12 @@
     "title": "Rethinking Attention with Performers",
     "description": "We introduce Performers, Transformer architectures which can estimate regular (softmax) full-rank-attention Transformers with provable accuracy, but using only linear (as opposed to quadratic) space and time complexity, without relying on any priors such as sparsity or low-rankness. To approximate softmax attention-kernels, Performers use a novel Fast Attention Via positive Orthogonal Random features approach (FAVOR+), which may be of independent interest for scalable kernel methods. FAVOR+ can be also used to efficiently model kernelizable attention mechanisms beyond softmax. This representa…",
     "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2011.13456": {
+    "checked_at": 1795065614,
+    "title": "Score-Based Generative Modeling through Stochastic Differential Equations",
+    "description": "Creating noise from data is easy; creating data from noise is generative modeling. We present a stochastic differential equation (SDE) that smoothly transforms a complex data distribution to a known prior distribution by slowly injecting noise, and a corresponding reverse-time SDE that transforms the prior distribution back into the data distribution by slowly removing the noise. Crucially, the reverse-time SDE depends only on the time-dependent gradient field (\\aka, score) of the perturbed data distribution. By leveraging advances in score-based generative modeling, we can accurately estimat…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/abs/2012.14913": {
     "checked_at": 1793252215,
@@ -215,17 +227,35 @@
     "description": "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IO-aware -- accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between G…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2205.14217": {
+    "checked_at": 1795065614,
+    "title": "Diffusion-LM Improves Controllable Text Generation",
+    "description": "Controlling the behavior of language models (LMs) without re-training is a major open problem in natural language generation. While recent works have demonstrated successes on controlling simple sentence attributes (e.g., sentiment), there has been little progress on complex, fine-grained controls (e.g., syntactic structure). To address this challenge, we develop a new non-autoregressive language model based on continuous diffusions that we call Diffusion-LM. Building upon the recent successes of diffusion models in continuous domains, Diffusion-LM iteratively denoises a sequence of Gaussian…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2207.06881": {
     "checked_at": 1793252215,
     "title": "Recurrent Memory Transformer",
     "description": "Transformer-based models show their effectiveness across multiple domains and tasks. The self-attention allows to combine information from all sequence elements into context-aware representations. However, global and local information has to be stored mostly in the same element-wise representations. Moreover, the length of an input sequence is limited by quadratic computational complexity of self-attention. In this work, we propose and study a memory-augmented segment-level recurrent Transformer (RMT). Memory allows to store and process local and global information as well as to pass informat…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/abs/2208.04202": {
+    "checked_at": 1795065614,
+    "title": "Analog Bits: Generating Discrete Data using Diffusion Models with Self-Conditioning",
+    "description": "We present Bit Diffusion: a simple and generic approach for generating discrete data with continuous state and continuous time diffusion models. The main idea behind our approach is to first represent the discrete data as binary bits, and then train a continuous diffusion model to model these bits as real numbers which we call analog bits. To generate samples, the model first generates the analog bits, which are then thresholded to obtain the bits that represent the discrete variables. We further propose two simple techniques, namely Self-Conditioning and Asymmetric Time Intervals, which lead…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2209.05433": {
     "checked_at": 1793212629,
     "title": "FP8 Formats for Deep Learning",
     "description": "FP8 is a natural progression for accelerating deep learning training inference beyond the 16-bit formats common in modern processors. In this paper we propose an 8-bit floating point (FP8) binary interchange format consisting of two encodings - E4M3 (4-bit exponent and 3-bit mantissa) and E5M2 (5-bit exponent and 2-bit mantissa). While E5M2 follows IEEE 754 conventions for representatio of special values, E4M3's dynamic range is extended by not representing infinities and having only one mantissa bit-pattern for NaNs. We demonstrate the efficacy of the FP8 format on a variety of image and lan…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2210.02747": {
+    "checked_at": 1795065614,
+    "title": "Flow Matching for Generative Modeling",
+    "description": "We introduce a new paradigm for generative modeling built on Continuous Normalizing Flows (CNFs), allowing us to train CNFs at unprecedented scale. Specifically, we present the notion of Flow Matching (FM), a simulation-free approach for training CNFs based on regressing vector fields of fixed conditional probability paths. Flow Matching is compatible with a general family of Gaussian probability paths for transforming between noise and data samples -- which subsumes existing diffusion paths as specific instances. Interestingly, we find that employing FM with diffusion paths results in a more…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/abs/2210.07229": {
     "checked_at": 1793252215,
@@ -239,6 +269,12 @@
     "description": "Recent progress in diffusion models has revolutionized the popular technology of text-to-image generation. While existing approaches could produce photorealistic high-resolution images with text conditions, there are still several open problems to be solved, which limits the further improvement of image fidelity and text relevancy. In this paper, we propose ERNIE-ViLG 2.0, a large-scale Chinese text-to-image diffusion model, to progressively upgrade the quality of generated images by: (1) incorporating fine-grained textual and visual knowledge of key elements in the scene, and (2) utilizing d…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2210.17432": {
+    "checked_at": 1795065614,
+    "title": "SSD-LM: Semi-autoregressive Simplex-based Diffusion Language Model for Text Generation and Modular Control",
+    "description": "Despite the growing success of diffusion models in continuous-valued domains (e.g., images), similar efforts for discrete domains such as text have yet to match the performance of autoregressive language models. In this work, we present SSD-LM -- a diffusion-based language model with two key design choices. First, SSD-LM is semi-autoregressive, iteratively generating blocks of text, allowing for flexible output length at decoding time while enabling local bidirectional context updates. Second, it is simplex-based, performing diffusion on the natural vocabulary space rather than a learned late…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2211.01324": {
     "checked_at": 1793212629,
     "title": "eDiff-I: Text-to-Image Diffusion Models with an Ensemble of Expert Denoisers",
@@ -251,11 +287,23 @@
     "description": "We study the problem of efficient generative inference for Transformer models, in one of its most challenging settings: large deep models, with tight latency targets and long sequence lengths. Better understanding of the engineering tradeoffs for inference for large Transformer-based models is important as use cases of these models are growing rapidly throughout application areas. We develop a simple analytical model for inference efficiency to select the best multi-dimensional partitioning techniques optimized for TPU v4 slices based on the application requirements. We combine these with a s…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2211.15089": {
+    "checked_at": 1795065614,
+    "title": "Continuous diffusion for categorical data",
+    "description": "Diffusion models have quickly become the go-to paradigm for generative modelling of perceptual signals (such as images and sound) through iterative refinement. Their success hinges on the fact that the underlying physical phenomena are continuous. For inherently discrete and categorical data such as language, various diffusion-inspired alternatives have been proposed. However, the continuous nature of diffusion models conveys many benefits, and in this work we endeavour to preserve it. We propose CDCD, a framework for modelling categorical data with diffusion models that are continuous both i…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2211.17192": {
     "checked_at": 1793212629,
     "title": "Fast Inference from Transformers via Speculative Decoding",
     "description": "Inference from large autoregressive models like Transformers is slow - decoding K tokens takes K serial runs of the model. In this work we introduce speculative decoding - an algorithm to sample from autoregressive models faster without any changes to the outputs, by computing several tokens in parallel. At the heart of our approach lie the observations that (1) hard language-modeling tasks often include easier subtasks that can be approximated well by more efficient models, and (2) using speculative execution and a novel sampling method, we can make exact decoding from the large models faste…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2212.09462": {
+    "checked_at": 1795065614,
+    "title": "Latent Diffusion for Language Generation",
+    "description": "Diffusion models have achieved great success in modeling continuous data modalities such as images, audio, and video, but have seen limited use in discrete domains such as language. Recent attempts to adapt diffusion to language have presented diffusion as an alternative to existing pretrained language models. We view diffusion and existing language models as complementary. We demonstrate that encoder-decoder language models can be utilized to efficiently learn high-quality language autoencoders. We then demonstrate that continuous diffusion models can be learned in the latent space of the la…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/abs/2301.12597": {
     "checked_at": 1793212629,
@@ -293,6 +341,12 @@
     "description": "A major limitation for the broader scope of problems solvable by transformers is the quadratic scaling of computational complexity with input size. In this study, we investigate the recurrent memory augmentation of pre-trained transformer models to extend input context length while linearly scaling compute. Our approach demonstrates the capability to store information in memory for sequences of up to an unprecedented two million tokens while maintaining high retrieval accuracy. Experiments with language modeling tasks show perplexity improvement as the number of processed input segments incre…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/abs/2305.08379": {
+    "checked_at": 1795065614,
+    "title": "TESS: Text-to-Text Self-Conditioned Simplex Diffusion",
+    "description": "Diffusion models have emerged as a powerful paradigm for generation, obtaining strong performance in various continuous domains. However, applying continuous diffusion models to natural language remains challenging due to its discrete nature and the need for a large number of diffusion steps to generate text, making diffusion-based generation expensive. In this work, we propose Text-to-text Self-conditioned Simplex Diffusion (TESS), a text diffusion model that is fully non-autoregressive, employs a new form of self-conditioning, and applies the diffusion process on the logit simplex space rat…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2305.13048": {
     "checked_at": 1793252215,
     "title": "RWKV: Reinventing RNNs for the Transformer Era",
@@ -310,6 +364,12 @@
     "title": "Adapting Language Models to Compress Contexts",
     "description": "Transformer-based language models (LMs) are powerful and widely-applicable tools, but their usefulness is constrained by a finite context window and the expensive computational cost of processing long text documents. We propose to adapt pre-trained LMs into AutoCompressors. These language models are capable of compressing long contexts into compact summary vectors, which are then accessible to the model as soft prompts. Summary vectors are trained with an unsupervised objective, whereby long documents are processed in segments, and summary vectors from all previous segments are used in langua…",
     "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2305.18619": {
+    "checked_at": 1795065614,
+    "title": "Likelihood-Based Diffusion Language Models",
+    "description": "Despite a growing interest in diffusion-based language models, existing work has not shown that these models can attain nontrivial likelihoods on standard language modeling benchmarks. In this work, we take the first steps towards closing the likelihood gap between autoregressive and diffusion-based language models, with the goal of building and releasing a diffusion model which outperforms a small but widely-known autoregressive model. We pursue this goal through algorithmic improvements, scaling laws, and increased compute. On the algorithmic front, we introduce several methodological impro…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/abs/2306.07174": {
     "checked_at": 1793252215,
@@ -425,6 +485,12 @@
     "description": "Existing Large Language Models (LLMs) usually remain static after deployment, which might make it hard to inject new knowledge into the model. We aim to build models containing a considerable portion of self-updatable parameters, enabling the model to integrate new knowledge effectively and efficiently. To this end, we introduce MEMORYLLM, a model that comprises a transformer and a fixed-size memory pool within the latent space of the transformer. MEMORYLLM can self-update with text knowledge and memorize the knowledge injected earlier. Our evaluations demonstrate the ability of MEMORYLLM to…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/abs/2402.05841": {
+    "checked_at": 1795065614,
+    "title": "Dirichlet Flow Matching with Applications to DNA Sequence Design",
+    "description": "Discrete diffusion or flow models could enable faster and more controllable sequence generation than autoregressive models. We show that naïve linear flow matching on the simplex is insufficient toward this goal since it suffers from discontinuities in the training target and further pathologies. To overcome this, we develop Dirichlet flow matching on the simplex based on mixtures of Dirichlet distributions as probability paths. In this framework, we derive a connection between the mixtures' scores and the flow's vector field that allows for classifier and classifier-free guidance. Further, w…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2402.07871": {
     "checked_at": 1793212629,
     "title": "Scaling Laws for Fine-Grained Mixture of Experts",
@@ -473,6 +539,12 @@
     "description": "Key-value (KV) caching plays an essential role in accelerating decoding for transformer-based autoregressive large language models (LLMs). However, the amount of memory required to store the KV cache can become prohibitive at long sequence lengths and large batch sizes. Since the invention of the transformer, two of the most effective interventions discovered for reducing the size of the KV cache have been Multi-Query Attention (MQA) and its generalization, Grouped-Query Attention (GQA). MQA and GQA both modify the design of the attention block so that multiple query heads can share a single…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/abs/2405.14664": {
+    "checked_at": 1795065614,
+    "title": "Fisher Flow Matching for Generative Modeling over Discrete Data",
+    "description": "Generative modeling over discrete data has recently seen numerous success stories, with applications spanning language modeling, biological sequence design, and graph-structured molecular data. The predominant generative modeling paradigm for discrete data is still autoregressive, with more recent alternatives based on diffusion or flow-matching falling short of their impressive performance in continuous data settings, such as image or video generation. In this work, we introduce Fisher-Flow, a novel flow-matching model for discrete data. Fisher-Flow takes a manifestly geometric perspective b…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2405.16039": {
     "checked_at": 1793212629,
     "title": "MoEUT: Mixture-of-Experts Universal Transformers",
@@ -484,6 +556,12 @@
     "title": "Seq1F1B: Efficient Sequence-Level Pipeline Parallelism for Large Language Model Training",
     "description": "The emergence of large language models (LLMs) relies heavily on distributed training strategies, among which pipeline parallelism plays a crucial role. As LLMs' training sequence length extends to 32k or even 128k, the current pipeline parallel methods face severe bottlenecks, including high memory footprints and substantial pipeline bubbles, greatly hindering model scalability and training throughput. To enhance memory efficiency and training throughput, in this work, we introduce an efficient sequence-level one-forward-one-backward (1F1B) pipeline scheduling method tailored for training LLM…",
     "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2406.04843": {
+    "checked_at": 1795065614,
+    "title": "Variational Flow Matching for Graph Generation",
+    "description": "We present a formulation of flow matching as variational inference, which we refer to as variational flow matching (VFM). Based on this formulation we develop CatFlow, a flow matching method for categorical data. CatFlow is easy to implement, computationally efficient, and achieves strong results on graph generation tasks. In VFM, the objective is to approximate the posterior probability path, which is a distribution over possible end points of a trajectory. We show that VFM admits both the CatFlow objective and the original flow matching objective as special cases. We also relate VFM to scor…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/abs/2406.09297": {
     "checked_at": 1793252215,
@@ -851,6 +929,18 @@
     "description": "When using an LLM to process text outside the training domain(s), an often overlooked factor is vocabulary mismatch, where the general-domain tokenizer fails to capture frequent domain-specific terms, leading to higher token fertility and thus a decrease in processing speed due to suboptimal sub-word splits. We address this limitation by augmenting the pretrained vocabulary with a set of domain-specific tokens. To this end, we design an algorithm that extends an existing tokenizer while guaranteeing it never decreases tokenization efficiency: every input sequence is segmented into at most the…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2510.01329": {
+    "checked_at": 1795065614,
+    "title": "Continuously Augmented Discrete Diffusion model for Categorical Generative Modeling",
+    "description": "Standard discrete diffusion models treat all unobserved states identically by mapping them to an absorbing [MASK] token. This creates an 'information void' where semantic information that could be inferred from unmasked tokens is lost between denoising steps. We introduce Continuously Augmented Discrete Diffusion (CADD), a framework that augments the discrete state space with a paired diffusion in a continuous latent space. This yields graded, gradually corrupted states in which masked tokens are represented by noisy yet informative latent vectors rather than collapsed 'information voids'. At…",
+    "fetched_at": 1795065614
+  },
+  "https://arxiv.org/abs/2510.03206": {
+    "checked_at": 1795065614,
+    "title": "Coevolutionary Continuous Discrete Diffusion: Make Your Diffusion Language Model a Latent Reasoner",
+    "description": "Diffusion language models, especially masked discrete diffusion models, have achieved great success recently. While there are some theoretical and primary empirical results showing the advantages of latent reasoning with looped transformers or continuous chain-of-thoughts, continuous diffusion models typically underperform their discrete counterparts. In this paper, we argue that diffusion language models do not necessarily need to be in the discrete space. In particular, we prove that continuous diffusion models have stronger expressivity than discrete diffusions and looped transformers. We…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2510.10620": {
     "checked_at": 1793252215,
     "title": "DCP: Addressing Input Dynamism In Long-Context Training via Dynamic Context Parallelism",
@@ -892,6 +982,12 @@
     "title": "DeepSeek-OCR: Contexts Optical Compression",
     "description": "We present DeepSeek-OCR as an initial investigation into the feasibility of compressing long contexts via optical 2D mapping. DeepSeek-OCR consists of two components: DeepEncoder and DeepSeek3B-MoE-A570M as the decoder. Specifically, DeepEncoder serves as the core engine, designed to maintain low activations under high-resolution input while achieving high compression ratios to ensure an optimal and manageable number of vision tokens. Experiments show that when the number of text tokens is within 10 times that of vision tokens (i.e., a compression ratio < 10x), the model can achieve decoding…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2510.22510": {
+    "checked_at": 1795065614,
+    "title": "CANDI: Hybrid Discrete-Continuous Diffusion Models",
+    "description": "While continuous diffusion has shown remarkable success in continuous domains such as image generation, its direct application to discrete data has underperformed pure discrete formulations. To understand this gap, we introduce token identifiability, an analytical framework characterizing how Gaussian noise corrupts discrete data through two mechanisms: discrete identity corruption and continuous rank degradation. We reveal that these mechanisms scale differently with vocabulary size, creating a temporal dissonance that forces a tradeoff between learning continuous geometry and discrete struc…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/abs/2510.25000": {
     "checked_at": 1793212629,
@@ -1115,6 +1211,12 @@
     "description": "The evolution of large language models (LLMs) towards applications with ultra-long contexts faces challenges posed by the high computational and memory costs of the Transformer architecture. While existing sparse and linear attention mechanisms attempt to mitigate these issues, they typically involve a trade-off between memory efficiency and model performance. This paper introduces MiniCPM-SALA, a 9B-parameter hybrid architecture that integrates the high-fidelity long-context modeling of sparse attention (InfLLM-V2) with the global efficiency of linear attention (Lightning Attention). By empl…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/abs/2602.12233": {
+    "checked_at": 1795065614,
+    "title": "Categorical Flow Maps",
+    "description": "We introduce Categorical Flow Maps, a flow-matching method for accelerated few-step generation of categorical data via self-distillation. Building on recent variational formulations of flow matching and the broader trend towards accelerated inference in diffusion and flow-based models, we define a flow map towards the simplex that transports probability mass toward a predicted endpoint, yielding a parametrisation that naturally constrains model predictions. Since our trajectories are continuous rather than discrete, Categorical Flow Maps can be trained with existing distillation techniques, a…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2602.15763": {
     "checked_at": 1793212629,
     "title": "GLM-5: from Vibe Coding to Agentic Engineering",
@@ -1126,6 +1228,12 @@
     "title": "MoE-Spec: Expert Budgeting for Efficient Speculative Decoding",
     "description": "Speculative decoding accelerates Large Language Model (LLM) inference by verifying multiple drafted tokens in parallel. However, for Mixture-of-Experts (MoE) models, this parallelism introduces a severe bottleneck: large draft trees activate many unique experts, significantly increasing memory pressure and diminishing speedups from speculative decoding relative to autoregressive decoding. Prior methods reduce speculation depth when MoE verification becomes expensive. We propose MoE-Spec, a training-free verification-time expert budgeting method that decouples speculation depth from memory cos…",
     "fetched_at": 1793212629
+  },
+  "https://arxiv.org/abs/2602.16813": {
+    "checked_at": 1795065614,
+    "title": "Flow Map Language Models: One-step Language Modeling via Continuous Denoising",
+    "description": "Language models based on discrete diffusion have attracted widespread interest for their potential to provide faster generation than autoregressive models. Despite their promise, these models typically produce samples whose quality sharply degrades in the few-step regime, preventing a dramatic speedup in practice. Here, we show that language models based on continuous flows over one-hot token embeddings can outperform discrete diffusion in both quality and speed. Importantly, our continuous formulation defines a unique flow map that can be learned directly for efficient few-step inference, a…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/abs/2602.17080": {
     "checked_at": 1793212629,
@@ -1211,6 +1319,12 @@
     "description": "Diffusion language models promise parallel generation, yet still lag behind autoregressive (AR) models in quality. We stem this gap to a failure of introspective consistency: AR models agree with their own generations, while DLMs often do not. We define the introspective acceptance rate, which measures whether a model accepts its previously generated tokens. This reveals why AR training has a structural advantage: causal masking and logit shifting implicitly enforce introspective consistency. Motivated by this observation, we introduce Introspective Diffusion Language Model (I-DLM), a paradig…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2604.11748": {
+    "checked_at": 1795065614,
+    "title": "LangFlow: Continuous Diffusion Rivals Discrete in Language Modeling",
+    "description": "Continuous diffusion has served as a foundation for high-fidelity, controllable, and few-step generation across continuous data modalities such as images, videos, and molecular structures. However, in language modeling, prior continuous diffusion language models (DLMs) lag behind discrete counterparts. Existing categorical and simplex-based approaches operate over extremely large and sparse language spaces, while prior embedding-space approaches avoid this sparsity but lack a well-selected design space. In this work, we close this gap with LangFlow by connecting embedding-space DLMs to Flow M…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2604.12452": {
     "checked_at": 1793252215,
     "title": "Latent-Condensed Transformer for Efficient Long Context Modeling",
@@ -1271,6 +1385,18 @@
     "description": "DeepSeek Sparse Attention (DSA) sets the state of the art for fine-grained inference-time sparse attention by introducing a learned token-wise indexer that scores every prefix token and selects the most relevant ones for the main attention. To remain expressive, the indexer uses many query heads (for example, 64 on DeepSeek-V3.2) that share the same selected token set; this multi-head design is precisely what makes the indexer the dominant cost on long contexts. We propose MISA (Mixture of Indexer Sparse Attention), a drop-in replacement for the DSA indexer that treats its indexer heads as a…",
     "fetched_at": 1793252215
   },
+  "https://arxiv.org/abs/2605.07820": {
+    "checked_at": 1795065614,
+    "title": "Scaling Categorical Flow Maps",
+    "description": "Continuous diffusion and flow matching models could represent a powerful alternative to autoregressive approaches for language modelling (LM), as they unlock a host of advantages currently reserved for continuous modalities, including accelerated sampling and tilting. Recently, several works have demonstrated the possibility of generating discrete data continuously by a simple flow matching process between a Gaussian and the one-hot encoded data distribution. They have further shown the feasibility of accelerated sampling via Categorical Flow Maps (CFMs), resulting in competitive sample quali…",
+    "fetched_at": 1795065614
+  },
+  "https://arxiv.org/abs/2605.10938": {
+    "checked_at": 1795065614,
+    "title": "ELF: Embedded Language Flows",
+    "description": "Diffusion and flow-based models have become the de facto approaches for generating continuous data, e.g., in domains such as images and videos. Their success has attracted growing interest in applying them to language modeling. Unlike their image-domain counterparts, today's leading diffusion language models (DLMs) primarily operate over discrete tokens. In this paper, we show that continuous DLMs can be made effective with minimal adaptation to the discrete domain. We propose Embedded Language Flows (ELF), a class of diffusion models in continuous embedding space based on continuous-time Flo…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2605.11706": {
     "checked_at": 1793212629,
     "title": "GRAFT: Graph-Tokenized LLMs for Tool Planning",
@@ -1306,6 +1432,12 @@
     "title": "GQLA: Group-Query Latent Attention for Hardware-Adaptive Decoding",
     "description": "Decoding efficiency depends on KV-cache traffic, computation, and parallelism. Multi-head Latent Attention (MLA) offers absorbed and head-expanded forms, but its head-specific projections limit grouped KV sharing. We introduce Group-Query Latent Attention (GQLA), whose group-shared up-projections preserve a joint latent and enable a shardable expanded cache. The same weights support equivalent MQA-absorb and GQA execution using existing kernels. Roofline analysis relates path preference to GPU compute-to-bandwidth ratio and tensor parallelism (TP): absorption trades traffic for computation an…",
     "fetched_at": 1793252215
+  },
+  "https://arxiv.org/abs/2605.18530": {
+    "checked_at": 1795065614,
+    "title": "Continuous Diffusion Scales Competitively with Discrete Diffusion for Language",
+    "description": "While diffusion has drawn considerable recent attention from the language modeling community, continuous diffusion has appeared less scalable than discrete approaches. To challenge this belief we revisit Plaid, a likelihood-based continuous diffusion language model (DLM), and construct RePlaid by aligning the architecture of Plaid with modern discrete DLMs. In this unified setting, we establish the first scaling law for continuous DLMs that rivals discrete DLMs: RePlaid exhibits a compute gap of only $20\\times$ compared to autoregressive models, outperforms Duo while using fewer parameters, a…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/abs/2605.18855": {
     "checked_at": 1793212629,
@@ -1733,6 +1865,12 @@
     "description": "Multi-token prediction (MTP) improves the throughput of autoregressive generation by enabling the language model to draft multiple next tokens per forward pass, while a verification step over draft tokens ensures that token distribution of the backbone is preserved. Every open MTP-family release (MiMo-7B, DeepSeek-V3, Qwen3) trains its heads jointly with the backbone over the full pretraining run of tens of trillions of tokens, thus setting the drafter quality at pretraining time. We ask whether a lightweight post-training pass on target-generated chain-of-thought is enough to reach the same…",
     "fetched_at": 1793212629
   },
+  "https://arxiv.org/abs/2610.02665v2": {
+    "checked_at": 1795065614,
+    "title": "Large Language Continuous Diffusion Models",
+    "description": "Despite the success of discrete diffusion language models (dLMs) for fast parallel decoding, their non-smooth, high-dimensional space hinders trajectory steering for reasoning and inference acceleration. To overcome this, we present Nemotron-Labs-Sigma, the first family of large-scale (3B/8B) continuous dLMs built on steerable, low-dimensional ODE/SDE latent trajectories. Trained blockwise via likelihood optimization, Nemotron-Labs-Sigma jointly denoises Gaussian-corrupted token embeddings while learning an optimal embedding geometry, and leverages pretrained autoregressive (AR) weights for w…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/abs/2610.04635": {
     "checked_at": 1793252215,
     "title": "LatentIndex: Cross-Layer Sharing with Layer-Specific Selection for Sparse Attention",
@@ -1816,6 +1954,12 @@
     "title": "Multi-Token Prediction Done Right",
     "description": "Multi-Token Prediction (MTP) is now a common ingredient in language-model pre-training, as it improves downstream performance and enables faster inference through speculative decoding. We identify a flaw in standard MTP training, in which a residual component of the MTP gradient interferes with both next-token and multi-token learning, increasingly so with scale. Specifically, the MTP cross-entropy gradient can be decomposed exactly into a KL self-distillation term that pulls each MTP head toward the model's own next-token prediction (NTP) distribution and improves speculative decoding, and a…",
     "fetched_at": 1793961809
+  },
+  "https://arxiv.org/html/2211.15089v3": {
+    "checked_at": 1795065614,
+    "title": "Continuous diffusion for categorical data",
+    "description": "Diffusion models have quickly become the go-to paradigm for generative modelling of perceptual signals (such as images and sound) through iterative refinement. Their success hinges on the fact that the underlying physical phenomena are continuous. For inherently discrete and categorical data such as language, various diffusion-inspired alternatives have been proposed. However, the continuous nature of diffusion models conveys many benefits, and in this work we endeavour to preserve it. We propose CDCD, a framework for modelling categorical data with diffusion models that are continuous both i…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/html/2305.18295v2": {
     "checked_at": 1794827952,
@@ -1997,6 +2141,12 @@
     "description": "Speculative decoding accelerates Large Language Model (LLM) inference by verifying multiple drafted tokens in parallel. However, for Mixture-of-Experts (MoE) models, this parallelism introduces a severe bottleneck: large draft trees activate many unique experts, significantly increasing memory pressure and diminishing speedups from speculative decoding relative to autoregressive decoding. Prior methods reduce speculation depth when MoE verification becomes expensive. We propose MoE-Spec, a training-free verification-time expert budgeting method that decouples speculation depth from memory cos…",
     "fetched_at": 1794222436
   },
+  "https://arxiv.org/html/2602.16813v1": {
+    "checked_at": 1795065614,
+    "title": "One-step Language Modeling via Continuous Denoising",
+    "description": "Language models based on discrete diffusion have attracted widespread interest for their potential to provide faster generation than autoregressive models. In practice, however, they exhibit a sharp degradation of sample quality in the few-step regime, failing to realize this promise. Here we show that language models leveraging flow-based continuous denoising can outperform discrete diffusion in both quality and speed. By revisiting the fundamentals of flows over discrete modalities, we build a flow-based language model (FLM) that performs Euclidean denoising over one-hot token encodings. We…",
+    "fetched_at": 1795065614
+  },
   "https://arxiv.org/html/2603.03276v1": {
     "checked_at": 1794672892,
     "title": "Beyond Language Modeling: An Exploration of Multimodal Pretraining",
@@ -2038,6 +2188,12 @@
     "title": "Dynamic Chunking for Diffusion Language Models",
     "description": "Block discrete diffusion language models factorize a sequence autoregressively over fixed-size positional blocks, decoupling within-block parallel denoising from across-block conditioning. We argue that this rigid partition wastes structure already present in the sequence: blocks defined by position rather than by content separate semantically coherent tokens and group unrelated ones together. We introduce the \\textbf{D}ynamic \\textbf{C}hunking \\textbf{D}iffusion \\textbf{M}odel (DCDM), which replaces positional blocks with content-defined semantic chunks. At its core is Chunking Attention, a…",
     "fetched_at": 1794222436
+  },
+  "https://arxiv.org/html/2605.18530v3": {
+    "checked_at": 1795065614,
+    "title": "Continuous Diffusion Scales Competitively with Discrete Diffusion for Language",
+    "description": "While diffusion has drawn considerable recent attention from the language modeling community, continuous diffusion has appeared less scalable than discrete approaches. To challenge this belief we revisit Plaid, a likelihood-based continuous diffusion language model (DLM), and construct RePlaid by aligning the architecture of Plaid with modern discrete DLMs. In this unified setting, we establish the first scaling law for continuous DLMs that rivals discrete DLMs: RePlaid exhibits a compute gap of only $20\\times$ compared to autoregressive models, outperforms Duo while using fewer parameters, a…",
+    "fetched_at": 1795065614
   },
   "https://arxiv.org/html/2605.30876v2": {
     "checked_at": 1794222436,
@@ -2539,6 +2695,12 @@
     "title": "TPU v5e | Google Cloud Documentation",
     "description": "Explore Google Cloud TPU v5e: high-performance hardware for training and serving large-scale ML models.",
     "fetched_at": 1793212629
+  },
+  "https://continuous-lm.github.io/": {
+    "checked_at": 1795065614,
+    "title": "A Survey on Continuous Diffusion and Flow Language Models",
+    "description": "Continuous diffusion and flow language models: principles, few-step generation, scaling, applications, and open questions.",
+    "fetched_at": 1795065614
   },
   "https://crd.lbl.gov/assets/pubs_presos/parlab08-roofline-talk.pdf": {
     "checked_at": 1795020790
