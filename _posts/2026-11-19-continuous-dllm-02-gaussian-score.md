@@ -9,7 +9,7 @@ series: continuous-dllm
 series_order: 2
 tags: [dLLM, Diffusion, Flow Matching]
 math: true
-description: "从高斯观测与条件均值推导 score，连接去噪目标、DDPM、ODE 与 SDE，并给出手算例子。"
+description: "推导 Gaussian 去噪与 score，走通 DDPM，并用概率守恒解释 Brownian 增量、reverse SDE 和 probability-flow ODE。"
 permalink: /2026/11/19/continuous-dllm-02-gaussian-score.html
 ---
 
@@ -309,6 +309,101 @@ $$
 式中 η 只随时间变化。额外随机扩散使密度向外散开，额外的 η·score 漂移恰好抵消这部分散开；因此不能只加噪声、却保持漂移完全不变。η=0 就退回原来的 ODE。
 
 这条对应关系可以用概率密度的演化方程验证。沿主线继续阅读时，需要掌握的是漂移怎样决定平均移动、随机增量为何乘 √h，以及随机初值与沿途加噪的区别。
+
+## 训练只抽一次噪声，为什么采样有时每步又抽一次
+
+构造 Xₜ=αₜC+σₜε 时，一次训练样本只需一份 C、ε 和 t；它是从一个已知边缘分布直接抽样，并没有模拟完整随机过程。
+
+若为了画出同一条插值，把同一份 C、ε 放到不同 t 上，就得到一条光滑曲线。若改成每个 t 都重新独立抽 ε，只能得到各时间的人群快照，不能把它们连起来当作同一条轨迹。
+
+SDE 里的逐步新噪声则有自己的缩放规律。长度 h 的 Brownian 增量方差为 h，所以随机位移为 g√h ξ。把长度 2h 的时间拆成两个 h，两份独立增量的方差相加，仍然是 2h；这就是 √h 缩放的可加性。固定一份 ε 乘上变化的 σₜ，与不断积累独立 Brownian 增量，不是同一种随机路径。
+
+## 用概率守恒验证 score 修正
+
+ODE 把概率密度沿速度 b 搬运，因此满足连续性方程：
+
+$$
+\partial_tp=-\nabla\cdot(pb).
+$$
+
+散度可以理解为一个小体积里流出的质量减去流入的质量。SDE 额外加入 Gaussian 扰动以后，还多出一个扩散项。对于本章的
+dX=(b+ηs)dt+√(2η)dW，其中 η 只随时间变，密度演化为：
+
+$$
+\partial_tp
+=-\nabla\cdot[p(b+\eta s)]+\eta\Delta p.
+$$
+
+Δp 是各坐标二阶导数的和。它描述随机扰动把密度峰向周围摊开。若 s=∇log p，那么 ps=∇p，代入得到：
+
+$$
+-\eta\nabla\cdot(ps)+\eta\Delta p
+=-\eta\Delta p+\eta\Delta p=0.
+$$
+
+于是剩下原来的连续性方程。这就解释了“ODE 和某些 SDE 可以共享所有时间边缘分布”：新噪声使群体散开，score 漂移把同样的量补回来。
+
+这个抵消是密度层面的结论，不要求两者逐样本走相同轨迹。随手在 Euler 更新后加 Gaussian，若缺少对应的漂移修正，通常会改变目标路径。
+
+## Reverse SDE 的负号怎样在统一时间下确定
+
+文献常把正向时间 τ 定义为数据到噪声：
+
+$$
+\mathrm dY_\tau=f(Y_\tau,\tau)\,\mathrm d\tau
++g(\tau)\,\mathrm dW_\tau.
+$$
+
+本系列使用相反方向 t=1−τ。令 Xₜ=Y₁₋ₜ，用 t 沿生成方向增加，反向 SDE 的漂移为：
+
+$$
+\mathrm dX_t
+=\left[-f(X_t,1-t)
++g(1-t)^2s_t(X_t)\right]\mathrm dt
++g(1-t)\,\mathrm d\overline W_t.
+$$
+
+其中 sₜ 是 Y₁₋ₜ 的密度 score。对应的 probability-flow ODE 为：
+
+$$
+\frac{\mathrm dX_t}{\mathrm dt}
+=-f(X_t,1-t)
++\tfrac12g(1-t)^2s_t(X_t).
+$$
+
+两式差了半个 g²score 与相应噪声，正好符合上一节 η=g²/2 的关系。文献若在递减的 τ 上写反向过程，公式外观会不同；判断正负应先明确积分时间在增加还是减少。
+
+### VP 过程的一次代入
+
+Variance-preserving SDE 的正向漂移为 f(y,τ)=−β(τ)y/2，噪声强度满足 g²=β。它使均值逐渐缩小、噪声逐渐增大。换成生成方向后：
+
+$$
+\begin{aligned}
+\text{Reverse SDE: }\quad
+\mathrm dX_t
+&=\left[\tfrac{\beta}2X_t+\beta s_t(X_t)\right]\mathrm dt
++\sqrt\beta\,\mathrm d\overline W_t,\\
+\text{PF ODE: }\quad
+\dot X_t&=\tfrac{\beta}2X_t+\tfrac{\beta}2s_t(X_t),
+\end{aligned}
+$$
+
+这里 β 取在 1−t 上。X 项把被压缩的信号尺度恢复，score 项根据当前密度调整方向；SDE 的额外散开还需要另半个 score 漂移抵消。
+
+DDPM 的小步 Gaussian 链可以与这类连续过程联系起来，但实际有限步 DDPM、ODE 求解器和重新设计的随机 sampler 仍有不同离散误差。比较它们时，应先确认是否针对同一概率路径，再比较有限 NFE 下的结果。
+
+## 为什么多模态密度的 score 不是“到最近答案的箭头”
+
+以等概率的 C=±1 为例，在 α=0.5、σ=0.5 时，x=0 附近对两类同样可能，score 在对称点为零。这并不意味着数据分布在零点有一个合法答案；它只表示该位置的 log density 一阶导数恰好为零。
+
+移到 x=0.2 后，后验 log odds 为 2αx/σ²=0.8，正类概率约为 0.6900，干净均值约为 0.3799。对应：
+
+$$
+s(x)=\frac{\alpha D(x)-x}{\sigma^2}
+\approx-0.0401.
+$$
+
+正类后验已经较大，score 却仍略向左。这并不矛盾：score 描述当前噪声密度怎样变化，D 描述干净端点的条件平均，真正生成速度还要结合 α、σ 的变化。不能把三个对象都画成“指向最大概率 token 的同一支箭头”。
 
 ## 方法归纳与出处
 

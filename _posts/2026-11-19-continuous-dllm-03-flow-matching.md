@@ -9,7 +9,7 @@ series: continuous-dllm
 series_order: 3
 tags: [dLLM, Diffusion, Flow Matching]
 math: true
-description: "推导条件平均速度与连续性方程，解释逐位置交叉熵如何定义整段序列的联合生成动力学。"
+description: "推导 CE 到联合连续速度的连接，给出张量代码、可直接运行的 AA／BB 采样，以及分类误差控制速度误差的界。"
 permalink: /2026/11/19/continuous-dllm-03-flow-matching.html
 ---
 
@@ -198,6 +198,38 @@ $$
 
 这个例子也说明，生成速度不是各个位置各自追随当前最大类别那么简单。它依赖完整观测如何改变共同的后验判断。
 
+## 推广到一般 Gaussian 路径以后，哪些公式需要一起改
+
+取 Xₜ=αₜC+σₜε，仍让网络通过类别后验得到 Dₜ=E[C|Xₜ]。对插值求导，再消去 ε：
+
+$$
+\begin{aligned}
+U_t&=\alpha_t'C+\sigma_t'\varepsilon,\\
+b_t(x)&=\frac{\sigma_t'}{\sigma_t}x
++\left(\alpha_t'-\frac{\alpha_t\sigma_t'}{\sigma_t}\right)D_t(x).
+\end{aligned}
+$$
+
+因此换成 VP、cosine 或 logSNR 参数化时，不能继续无条件沿用 (D−x)/(1−t)。后一式只对应本篇的线性系数 α=t、σ=1−t。
+
+若噪声还是与 C 独立的 Gaussian，则 score 另外满足：
+
+$$
+s_t(x)=\frac{\alpha_tD_t(x)-x}{\sigma_t^2}.
+$$
+
+两个公式的依据不同。速度关系主要来自仿射插值的代数与条件期望；score 关系还用了给定 C 时的 Gaussian likelihood。若改成 AR teacher 等非独立的 noise–data coupling，需要重新检查后一个条件，不能因为噪声的边缘仍是 Gaussian，就照搬所有独立-noise 的 score 公式。
+
+对一般词表 E，CE 学到 qᵢ(k|Xₜ,t) 后，Dᵢ=∑qᵢ(k)Eₖ，仍可代入相应速度。这是 one-hot FLM 与 embedding-CE 路线共用的桥梁；区别在状态几何、噪声路径和构造 D 的词表。
+
+## 为什么不让小 hidden state 直接回归整份 Gaussian 速度
+
+假设词表有 50,000 维，网络 hidden width 只有 768，最后用一个线性 head 直接输出完整速度。随机 Gaussian 成分遍布 50,000 维，而线性 head 的输出变化受到 hidden 子空间限制，网络要额外花能力表达已知输入里那份高维噪声。
+
+clean prediction 接口把事情拆开：网络用词表分类头判断候选 token，速度中已知的 −x/(1−t) 部分直接解析计算。网络不必再通过低宽度 hidden state 重建整份 Gaussian。加入适当 residual／skip 的其他参数化也能处理这一点，不能把它说成所有 noise prediction 都不可能。
+
+这解释了 [FLM](https://arxiv.org/abs/2602.16813v3) 为什么强调“预测什么”和“用什么 loss”必须一起选择。理论上能相互转换的统计量，在给定网络输出结构下，优化难度未必相同。
+
 ## 理论保证与离散终点
 
 前面的分布一致性结论依赖正确的速度场和准确积分。实际模型只近似条件均值，采样器也只做有限次更新；两类误差要分别检查。
@@ -206,39 +238,91 @@ $$
 
 这也是为什么“理想联合动力学成立”和“用一两步就生成正确文本”之间还有距离。少步时的积分误差，需要额外处理。
 
-## 把训练与采样写成两段伪代码
+## 把 one-hot CE 训练写成真正的张量操作
 
-这段教学伪代码保留固定 one-hot 表示、CE 训练和 Euler 小步更新。时间分配与完整终止规则分别在第 5、6 篇展开。
+下面是不带 self-conditioning 的核心更新。network 的输入、输出均为 B×L×V，内部可投影到 dmodel 后做 Transformer。为避免再分配一份完整 one-hot，直接把信号加到目标坐标：
 
-```text
-训练一次
-  取一条真实 token 序列 w
-  C = onehot(w)
-  ε = 标准高斯噪声
-  t = 抽取训练时间
-  I = (1-t) * ε + t * C
-  logits = network(I, t)
-  loss = 各位置 token 交叉熵的平均
+~~~python
+B, L = token_ids.shape
+t = sample_training_time(B).to(token_ids.device).view(B, 1, 1)
+noise = torch.randn(B, L, vocab_size, device=token_ids.device)
+x = (1 - t) * noise
+x.scatter_add_(-1, token_ids[..., None], t.expand(B, L, 1))
 
-采样一个小步
-  D = softmax(network(x, t))
-  b = (D-x) / (1-t)
-  x_next = x + h*b
-```
+logits = network(x, t.view(B))
+loss = torch.nn.functional.cross_entropy(
+    logits.transpose(1, 2), token_ids)
+optimizer.zero_grad()
+loss.backward()
+optimizer.step()
+~~~
 
-训练输入 I 是直接构造的，所以这一步不用跑 ODE。采样中的 x 则由上一个更新得到，是模型真实经历的轨迹。两者的输入分布可能因网络和数值误差出现差距；少步时尤其不能忽略这个区别。
+标签仍是 B×L 的 token IDs。loss 没有枚举 Vᴸ 个句子，但 noisy input 含有整段句子的联合证据，network 必须用跨位置计算利用这些证据。
 
-第二段是 Euler 示意，时间要避开 t=1 的除零点。最后怎样截断时间并读回 token，属于完整采样算法的一部分。
+相应的确定性采样可以直接写成数值上更清楚的有限更新：
 
-## 用一个统一训练循环接到真实模型
+~~~python
+x = torch.randn(batch_size, seq_len, vocab_size, device=device)
+for s, t in zip(grid[:-1], grid[1:]):     # 每个 s 都严格小于 1
+    q = network(x, batch_time(s)).softmax(-1)
+    x = ((1-t) * x + (t-s) * q) / (1-s)
+tokens = x.argmax(-1)
+~~~
 
-批大小为 B、序列长度为 L、词表大小为 V 时，one-hot 模型的状态张量为 B×L×V，输出 logits 具有相同形状。网络内部可以先投影到隐藏维度，再用 Transformer 处理，最后由输出头回到 V 类。
+最后一个更新可令目标时间 t=1，此时直接得到 q，而分母用的是尚未到 1 的 s。这份参考程序定义了一个有限步近似 sampler；它不是“有限步以后连续状态已经严格服从 one-hot 数据分布”的证明。真实 FLM 还要采用合适时间分配，少步模型则在第 7 篇另外训练。
 
-每批样本抽取时间与高斯噪声，直接构造 Iₜ，并把时间作为网络条件。CE 的标签仍是原 token ID，因此训练不需要把整句编码成 V 的 L 次方类之一。
+## 不用训练网络，也能跑通 AA／BB 的连续生成
 
-噪声与数据怎样配对，称为 coupling（耦合或联合配对）。本篇采用独立配对，因而可以直接写出插值与监督速度。改变配对方式会改变中间路径和训练难度，也需要重新推导相应的速度。
+前面两位置例子的后验有解析式，因此可以替代 network，单独观察 sampler。令 A=+1、B=−1，C=(Y,Y)，Gaussian 噪声独立：
 
-实际网络容量有限、训练不完美、推理只用有限步，所以理论中的正确均值与准确积分都只能近似实现。这些误差要分别诊断：训练误差看逐时间预测，数值误差看同一网络不同步数，读出误差看连续终点附近的离散决策。
+~~~python
+import numpy as np
+
+rng = np.random.default_rng(7)
+initial = rng.standard_normal((4096, 2))
+for steps in (1, 2, 4, 16):
+    x = initial.copy()
+    grid = np.linspace(0, 1, steps + 1)
+    for s, t in zip(grid[:-1], grid[1:]):
+        m = np.tanh(s * x.sum(axis=1) / (1-s)**2)
+        D = np.repeat(m[:, None], 2, axis=1)
+        x = ((1-t)*x + (t-s)*D) / (1-s)
+    A = x >= 0                           # 对零的 tie 固定选 A
+    print(steps, np.mean(A.all(axis=1)),
+          np.mean(A[:, 0] != A[:, 1]))
+~~~
+
+以这里的随机种子运行，输出为：
+
+| 更新步数 | AA 比例 | 不合法组合比例 |
+| --- | --- | --- |
+| 1 | 1.000000 | 0 |
+| 2 | 0.490234 | 0 |
+| 4 | 0.490234 | 0 |
+| 16 | 0.490234 | 0 |
+
+输出的两列分别是 AA 的比例和不合法组合比例。一步时，D₀=0，所有样本都在同一个零点打平，固定 tie-breaking 让它们全变成 AA。两步及更多步在这个特意简化的模型里能保留初始噪声的分支选择，产生接近各一半的 AA、BB。
+
+因此“一步全部合法”也不代表分布正确：一直输出 AA 的合法率是 100%，却漏掉一半数据模式。这个例子同时隔离了后验估计误差、数值更新与最终读出，不需要把失败一概归因于神经网络没训好。
+
+## CE 误差怎样进入连续速度
+
+令 pᵢ 是给定完整带噪状态的真实 token 后验，qᵢ 是模型后验。条件平均 CE 比最优值多出的部分为 KL(pᵢ||qᵢ)。对 one-hot 线性流，用 Pinsker 不等式可得：
+
+$$
+\begin{aligned}
+\|\widehat b_t-b_t\|_F^2
+&=\frac1{(1-t)^2}\sum_i\|q_i-p_i\|_2^2\\
+&\leq\frac2{(1-t)^2}
+\sum_i\mathrm{KL}(p_i\|q_i).
+\end{aligned}
+$$
+
+这给出了一个明确的桥梁：逐位置分类误差控制的是所需联合速度的每个坐标，并不要求预测完整的 Vᴸ 类联合表。
+
+系数也说明了边界为什么敏感。相同大小的类别误差，靠近 t=1 时可能对应更大的速度误差。完整的生成质量还受状态分布偏移、求解器和端点读出影响，不能只拿一个全时间平均 CE 判断极少步表现。
+
+而高噪声端 CE 较大，也未必表示网络犯了很多错：条件风险中还有不可约的后验熵 H(p)。在 AA/BB 的完全对称观测上，正确预测本来就是各一半。区分不可约不确定性与模型后验误差，是解释 loss 曲线和设计时间日程的前提。
 
 ## 方法归纳与出处
 

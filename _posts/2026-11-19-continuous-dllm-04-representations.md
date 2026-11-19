@@ -9,7 +9,7 @@ series: continuous-dllm
 series_order: 4
 tags: [dLLM, Diffusion, Flow Matching]
 math: true
-description: "比较 one-hot、embedding、binary 与 latent 表示，分析 token 可辨认性、压缩与连续状态成本。"
+description: "逐条拆解 Diffusion-LM、CDCD、SED、ELF、LD4LG、LDLM、Cola DLM 与 CoBit 的表示、梯度、采样和解码。"
 permalink: /2026/11/19/continuous-dllm-04-representations.html
 ---
 
@@ -166,6 +166,173 @@ $$
 对于带 AR decoder 的系统，要分别计算 latent 生成与文本实现的成本。减少扩散步数只能直接改善前者，整体延迟还取决于 decoder、缓存、输出长度和 batch。
 
 对上下文 latent，还要检查编码覆盖的范围：它依赖单个 token、一个 block，还是整句？这个范围决定了生成器建模的单位，也影响长度控制和局部修改。
+
+## Diffusion-LM 怎样把词向量训练成可生成的空间
+
+[Diffusion-LM](https://arxiv.org/abs/2205.14217) 的基本流水线是：token 经可学习的词表 E 变成向量；在向量上加入高斯噪声；Transformer 预测干净向量；由最终连续向量恢复 token。它让词表几何与去噪网络一起学习。
+
+这条路线的训练问题可以写成三项职责：
+
+$$
+\mathcal L
+=\mathcal L_{\mathrm{denoise}}
++\lambda_{\mathrm{rec}}\mathcal L_{\mathrm{token}}
++\lambda_{\mathrm{norm}}\mathcal R(E).
+$$
+
+去噪项要求网络恢复正确向量；token 重建项要求不同词仍然能被读出来；尺度约束防止只靠放大向量让噪声相对变小。这里是职责的示意分解，具体扩散时间的边界项与权重由其概率模型确定。
+
+为什么重建项不可省？假如把“猫”和“狗”的词向量都设成同一个点，向量 MSE 的任务会更容易，但生成器已经无法仅凭那个点知道应该输出哪一个词。相反，如果只训练带噪分类且不限制范数，把所有向量推得极远，也能降低分类难度，却没有学好跨 token 的组合关系。两个方向需要分别控制。
+
+Diffusion-LM 的另一项关键设计是噪声层级上的可微分类器：分类器读取连续状态，梯度可以修正去噪方向。这也是早期连续文本模型先在可控生成上发挥作用的原因。表示、重建和引导在这条方法中是同一套连续接口的不同用途。
+
+## CDCD 把向量回归换成类别后验，再由后验恢复 score
+
+[CDCD](https://arxiv.org/abs/2211.15089) 的接口更接近离散 dLLM：网络直接预测 token 概率 qθ(k|Xₜ,t)，用真实 token CE 训练。它不让网络自由输出任意干净向量，而是令：
+
+$$
+D_\theta^i(X_t,t)
+=\sum_{k=1}^{V}q_\theta^i(k\mid X_t,t)E_k.
+$$
+
+对于高斯观测，score 可以由这个条件均值解析得到。于是训练过程在类别空间，生成过程在连续向量空间。假设某位置预测“猫”0.6、“狗”0.4，给求解器的干净估计就是 0.6E猫+0.4E狗，而不是先随机选猫或狗；后续整段状态继续变化，再逐渐选择最终答案。
+
+这有两个实现后果。第一，q 的 V 个输出仍然存在，但连续状态只需要 d 个坐标。第二，CE 与 E 共同训练会倾向于把向量分开，因此 CDCD 对词向量做归一化，阻止通过范数增长降低噪声难度。它还从训练 CE 拟合时间变换，让快速丢失 token 信息的噪声区间得到更多训练和采样节点；第 5 篇会给出具体算法。
+
+CDCD 因而不能简单归类为“Diffusion-LM 换了一个 loss”：输出参数化、几何约束和时间分配是联动的。
+
+## SED 的固定词表与上下文表示有什么不同
+
+[SED](https://arxiv.org/abs/2211.04236) 从预训练 BERT 的词表取得向量，固定 E，并将其范数调整到与高斯尺度相配合。它用向量 MSE 训练去噪器，再训练一个词表 readout 把最终向量转换为 token；readout 的重建 CE 不回头改变固定 E。
+
+这里用的是“预训练模型提供的词表向量”：给同一个词 ID 查表，不同句子仍然返回同一个向量。它有预训练几何，但不是“这个词在当前句子中的整层 hidden state”。两者经常都被称为 embedding，训练任务却不同。
+
+固定 E 让扩散网络面对一个稳定目标，避免表示在训练中漂移。代价是：预训练时对分类或语言理解有用的距离，未必最适合从高斯噪声逐渐生成；扩散损失不能再调整它。SED 加入 self-conditioning，让网络沿采样步骤重复修正干净向量预测，这是对推理过程的改进，并没有把固定词表变成一个联合学习的上下文编码器。
+
+## ELF 把上下文向量去噪与最后一次解码放进同一个网络
+
+[ELF v3](https://arxiv.org/abs/2605.10938v3) 的一条主要配置使用 T5 编码器的上下文表示 C=Enc(w)。Cᵢ 已经受整段句子影响：同一个词出现在不同上下文，可以对应不同向量。这把一部分语言结构放进了生成目标。
+
+ELF 使用线性插值 Xₜ=tC+(1−t)ε，并让网络输出干净向量 Dθ，而非直接回归高维 Gaussian 速度。其 flow-matching 平方误差可以等价写为：
+
+$$
+\left\|
+\frac{D_\theta(X_t,t)-X_t}{1-t}-(C-\varepsilon)
+\right\|^2
+=\frac{\|D_\theta(X_t,t)-C\|^2}{(1-t)^2}.
+$$
+
+这说明“预测干净向量”与“优化速度误差”可以同时成立；把右侧的时间权重丢掉，则是另一个训练目标。
+
+它还需要把上下文向量还原成文字。ELF 让同一个网络有 denoise、decode 两种模式：普通时间处理连续去噪；最终 decode 模式接 unembedding 矩阵，输出所有位置的 token logits，用 CE 训练。解码分支的输入也施加专门的扰动，让它学习处理不完美的向量，而非只会复制理想编码器输出。
+
+完整推理因此是：
+
+~~~text
+X = Gaussian noise [L,d]
+对每个积分节点 t：
+    C_hat = net(X,t,mode=denoise)
+    用 (C_hat-X)/(1-t) 更新连续状态
+h = net(X,1,mode=decode)
+tokens = argmax(unembed(h))
+~~~
+
+成本差别体现在最终的 decode 与 unembedding。ELF 不必在每个中间步骤计算完整词表 head，但终点需要一次解码调用。它与“每步预测 q，再用 E 加权”的 CDCD、LangFlow 接口不同，也与需要额外 AR decoder 的压缩 latent 模型不同。
+
+## LD4LG 把长度和维度一起压缩，再交回 AR decoder
+
+[LD4LG](https://arxiv.org/abs/2212.09462) 先建立一个可重建文本的压缩接口。预训练 BART 或 T5 编码器把 L 个 token 变为 L 个 hidden states；少量可学习的 latent queries 通过 cross-attention 汇聚这些状态，再投影到更低维空间。
+
+论文的单语实验使用 32 个 latent、每个 64 维，状态一共 2,048 个标量。一个对照例子是 L=128、d=768 的逐 token 上下文状态，需要 98,304 个标量。这个对比只算流动的状态，不包含网络参数和 decoder，也不保证相应的计算就按 48 倍缩小。
+
+重建过程先把低维 latent 投回预训练 decoder 所需的特征宽度，再让 AR decoder 通过 cross-attention 逐 token 生成原句。单语配置默认固定预训练编码器、decoder，只学习压缩和重建模块；随后在所得 latent 分布上训练扩散模型。
+
+其生成流程是：
+
+$$
+\varepsilon\in\mathbb R^{32\times64}
+\xrightarrow{\text{latent diffusion}}z
+\xrightarrow{\text{reconstruction network}}h
+\xrightarrow{\text{AR decoder}}w.
+$$
+
+这是一种很具体的分工：扩散负责整句的低维全局信息，decoder 负责把它实现为流畅的 token 序列。若把 latent 生成压到一步，文字生成仍然可能是串行的。因此评价这条路线，需要分别统计 latent denoiser 的 NFE、decoder 的串行长度，以及两部分的参数和缓存。
+
+## LDLM 的联合训练具体改了哪些梯度
+
+固定 autoencoder 的潜在问题是：重建文本学得很好，但扩散所产生的微小表示误差恰好跨过 decoder 的敏感边界。只继续加大去噪器，不一定能改善这个接口。[LDLM v2](https://arxiv.org/abs/2605.07933v2) 让表示跟随扩散目标调整，并把重建监督分成两层。
+
+先由固定语言编码器得到上下文 h，再由可训练编码器 Aφ 得到 z；latent decoder Bψ 重建 h，token decoder Pω 读出文字：
+
+$$
+h=E_{\mathrm{frozen}}(w),\qquad
+z=A_\phi(h),\qquad
+\widehat h=B_\psi(z+\sigma_{\mathrm{dec}}\xi).
+$$
+
+它的三项训练信号是：
+
+$$
+\begin{aligned}
+\mathcal L_{\mathrm{diff}}&=
+\mathbb E\|D_\theta(z_t,t)-z\|^2
+\quad\text{带相应时间权重},\\
+\mathcal L_h&=\mathbb E\|\widehat h-h\|^2,\\
+\mathcal L_w&=
+-\mathbb E\log P_\omega(w\mid\operatorname{sg}(\widehat h)).
+\end{aligned}
+$$
+
+关键是最后的 sg：token CE 只训练文字读出，不把“每个 token 必须极容易区分”的梯度继续传回 latent encoder。表示主要由 hidden-state 重建与扩散共同塑形。否则在带噪重建下，CE 会强烈推动相似词的 latent 分离，未必有利于连续生成。
+
+联合学习还会产生早期拉扯。重建倾向于扩大表示以抵抗扰动，去噪 MSE 则可能推动表示缩小。LDLM 因此先让重建建立可读出的空间，再逐渐打开扩散损失流向 latent encoder 的梯度；扩散网络本身可以从开始就训练。随着表示变化，它还重新估计有用的噪声区间。
+
+解码器输入噪声 σdec 也有明确职责：迫使重建使用稳定信息，并让 decoder 在训练时见过偏离理想 latent 的状态。推理时，直接解码扩散生成的 latent，不再额外加入这份训练扰动。是否压短序列由编码器配置决定，“联合训练 latent”本身并不等于“一定把 L 压成很短的 M”。
+
+## Cola DLM 把连续先验和文字实现分成两层
+
+[Cola DLM](https://arxiv.org/abs/2605.06548) 的核心概率接口为：
+
+$$
+p(w,z)=p_{\mathrm{dec}}(w\mid z)p_{\mathrm{flow}}(z),
+\qquad
+p(w)=\int p_{\mathrm{dec}}(w\mid z)p_{\mathrm{flow}}(z)\,\mathrm dz.
+$$
+
+训练时的 encoder qφ(z|w) 用来把数据放进 latent 空间，推理时不必存在：生成只需要先验和 decoder。它先预训练带辅助 masking 任务的 causal VAE，再联合训练 latent flow，并用参考编码器限制表示漂移。连续先验按块组织：已完成的 latent blocks 提供因果上下文，当前块内部则并行去噪。
+
+从一个普通 VAE 的目标出发，可以理解它为何需要共同调整两部分：
+
+$$
+\mathbb E_{q_\phi(z\mid w)}
+[-\log p_{\mathrm{dec}}(w\mid z)]
++\mathrm{KL}(q_\phi(z\mid w)\|p_{\mathrm{flow}}(z)).
+$$
+
+第一项要求 latent 保留重建需要的信息；第二项要求这些 latent 的分布能由先验产生。在实际实现中，连续先验的学习通过 flow matching 完成，不能把“用了 FM”直接等同于每个理论 KL 都被精确算出。固定 latent 时，先验只能追赶已有分布；联合训练时，encoder 也可以把数据分布整理成更好生成的形状。
+
+## Binary 路线到底节省了什么
+
+one-hot 用 V 个坐标代表一个词，binary 只需要 b=⌈log₂V⌉ 个 bit。但计算节省取决于网络怎样组织这些 bit。[CoBit](https://arxiv.org/abs/2605.07013) 将 bitstream 分组送入 Transformer，用小的 bitwise head 替代每位置的 V 类 head，并利用单个带噪 bit 的解析后验，再学习上下文修正。
+
+这可以用一个 bit 的手算看懂。令干净 bit B∈{−1,+1}，观测 Y=αB+σε，先验等概率，则：
+
+$$
+\Pr(B=+1\mid Y=y)
+=\operatorname{sigmoid}\!\left(\frac{2\alpha y}{\sigma^2}\right).
+$$
+
+这个式子只使用本 bit 的证据。语言网络额外需要利用其他 bit 和其他词，修正“某个 bit 单独看来很像 1，但与整句或同一词的其他 bits 不协调”的情况。直接分别训练、分别抽所有 bit，会产生 bit 组合间的依赖问题，不能因 head 变小就忽略它。
+
+编码还会引入人为几何：编号相邻的词可能相差许多 bit，语义无关的词也可能只差一个 bit。H-CoBit 额外建模预训练词向量聚类的代码，为 bitstream 加入语义层次。这说明从 one-hot 换成 binary，并非纯粹的无损矩阵压缩；噪声距离与学习任务也随之改变。
+
+## 怎样判断一个表示真的更适合扩散
+
+除了理想编码状态的重建率，至少要比较三类输入：真实编码、加上受控扰动的编码，以及模型实际生成的状态。前两类之间的落差反映局部 decoder 稳定性；第二、三类之间的落差反映真实生成误差是否落在训练覆盖的方向。
+
+例如两个 decoder 都能完美重建训练编码。把编码沿生成器常见的误差方向移动 0.01，甲仍然输出原句，乙却换了关键词。只报告 clean reconstruction，二者完全相同；实际生成中则可能差很多。LDLM 的 noisy decoding、ELF 的解码扰动和不同 latent 训练方法，正是在处理这种接口误差。
+
+低有效秩也不能直接当作 collapse。真正的 collapse 是任务所需的信息变得不可恢复；低秩空间仍可能把所有词和句子分清。[RePlaid](https://arxiv.org/abs/2605.18530v3) 的观察尤其值得区分：额外 CE 将表示“摊得更开”以后，其 likelihood bound 反而变差。评估表示时，应检查它支持的生成与读出，而不是单凭秩、距离更均匀或重建更容易就判定优劣。
 
 ## 怎样为自己的实验做选择
 
