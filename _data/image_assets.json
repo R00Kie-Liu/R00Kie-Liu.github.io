@@ -35,6 +35,46 @@
     "width": 1440,
     "height": 678
   },
+  "assets/img/blog/continuous-dllm/coupled-flow.png": {
+    "width": 2208,
+    "height": 704
+  },
+  "assets/img/blog/continuous-dllm/joint-vs-marginal.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/continuous-dllm/posterior-vs-mean.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/continuous-dllm/reward-and-expectation.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/continuous-dllm/self-conditioning.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/continuous-dllm/simplex-sphere.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/continuous-dllm/sphere-tangent-step.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/continuous-dllm/time-schedule.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/continuous-dllm/training-pairs-vs-trajectories.png": {
+    "width": 1536,
+    "height": 1024
+  },
+  "assets/img/blog/continuous-dllm/velocity-vs-flow-map.png": {
+    "width": 1536,
+    "height": 1024
+  },
   "assets/img/blog/cross-layer-kv-reuse/gsm-fig1-architecture.png": {
     "width": 3328,
     "height": 1046
