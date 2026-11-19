@@ -3380,6 +3380,12 @@
     "description": "stepfun-ai has 34 repositories available. Follow their code on GitHub.",
     "fetched_at": 1793212629
   },
+  "https://github.com/tarekziade/moe-expert-streaming": {
+    "checked_at": 1795068708,
+    "title": "GitHub - tarekziade/moe-expert-streaming: Run MoE models larger than memory with transformers by streaming experts from the SSD (Qwen3.8-Flash-Next on a 32 GB Mac)",
+    "description": "Run MoE models larger than memory with transformers by streaming experts from the SSD (Qwen3.8-Flash-Next on a 32 GB Mac) - tarekziade/moe-expert-streaming",
+    "fetched_at": 1795068708
+  },
   "https://github.com/verl-project/vexact": {
     "checked_at": 1793212629,
     "title": "GitHub - verl-project/vexact: verl Zero-Mismatch Dense/MoE HuggingFace Rollout",
@@ -3478,6 +3484,12 @@
     "title": "allenai (Ai2)",
     "description": "Building breatkthrough AI to solve the world's biggest problems.",
     "fetched_at": 1793212629
+  },
+  "https://huggingface.co/blog/moe-expert-streaming": {
+    "checked_at": 1795068708,
+    "title": "180B Parameters, 32GB of RAM: Pushing MoE Inference to the Limit with Transformers",
+    "description": "We’re on a journey to advance and democratize artificial intelligence through open source and open science.",
+    "fetched_at": 1795068708
   },
   "https://huggingface.co/collections/Qwen/qwen35": {
     "checked_at": 1793212629,
@@ -3958,6 +3970,12 @@
     "title": "DMTP: A Better First Token for Block Drafting via MTP",
     "description": "DMTP combines pretrained MTP first-token prediction with parallel DFlash drafting. A technical blog by Piggy Shen covering the method, inference design, and evaluation.",
     "fetched_at": 1793961809
+  },
+  "https://tarekziade-moe-expert-streaming.static.hf.space/details.html": {
+    "checked_at": 1795068708,
+    "title": "MoE expert streaming in Transformers",
+    "description": "",
+    "fetched_at": 1795068708
   },
   "https://tech.meituan.com/2026/06/30/LongCat2.0.html": {
     "checked_at": 1793252215,
