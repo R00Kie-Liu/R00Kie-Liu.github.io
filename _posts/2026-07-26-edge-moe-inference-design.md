@@ -3,10 +3,10 @@ layout: post
 title: "MoE我们喜欢你（六）：端侧 MoE 的推理瓶颈与加速"
 series: moe-we-like-you
 series_order: 6
-last_modified_at: 2026-11-14
+last_modified_at: 2026-11-19
 date: 2026-07-26
 tags: [MoE, Infra, Inference]
-description: "比较端侧 MoE 与相近 active compute 的 Dense 执行，沿常驻权重、专家卸载、投机验证和多级搬运，讨论完整推理链的加速。"
+description: "沿常驻权重、Expert Streaming、LES 预取、投机验证和多级搬运，分析手机与 Mac 上 MoE 的完整推理链。"
 ---
 
 <a id="0-端侧-moe-的读取执行与加载等待"></a>
@@ -24,7 +24,7 @@ MoE FFN： router / top-k → 准备所选专家权重 → 多个 expert FFN →
                   读取常驻权重，或先加载缺失专家
 ```
 
-本文以手机上的单请求交互式 decode 为主，沿这条执行链讨论加速：权重能常驻时怎样减少读取和小算子开销；放不下时怎样预取并隐藏加载；再用投机解码提高一次权重准备所能服务的有效输出，最后将验证请求与多级搬运接成流水。
+本文讨论手机与 Mac 等内存受限设备上的单请求交互式 decode。权重能常驻时，重点是减少读取和小算子开销；放不下时，还要组织专家缓存、按需加载与预取。投机解码再尝试让一次权重准备服务多个有效输出，最终由执行系统将这些请求接入搬运与计算流水。各案例分别说明设备、精度与执行后端。
 
 <a id="1-端侧与服务器-gpu-的内存和执行差异"></a>
 
@@ -39,7 +39,7 @@ MoE FFN： router / top-k → 准备所选专家权重 → 多个 expert FFN →
 
 Dense 的 batch=1 decode 也常受权重带宽限制。相对同总参的 Dense，MoE 可以通过较少的 active 权重降低流量；与相近 active compute 的 Dense 比较时，专家切分、调用和加载的额外成本就更显眼。
 
-服务器 GPU 上，多请求 batching 可以让一个专家处理更多输入行，常驻 HBM 也省去了冷加载。手机的共享 DRAM、较小可用内存和持续功耗预算，让扩大 batch 或增加设备更难成为解法。prefill 已有多个输入位置可以聚合；交互式 decode 则要等前一个输出，才能确定下一个输入。
+在权重能常驻 HBM 的服务器 GPU 上，多请求 batching 可以让一个专家处理更多输入行，也省去了冷加载。手机的共享 DRAM、较小可用内存和持续功耗预算，让扩大 batch 或增加设备更难成为解法。prefill 已有多个输入位置可以聚合；交互式 decode 则要等前一个输出，才能确定下一个输入。
 
 <a id="2-单-token-执行优化量化算子融合与专家预取"></a>
 
@@ -67,7 +67,7 @@ $$
 
 这是一组教学估算，MB、GB 均使用十进制单位。它只计算权重流量；完整 decode 还要执行 attention、读取 KV、处理量化数据并调度算子。缓存命中可以减少 DRAM 读取，实际带宽也随访问方式变化，因此表中数值不能直接当作 token 延迟。
 
-不过，这个估算解释了一个具体收益：在相同权重精度下，减少每步访问的专家参数，可以减少需要从 DRAM 读取的字节数。收益能保留多少，取决于后面的专家计算是否引入了过多小算子与调度开销。
+在相同权重精度下，减少每步访问的专家参数，可以降低 DRAM 流量。要让这些节省体现在延迟上，专家计算还需要控制小矩阵、量化解包和算子调用的成本。
 
 <a id="22-小矩阵与算子开销mobilemoe"></a>
 
@@ -85,17 +85,66 @@ $$
 
 论文在 Galaxy S25 的 4 CPU 线程、iPhone 16 Pro 的 2 CPU 线程上，以 batch=1、INT4 权重和动态 INT8 激活测试。MobileMoE-S 相对 MobileLLM-Pro 报告约 2.2–3.4× decode 加速；两者权重占用分别为 0.68GB 和 0.55GB，QAT 后 14 项平均分为 44.0 和 45.5。这组比较对应较接近的权重容量与质量，不能解释为同一模型只替换了 kernel 后的加速。
 
+<a id="2-专家卸载预取连续读取与就绪调度"></a>
+
+## 2. 专家卸载：按需加载、缓存与预取
+
+模型扩大到几十 B total 后，完整权重可能超过应用可用内存。卸载部署将冷专家留在容量更大的存储层，为计算端保留有限的专家缓存：命中时复用已有权重，miss 时补载，并在空间不足时回收其它专家的槽位。缓存管理已使用的权重，预取提前准备预计需要的权重，两者共享内存与读取带宽。
+
+### 2.1 专家放在哪里，矩阵乘在哪里执行
+
+“卸载到 CPU”与“从 SSD 流式加载”对应不同的数据路径。比较方案时，需要同时确定权重存放位置、专家计算位置，以及每次调用搬运什么：
+
+| 执行方式 | 专家权重存放位置 | 专家计算位置 | 主要搬运 |
+|---|---|---|---|
+| CPU 执行冷专家 | 主机 RAM | CPU | GPU 与 CPU 之间传递输入、输出激活 |
+| 主机权重供 GPU 使用 | 主机 RAM | GPU | 经 PCIe 读取权重，或先将权重复制到设备 |
+| 存储卸载与设备缓存 | SSD / 闪存，部分权重已缓存 | GPU / NPU 等计算后端 | 缺失专家从文件进入计算端缓存，命中则复用 |
+
+前两行描述独立显存设备上的常见划分。Apple silicon 的 CPU 与 GPU 共用物理内存，把全部专家从 MPS tensor 改放 CPU tensor，并不能省下保存这些权重所需的总内存。完整模型超过统一内存容量时，仍需要文件支持的按需访问或显式 streaming；任由操作系统换页则会把等待交给页面访问决定。
+
+卸载粒度也会改变读取量。若框架在整个 expert bank 的 `forward` 前搬入这个模块，即使当前 token 只用少数专家，也可能加载整层权重。按需路径根据实际路由结果查缓存，只补载缺失的专家；预测读取则可以在此之前发起。
+
+### 2.2 Expert Streaming：让专家缓存接上高效算子
+
+[Tarek Ziadé 的 Expert Streaming 实践][expert-streaming]将这条路径接入 Transformers。其 Qwen3.8-Flash-Next 案例包含 48 层，每层 512 个 routed experts、每 token 激活 10 个；GGUF 版本的专家文件约 43GB，而设备端专家缓存只有 12GiB。完整专家池留在 SSD，缓存只保存其中一部分。
+
+实现的关键是预分配 **slot pool**。每个槽位放一份专家权重，各层维护 expert ID 到 slot ID 的映射；形状与量化布局兼容的层可以共享同一池，不同布局则使用不同的池。各层专家仍有自己的参数，共用的是存储槽位。
+
+一层实际执行的过程是：
+
+```text
+router / top-k 得到真实专家 ID
+  → 将选择结果交给主机端缓存管理
+  → 命中的专家保留原槽位
+  → 缺失的专家从文件读取，写入可用槽位
+  → 将本次 expert ID 重映射为 slot ID
+  → 专家 kernel 直接读取池内权重，计算并合并输出
+```
+
+用一个简化示例，某层选中 E2、E7，E2 已经位于 slot 4，E7 补载到 slot 9。送入专家算子的索引就从 `[2, 7]` 变成 `[4, 9]`；路由分数与对应的权重仍保持配对。下一层可以借用其它空闲槽位，其映射记录会区分层号与专家编号。
+
+[![Expert Streaming 的真实路由、缓存槽位与按需读取](/assets/img/blog/moe-we-like-you/06-expert-streaming-slot-pool.svg)](/assets/img/blog/moe-we-like-you/06-expert-streaming-slot-pool.svg)
+
+*图 2：当前层选中的专家先查设备缓存，缺失项补入槽位，再由 GPU 执行。图中还展示了利用读取空闲期猜测下一层一个专家的可选路径；当前输出仍按真实路由计算。*
+
+这个布局让缓存能继续使用高效专家算子。作者最初在 Python 中逐专家调用，即使所有专家已经缓存，也只有约 10.1 token/s；改为 slot pool 后，未量化原型可以继续使用 `grouped_mm`，报告约 34.6 token/s，同轮原生 Transformers 约为 38.1 token/s。这里的收益来自避免逐专家循环，不能归给 SSD 预取。量化版本则使用对应的 `gather_qmm`、索引式 GEMV 或分块 GEMM，并非所有路径都调用同一个 kernel。
+
+[项目实现与测量记录][streaming-details]还将单个专家的量化块连续存放，缺失时用 I/O 线程读取到可复用的主机缓冲区，再安装进设备槽位。文件读取可能命中操作系统 page cache，因此设备专家缓存的 miss 数不等于物理 SSD 读取次数。减少每专家字节量既能缩短一次补载，也能让相同容量的池保留更多专家。
+
+模型中还有一张约 51GB 的 n-gram embedding 表，项目将它留在磁盘，按需读取行；主干大矩阵也采用量化。作者在 M5、32GB 统一内存、greedy 解码、关闭 MTP 与投机 draft 的设置下，对四个不同的 200-token 回答报告约 13.9 token/s，4K prompt prefill 约 228 token/s。这些结果对应专家 streaming、主干量化、专用 Metal kernel 和调度优化的整套配置。
+
+slot pool 解决了“权重放入缓存后怎样高效计算”。若缺失专家直到本层路由结束才开始读取，加载仍可能阻塞计算，接下来需要考虑提前准备和就绪调度。
+
 <a id="23-冷专家加载与预取les"></a>
 
-## 2. 专家卸载：预取、连续读取与就绪调度
-
-模型扩大到几十 B total 后，完整权重可能超过应用可用内存。卸载部署将冷专家留在闪存，在内存中为专家保留有限的缓存：命中时复用已有权重，miss 时加载，并在空间不足时换出其它专家。缓存决定哪些历史权重继续保留，预取则尝试在真实路由确定之前准备未来权重。两者都受同一份内存预算约束，预测过多也会挤占有用的缓存。
+### 2.3 LES：用当前计算覆盖下一层加载
 
 [MiniCPM-V 4.7][minicpm-v47] 的 35B-A3B 版本通过存储卸载保留完整专家池；[Lookahead Expert Scheduling（LES）][les] 用跨层路由预测提前加载下一层可能需要的专家。
 
 [![LES 跨层专家预测、异步预取与就绪专家优先计算时间线](/assets/img/blog/moe-we-like-you/06-les-lookahead-expert-scheduling.png)](/assets/img/blog/moe-we-like-you/06-les-lookahead-expert-scheduling.png)
 
-*图 2：LES 在当前层计算期间预测并预取下一层专家，下一层优先计算已就绪的真实路由专家，同时补载其余权重。图中 top-8、命中率与时长对应官方示例。*
+*图 3：LES 在当前层计算期间预测并预取下一层专家，下一层优先计算已就绪的真实路由专家，同时补载其余权重。图中 top-8、命中率与时长对应官方示例。*
 
 以一层 top-2 路由为例。下面的编号只用于解释流程：
 
@@ -110,7 +159,7 @@ E2、E7 都完成后 → 按真实路由权重合并
 
 预测错误有两种成本：多读了不需要的 E5，或者没有及时准备好必需的 E7。LES 仍会补载 E7，所以预测命中率影响等待时间，计算所用的专家集合则由真实 router 决定。
 
-重叠能隐藏多少时间，还取决于已有多少可执行工作。用一个独立加载与计算可以并行的简化例子：E7 的剩余加载需要 5ms，E2 的计算需要 3ms，那么 E2 结束后还需等约 2ms。若 E2 只需要 0.5ms，等待就有约 4.5ms。预取不仅要尽量命中，还要足够早；已经就绪的计算也必须能覆盖一部分加载。
+用一个独立加载与计算可以并行的简化例子：E7 的剩余加载需要 5ms，E2 的计算需要 3ms，那么 E2 结束后还需等约 2ms。若 E2 只需要 0.5ms，等待就有约 4.5ms。预测命中、发起读取的时机和可供重叠的计算时长，共同决定能隐藏多少等待。
 
 官方文档还将连续权重布局、减少读取调用、直接写入 GPU 可见内存、逐层混合精度量化和 DSpark 投机采样接入同一流程。在 iPhone 18 Pro Max（设备总内存 12GB）上的逐阶段结果是：
 
@@ -122,9 +171,17 @@ E2、E7 都完成后 → 按真实路由权重合并
 | 再加逐层混合精度量化 | 17.16 |
 | 再加 DSpark 投机采样 | 20.51 |
 
-速度按生成 token 数除以总 decode 时间计算。单独 lookahead 阶段约为基线的 1.94×，完整流程约为 6.07×。前者主要改变等待，布局优化改变读取效率，量化减少权重字节量，DSpark 再减少每个输出 token 分摊的解码开销。这些收益不能全部归给路由预测。
+速度按生成 token 数除以总 decode 时间计算。单独 lookahead 阶段约为基线的 1.94×，完整流程约为 6.07×。这几项分别减少加载等待、读取调用、权重字节量，以及每个有效输出分摊的解码开销。
 
-表中的 DSpark 已经引入投机解码。预取缩短一次 forward 的等待，投机解码则尝试用这次权重读取和计算产生多个有效输出。接下来需要同时考虑 draft 的成本、验证窗口的大小，以及窗口扩大后新增的专家访问。
+### 2.4 预取、缓存与主机同步的开销
+
+跨层预测需要额外运行 router，读错专家还会消耗带宽和缓存。Expert Streaming 的[项目消融][streaming-code]中，一组 M5、GGUF 主干配置在预测未来两层时约为 11.1 token/s，关闭这项预测后约为 11.7 token/s。原文流程图还给出更克制的预读方式：在读取空闲期只尝试一个猜测专家。LES 的加速与这组负结果对应不同的预测器和执行后端，预取深度需要按实际延迟选择。
+
+prefill 的问题又不同。较大的 chunk 可以让每个专家处理更多输入行，却也可能覆盖近乎整层专家，形成一次扫描。若所有扫描命中都刷新 LRU、所有新加载都放到最近使用端，一轮长 prompt 就会挤掉 decode 原本能复用的工作集。项目因此降低长 prefill 加载项的保留优先级：命中时不更新最近使用顺序，调用完成后将新安装项移到 LRU 冷端，使它们更容易被后续请求回收；下一层读取仍可以与当前层计算重叠。
+
+缓存命中后，主机调度也可能让 GPU 等待。该实现逐层将路由索引交给主机，检查缓存并安排读取；在被测 MPS 路径中，部分小 kernel 留在 command buffer 中，直到后续同步才提交，GPU 会在主机准备期间空闲。提前提交已编码的 GPU 工作，以及让 shared expert 计算覆盖主机缓存管理，能缩短这部分间隙。主干投影、attention 和 KV 访问仍然存在，不能仅根据专家 miss 率判断完整 decode 延迟。
+
+这些优化都在缩短一次 forward 的准备与执行。LES 表中的 DSpark 再引入投机解码，尝试让一次权重读取和计算产生多个有效输出；验证窗口扩大后，新增的专家访问也会改变收益。
 
 ## 3. 投机解码：权重复用收益与专家并集膨胀
 
@@ -142,7 +199,7 @@ $$
 {T_{\mathrm{draft}}+T_{\mathrm{verify}}+T_{\mathrm{extra}}}.
 $$
 
-投机长度增加，只有在有效输出的增长抵得上这些新增成本时才有收益。同样的接受长度不保证相同加速比，verify 访问的权重数量也会改变分母。
+投机长度增加时，有效输出的增长需要抵得上新增成本。同样的接受长度也可能对应不同的 verify 权重访问量，因而产生不同加速比。
 
 <a id="32-验证-token-数专家并集与搬运量"></a>
 
@@ -174,7 +231,7 @@ $$
 
 第一行中，验证需要访问的专家明显增加；第二行中，AR 本来就接近覆盖整个专家池，验证只增加很少的唯一权重。若此时每个专家的矩阵乘仍有计算余量，投机验证就能增加权重复用。这是 MoESD 讨论的中等 batch 收益区间。继续增大 batch、进入 compute-bound 后，额外计算又会限制收益。
 
-表中均匀独立路由用于解释饱和趋势，不是实际模型测量，也不意味着 batch=32 是通用阈值。真实 token 的路由相关性、专家粒度与 kernel 形状会改变这个区间。
+表中的均匀独立路由是假设，用来解释专家覆盖的饱和趋势；真实 token 的路由相关性、专家粒度与 kernel 形状会改变这个区间，batch=32 不构成通用阈值。
 
 这个对照也解释了手机单请求的困难：它通常处于表中第一行一侧，AR 原本只访问少数专家，verify 很容易引入新的权重。端侧投机需要在较小 batch 下控制验证开销，同时尽量用已有权重增加有效输出。
 
@@ -186,7 +243,7 @@ $$
 
 [![DraftExpert 的常驻草稿路径、自蒸馏与专家预取](/assets/img/blog/moe-routing-granularity/draftexpert-architecture.svg)](/assets/img/blog/moe-routing-granularity/draftexpert-architecture.svg)
 
-*图 3：DraftExpert 将小型草稿路径常驻内存，在生成候选时预测专家需求，为完整 target 验证提前准备权重。*
+*图 4：DraftExpert 将小型草稿路径常驻内存，在生成候选时预测专家需求，为完整 target 验证提前准备权重。*
 
 它还结合置信度和新增专家需求截断多 token draft：后续候选接受机会低、却会触发更多冷专家时，提前结束扩展。
 
@@ -209,19 +266,19 @@ $$
 | [Expert Coactivation][coactivation] | 通过训练和相邻位置的选择规则提高专家重叠，减少窗口内的唯一权重 | 需要配套训练，改变模型路由行为 |
 | [S²-MoE][s2-moe] | 联合估计候选收益与新增专家成本，并用路由 bias 增加复用 | 完整配置改变 target 路由；self-draft 与上下文对齐留待投机解码专题展开 |
 
-候选和路由规则决定了一轮验证的权重需求。剩余权重什么时候到达、能否及时供给计算单元，还需要执行系统处理。
+候选和路由规则决定一轮验证需要哪些权重，执行系统还要按时将它们供给计算单元。
 
 <a id="45-将验证请求排成搬运流水bigmomo"></a>
 
 ## 4. 完整执行链：BigMoMo 的多级搬运与计算流水
 
-对于使用闪存卸载的端侧 MoE，减少验证请求后，剩余专家仍可能到达得太晚。搬运调度需要把它们尽早变成可执行工作，并与当前计算重叠。
+第 2 节的 streaming 与预取主要讨论如何供给一次 forward。投机验证同时暴露多个位置的专家需求后，执行系统还可以跨专家组织读取、映射与计算，覆盖不同存储层级的等待。
 
 [BigMoMo][bigmomo] 用投机解码将多个候选放到同一轮目标验证中，因而同时暴露一批专家请求。各专家权重到达计算单元的时间不同，系统将请求筛选、闪存布局与 NPU 执行调度接成一条流水。
 
 [![BigMoMo 的请求筛选、闪存组织与专家执行系统总览](/assets/img/blog/moe-we-like-you/06-bigmomo-system-overview.png)](/assets/img/blog/moe-we-like-you/06-bigmomo-system-overview.png)
 
-*图 4：BigMoMo 系统总览。上半部分从 draft 节点与专家筛选推进到目标验证，下半部分对应闪存布局和 NPU 执行调度。*
+*图 5：BigMoMo 系统总览。上半部分从 draft 节点与专家筛选推进到目标验证，下半部分对应闪存布局和 NPU 执行调度。*
 
 它面向 Snapdragon 的 Hexagon NPU，将权重准备过程细分为：
 
@@ -237,13 +294,13 @@ BigMoMo 先减少进入流水的请求：根据接受收益筛掉低价值 draft
 
 [![BigMoMo 的 VTCM 双缓冲与跨层级搬运计算流水](/assets/img/blog/moe-we-like-you/06-bigmomo-movement-pipeline.png)](/assets/img/blog/moe-we-like-you/06-bigmomo-movement-pipeline.png)
 
-*图 5：左侧是 VTCM 双缓冲，右侧比较按需执行、固定双缓冲与跨层级调度。粉色区域中的候选计算组用于覆盖后续权重准备，减少 HMX 空闲区间。*
+*图 6：左侧是 VTCM 双缓冲，右侧比较按需执行、固定双缓冲与跨层级调度。粉色区域中的候选计算组用于覆盖后续权重准备，减少 HMX 空闲区间。*
 
 即使两轮验证拥有同样大小的专家工作集，命中 DRAM 的比例、闪存布局和 NPU 准备状态不同，也会产生不同延迟。
 
 论文基于 llama.cpp 的 Hexagon 后端，以四种 Q4_0 MoE、五类任务评估，报告相对按需卸载 AR 基线平均 4.83× 加速。这个基线本身需要从闪存加载专家，与 MobileMoE 的内存常驻 CPU 测试、LES 的 Apple 设备测试分别对应不同的执行路径。
 
-常驻模型的重点是减少读取和小算子开销，卸载模型还要让专家尽早就绪。投机解码增加一次 forward 的输出机会，也扩大了权重需求；BigMoMo 将这批需求落实到闪存读取、NPU 准备和计算调度。active compute 只描述其中的计算量；读取、加载和调度缩短之后，这部分节省才能体现在最终的 token 延迟上。
+端侧 MoE 的延迟由实际执行路径决定：常驻权重需要高效的小矩阵算子，卸载权重需要缓存与及时供给，投机验证则需要用新增的专家访问换取更多有效输出。Expert Streaming 在 Mac 上将缓存接入专家 kernel，LES 隐藏跨层加载，BigMoMo 进一步组织 NPU 的多级搬运。active compute 描述的是激活计算量，完整加速还要来自权重读取、主机调度与计算单元之间等待的减少。
 
 ## 系列导航
 
@@ -255,6 +312,7 @@ BigMoMo 先减少进入流水的请求：根据接受收益筛掉低价值 draft
 
 - [DraftExpert][draftexpert]
 - [MobileMoE: Scaling On-Device Mixture of Experts][mobilemoe]
+- [180B Parameters, 32GB of RAM: Pushing MoE Inference to the Limit with Transformers][expert-streaming]；[实现与测量细节][streaming-details]；[项目代码][streaming-code]
 - [MiniCPM-V 4.7][minicpm-v47]；[LES][les]
 - [BigMoMo: Efficient Inference of Large-Scale MoE with Speculative Decoding on Mobile Devices][bigmomo]
 - [MoESD: Unveil Speculative Decoding’s Potential for Accelerating Sparse MoE][moesd]
@@ -266,6 +324,9 @@ BigMoMo 先减少进入流水的请求：根据接受收益筛掉低价值 draft
 - [S²-MoE: Enabling Efficient Self-Speculative Decoding for Mixture-of-Experts on Edge Devices][s2-moe]；[官方代码][s2-moe-code]
 
 [mobilemoe]: https://arxiv.org/abs/2605.27358
+[expert-streaming]: https://huggingface.co/blog/moe-expert-streaming
+[streaming-details]: https://tarekziade-moe-expert-streaming.static.hf.space/details.html
+[streaming-code]: https://github.com/tarekziade/moe-expert-streaming
 [s2-moe]: https://arxiv.org/abs/2608.15018
 [s2-moe-code]: https://github.com/angerybob/S2-MoE/tree/orin
 [minicpm-v47]: https://github.com/OpenBMB/MiniCPM-V/blob/main/docs/minicpm_v4dot7_en.md

@@ -1,0 +1,20 @@
+{
+  "post": "_posts/2026-07-26-edge-moe-inference-design.md",
+  "added_on": "2026-11-19",
+  "current_figure_count": 6,
+  "added_figures": [
+    {
+      "figure_number": 2,
+      "project": "MoE expert streaming in Transformers",
+      "source_page": "https://huggingface.co/blog/moe-expert-streaming",
+      "source_url": "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/blog/moe-expert-streaming/expert-streaming.svg",
+      "image": "/assets/img/blog/moe-we-like-you/06-expert-streaming-slot-pool.svg",
+      "mime": "image/svg+xml",
+      "bytes": 34064,
+      "sha256": "76bc74707ad8c5dd72157540a838ab70f27873e3d1aad7602b06035d1b382ec8",
+      "viewBox": "0 0 800 360",
+      "original_animation_preserved": true,
+      "modifications": null
+    }
+  ]
+}
