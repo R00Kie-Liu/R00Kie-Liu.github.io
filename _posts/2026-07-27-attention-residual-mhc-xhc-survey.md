@@ -2,9 +2,9 @@
 layout: post
 title: "Attention Residual 与 Hyper-Connections：从 HC、iHC、mHC、oHC 到 xHC"
 date: 2026-07-27
-last_modified_at: 2026-10-27
+last_modified_at: 2026-11-20
 tags: [Transformer, Residual]
-description: "梳理多 residual stream、显式深度检索与矩阵记忆，解释 HC/iHC/mHC/oHC/xHC、Full/Block/Delta AttnRes，以及 MSAR、低秩路由和 LDM 的机制、公式、shape 与实验结果。"
+description: "梳理 residual 状态扩展、深度检索与矩阵记忆，解释 HC/iHC/mHC/oHC/xHC、SimpleHC、HiRes、AttnRes、MSAR、LDM，以及 ARLoop/Loopback 的机制、公式、shape 与实验结果。"
 ---
 
 最近，Attention Residuals 及相关的残差连接改造受到越来越多关注，也已经进入多款开放权重模型的架构。[Kimi K3](https://github.com/MoonshotAI/Kimi-K3) 采用 Attention Residuals；在多残差流这条路线上，[DeepSeek V4](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro) 使用 mHC，[混元 Hy4-preview](https://github.com/Tencent-Hunyuan/Hy4-preview) 使用 iHC。这些设计分别从跨层聚合和多 stream 读写入手，改进层与层之间的信息传递。
@@ -13,23 +13,25 @@ description: "梳理多 residual stream、显式深度检索与矩阵记忆，�
 
 > **多 stream 方法增加可读写的 residual 槽位；AttnRes 方法增加对历史 source 的显式访问。**
 
-## 0. 两条路线与矩阵记忆
+## 0. 残差状态与历史检索
 
 ![Residual 连接的方法脉络与关联：多 residual streams、Attention Residuals 与 Depth Memory](/assets/img/blog/attention-residual/method-map.svg)
 
-*方法关系总览：实线表示设计分支或变体，灰色虚线表示机制关联，橙色虚线表示组件借用；按机制组织，不代表严格时间线。*
+*基础方法关系：实线表示设计分支或变体，灰色虚线表示机制关联，橙色虚线表示组件借用；按机制组织，不代表严格时间线。*
 
 [查看 SVG 原图](/assets/img/blog/attention-residual/method-map.svg)
 
 | 路线 | 状态如何变化 | 代表方法 |
 |---|---|---|
-| 多 residual streams | 从 $$[C]$$ 扩展到 $$[N,C]$$，每层读出一个输入，再混合、写回 | HC、iHC、mHC、oHC、xHC |
-| Depth-source attention | 缓存历史 branch outputs、block sums 或 deltas，沿 source 维聚合 | Full / Block AttnRes、Delta AttnRes / Delta Block、LR-AttnRes、MSAR |
+| 扩展 residual state | 并行 streams 或块间宽 state，通过 read/write 接口连接 sublayer | HC、iHC、mHC、oHC、xHC、SimpleHC、HiRes |
+| Depth-source attention | 缓存历史 branch outputs、block sums 或 deltas，沿 source 维聚合 | Full / Block / Delta AttnRes、LR-AttnRes、MSAR、ARLoop、Loopback |
 | 矩阵关联记忆 | 将历史 key–value 关联递推写入固定大小的矩阵，通过 query 读取 | LDM |
 
 多 stream 内部还要区分 residual transition：iHC 固定成 identity；mHC 使用双随机矩阵；oHC 使用正交矩阵；xHC 在 mHC 的基础上丰富写回分量，并稀疏更新 stream。
 
 近期工作进一步细分了 depth attention：Low-Rank AttnRes 缩小打分所用的 key，MSAR 为每个 source 构造多个上下文视图。Depth Memory 则提出另一种存储方式：LDM 将历史 key–value 关联写入固定大小的矩阵，后续层通过 query 读取。它保留跨层检索能力，但不再逐项缓存历史 source。
+
+SimpleHC 与 HiRes 进一步调整宽 state 的访问频率：前者共享组入口 state 的读取，后者只在 block 边界操作较宽的外层 residual。循环模型又引入了共享参数反复执行的历史，ARLoop 与 Loopback 分别控制检索范围、增量衰减与权重分配。
 
 ## 1. Residual Stream 缺少什么
 
@@ -48,15 +50,19 @@ description: "梳理多 residual stream、显式深度检索与矩阵记忆，�
 | 标准 residual | PreNorm Transformer | $$h \in \mathbb{R}^C$$ | 当前累计 state | 当前 layer output | 稳定、简单 | 深度路由固定 |
 | 多 stream residual | HC | $$X \in \mathbb{R}^{N \times C}$$ | 多 stream 动态聚合 | 多 stream 动态写回 | 扩展 residual memory | 自由 mixing 带来稳定性风险 |
 | Identity multi-stream residual | iHC | $$X \in \mathbb{R}^{N \times C}$$ | 多 stream 动态聚合 | $$H^{res}=I$$ + 动态写回 | 保留精确 identity transition，成本低 | 没有显式 cross-stream mixing |
+| 共享状态访问 | SimpleHC | 组入口 streams + 组内 outputs | 批量 base reads + 标量修正 | 组末 additive write-back | 减少宽 state 的重复访存 | gate conditioning 改变，效率依赖实现 |
 | 约束多 stream residual | mHC | $$X \in \mathbb{R}^{N \times C}$$ | 多 stream 动态聚合 | doubly-stochastic stream mixing + write-back | 稳定性更好 | memory traffic 和 kernel 复杂 |
 | 正交多 stream residual | oHC | $$X \in \mathbb{R}^{N \times C}$$ | 多 stream 动态聚合 | $$H^{res}\in SO(N)$$ + 动态写回 | 线性 mixing 整体保范数 | 验证规模与训练配置仍有限 |
 | 稀疏多 stream residual | xHC | $$X \in \mathbb{R}^{N \times C}$$ | dense read 全部 stream | sparse write $$k$$ 个 active stream | 大 $$N$$ 更有性价比 | router、TopK、Flash 变体更复杂 |
+| 分层 residual | HiRes | $$D$$ 维外层 + $$C$$ 维内层 | 块边界 dense projection | 整块 inner state 投影写回，外层 PostNorm | 解耦状态宽度与计算宽度 | dense 接口新增参数与计算 |
 | 深度 attention residual | Full AttnRes | 历史 depth sources | embedding + 历史 layer outputs | weighted replacement / aggregation | depth-wise softmax routing | 存储/通信随层数增长 |
 | 分块深度 attention | Block AttnRes | block-level sources | 历史 block sum + 当前 partial block | block-level aggregation | 降低通信和缓存成本 | block 内信息被压缩 |
 | Delta 深度 attention | Delta AttnRes / Delta Block | layer/block deltas | 历史增量 | additive delta routing | 避免 cumulative source 冗余 | 仍需维护 source list |
 | 低秩深度路由 | LR-AttnRes | 全宽 depth sources | 低维 key 打分、全宽 value 聚合 | branch outputs / block sums | 降低路由打分成本 | value 缓存与聚合仍为全宽 |
 | 多视图深度 attention | MSAR | 单流 depth sources，按需展开 | 多个全宽上下文视图，各自沿 depth 检索 | 单流 branch outputs / block sums | 同一历史的多种上下文读法 | 卷积展开、多路检索与融合 |
 | 矩阵关联记忆 | LDM | residual + memory matrix + inverse covariance | 动态 query 读取矩阵 | RLS 更新 key–value 关联 | 状态大小不随深度增长 | 矩阵状态、读写及高效反向实现 |
+| 循环深度 attention | ARLoop | embedding + 近期 block sources | 滑窗内 depth attention | branch outputs 累计为 sources | 选择共享层反复执行的结果 | 滑窗收益依赖循环架构 |
+| 增量衰减与检索 | Loopback | 原始输入 + block updates | 几何先验与 attention 分配 | 追加本次执行的 update | 分开控制输入、总量与分配 | 显式历史仍随执行深度增长 |
 
 ### 2.2 按“路由对象”分类
 
@@ -98,6 +104,10 @@ AttnRes 在 depth source 维路由：Full AttnRes 聚合 embedding 与历史 bra
 | $$N_g,D_k,C_v$$ | scalars | LDM 的分组数、key 宽度与组内 value 宽度，$$C_v=C/N_g$$ |
 | $$\mathcal{M}_l$$ | $$[N_g,C_v,D_k]$$ | LDM 的矩阵记忆；单组公式省略分组维 |
 | $$P_l$$ | $$[N_g,D_k,D_k]$$ | LDM 的 inverse covariance state |
+| $$K_s$$ | scalar | SimpleHC 每组包含的 sublayers 数，主配置为 4 |
+| $$D,B_h$$ | scalars | HiRes 的外层 residual width 与 block 数，内层计算宽度仍为 $$C$$ |
+| $$W_d$$ | scalar | ARLoop 的深度 source 窗口，主滑窗配置为 3 |
+| $$K_\ell,R_{\mathrm{loop}}$$ | scalars | Loopback 每轮执行的共享 blocks 数与循环次数，不与 Attention / MLP sublayer 数混用 |
 
 $$h_l^{in}$$ 是 residual routing 之后读出来、准备喂给当前 sublayer 的表示；$$h_l^{out}$$ 是 Attention / MLP / MoE 根据这个输入算出的新信息。标准 residual 里这两者通常藏在 `norm(h)` 和 `F(norm(h))` 里；HC/iHC/mHC/oHC/xHC 把“读出输入”和“写回新信息”显式拆开了。
 
@@ -487,7 +497,43 @@ iHC 保留多 stream read/write，省去旧 state 之间的直接 mixing：
 
 iHC 的限制也很清楚：stream 之间没有显式交换。某条 stream 想影响另一条 stream，只能绕一圈：先被后续 sublayer 的 read 聚合读出来，经过 Attention / MLP 产生新 output，再通过 write 写进其他 stream。也就是说，iHC 很适合作为低成本 multi-stream baseline，但它没有 mHC / oHC 那种直接的 stream mixing 通道。
 
-### 4.4 oHC：用正交矩阵做 stream mixing
+### 4.4 SimpleHC：共享 state 访问，保留逐层 gate
+
+[SimpleHC](https://arxiv.org/abs/2611.05984)将 iHC 的结构简化推进到执行过程：保留可学习 read/write 和 identity transition，再减少每个 sublayer 对宽 state 的反复访问。论文的组件消融中，15B-A1B 的 mHC、identityHC 与 SimpleHC 验证 loss 分别为 1.659、1.660、1.660；去掉 mixing 后，读写机制仍能提供接近的收益。
+
+设一组包含 $$K_s$$ 个 sublayers，入口 state 为 $$X_a\in\mathbb{R}^{N\times C}$$。组内各层保留独立 gate 参数，但统一从 $$X_a$$ 预测 $$\bar p_j,\bar q_j\in\mathbb{R}^{N}$$，分别用于 read 和 write。由 additive update 可得：
+
+$$
+u_j=X_a^\top\bar p_j+\sum_{i=a}^{j-1}(\bar p_j^\top\bar q_i)o_i,\qquad
+o_j=F_j(\operatorname{Norm}(u_j)).
+$$
+
+第一项可在组入口批量读取；后面的标量修正把组内已有 outputs 的贡献补回来，无需逐层物化 $$[N,C]$$ state。组末再统一写回：
+
+$$
+X_{a+K_s}=X_a+\sum_{j=a}^{a+K_s-1}\bar q_j o_j^\top.
+$$
+
+给定这些 gates，标量修正与顺序 additive update 等价。相对论文中逐 sublayer 条件化的 identityHC 基线，改动在于 gate 的条件输入从各层更新后的 $$X_j$$ 换成组入口 $$X_a$$，因此它是调整了 gate conditioning 的模型设计。共享 state 也不等于共享 gate：复用同一组 read/write 系数的消融会退化。
+
+```python
+# X: [N, C], group-entry state; K_s sublayers per group
+# Each column has its own parameters, all conditioned on X.
+pre, post = predict_group_gates(X)       # each [N, K_s]
+base = X.T @ pre                        # [C, K_s], batched reads
+coeff = tril(pre.T @ post, diagonal=-1)  # [K_s, K_s]
+outputs = []
+for j in range(K_s):
+    u = base[:, j]
+    for i in range(j):
+        u = u + coeff[j, i] * outputs[i]
+    outputs.append(F[j](norm[j](u)))    # each [C]
+X_next = X + post @ stack(outputs)      # [N, C]
+```
+
+30B-A2B 上，SimpleHC 与 mHC 的 loss 都为 1.561，平均 benchmark 分数为 63.1 对 62.9。效率基准另设为八层 Transformer（16 个 sublayers），在 $$C=6144$$、专用 kernel、不开 activation recompute 的设置下，相对 vanilla 的额外训练时间由 mHC 的约 7.0% 降至 2.4%。这两组证据分别回答质量与执行成本；主质量实验的训练 token 数未在配置表中列出。
+
+### 4.5 oHC：用正交矩阵做 stream mixing
 
 [oHC 论文](https://arxiv.org/abs/2609.02672) 从 mHC 的收缩性质出发：双随机约束固定了均值方向，却可能不断衰减 stream 之间的差异；iHC 避开收缩，同时也放弃直接 mixing。
 
@@ -513,7 +559,7 @@ $$
 
 *图 2：oHC 论文 Figure 2 的概念示意。mHC 的 mixing 可能压缩差异，iHC 保留直通项，oHC 引入整体等距的 stream mixing，并允许均值与差异子空间交换。*
 
-### 4.5 mHC 的参数化
+### 4.6 mHC 的参数化
 
 mHC 通常先从 flattened multi-stream state 生成三个 mapping：
 
@@ -573,7 +619,7 @@ mHC 论文里的常用设置：
 | gating init $$\alpha$$ | 0.01 | 让动态项初期较弱 |
 | Sinkhorn iterations | 20 | 近似 doubly stochastic |
 
-### 4.6 mHC 的工程代价
+### 4.7 mHC 的工程代价
 
 mHC 的主要压力不在 FLOPs，而在 residual stream 相关的 memory access 和 kernel launch。
 
@@ -595,7 +641,7 @@ mHC 的主要压力不在 FLOPs，而在 residual stream 相关的 memory access
 
 DeepSeek 报告其内部大规模实现中，$$N=4$$ 的 mHC 训练额外时间开销约为 6.7%。这是特定系统优化后的测量，迁移到另一套 kernel 与并行配置时需要重新 profile。
 
-### 4.7 三种约束的差别
+### 4.8 三种约束的差别
 
 iHC 省去 residual mixer，保留动态 read/write；mHC 允许非负的 stream 重分配，同时限制扩张；oHC 保留整体范数，并允许均值与差异子空间交换。三者改变的是旧 state 的传播方式，每个 sublayer 仍只提供一个 write-back signal。
 
@@ -830,7 +876,36 @@ xHC-Flash 通过跨连续 sublayers 共享 full-state read / routing，并增量
 
 这也解释了为什么较低的 FLOPs overhead 不保证较短的训练时间：residual I/O、kernel launch、重算和跨 stage 通信仍可能抵消计算效率上的收益。xHC-Flash 的作用，是在论文配置中进一步降低这部分访存成本。
 
-## 6. Attention Residuals：把 Residual Sum 改成 Depth-wise Softmax Attention
+## 6. HiRes：块间维护宽 state，块内保留窄计算
+
+[Hierarchical Residuals（HiRes）](https://arxiv.org/abs/2610.41711)把 residual width 与 compute width 分开。HC 在每个 sublayer 操作多条 $$C$$ 维 stream；HiRes 在 blocks 之间维护 $$D>C$$ 的宽向量，块内仍运行普通的 $$C$$ 维 PreNorm Transformer。
+
+令 $$x_{b-1}\in\mathbb{R}^{D}$$ 为外层 state，$$\Phi_b$$ 表示一整个 block 的 PreNorm residual 递推。块边界的 dense read/write projections 为 $$R_b\in\mathbb{R}^{C\times D}$$、$$W_b\in\mathbb{R}^{D\times C}$$：
+
+$$
+u_{b,0}=R_bx_{b-1},\qquad
+u_{b,i+1}=u_{b,i}+F_{b,i}(\operatorname{Norm}(u_{b,i})),
+$$
+
+$$
+x_b=\operatorname{RMSNorm}_b\left(x_{b-1}+W_b\Phi_b(u_{b,0})\right).
+$$
+
+写回对象是 block 结束时的完整 inner state，包含块内 residual 累加；外层相加后执行 PostNorm。embedding 先投影到 $$D$$ 维，最终 state 再读回 $$C$$ 维交给输出头。
+
+```python
+# outer: [D], R[b]: [C, D], W[b]: [D, C]
+inner = R[b] @ outer                     # [C]
+for F_i, norm_i in block_sublayers[b]:
+    inner = inner + F_i(norm_i(inner))   # ordinary PreNorm residual
+outer_next = boundary_norm[b](outer + W[b] @ inner)  # [D], PostNorm
+```
+
+若共有 $$B_h$$ 个 blocks，dense 接口的参数量约为 $$O(B_hDC)$$，而逐 sublayer 放置同类接口约为 $$O(LDC)$$。HiRes 通过降低宽 state 的读写频率摊销投影成本；块内的 Attention / MLP 宽度保持为 $$C$$。主配置取 $$D/C=2,B_h=4$$，read/write 接口从接近截取与补零的映射开始，再通过可学习插值逐渐调整。
+
+在 OLMoE-1B-7B 的 500B-token 预训练中，HiRes 相对 vanilla 的训练 loss 降低 0.0208，平均下游准确率提高 1.14 个百分点。该设置新增约 83.9M 参数。mHC、VWN 与 AttnRes 的直接对照在较小 backbone 上进行：HiRes 保留了约 91.7%–93.1% 的 baseline 吞吐，峰值显存增加约 3.3%–3.4%。论文的 1.30 倍计算效率是在验证 loss 3.00 处比较 scaling-law 拟合曲线得到的等 loss FLOPs 比例。
+
+## 7. Attention Residuals：把 Residual Sum 改成 Depth-wise Softmax Attention
 
 和 HC family 不同，Attention Residuals 不把 hidden state 扩成 $$N$$ 条 stream，而是缓存历史 source representations，让每层沿 depth 做 attention。
 
@@ -839,7 +914,7 @@ xHC-Flash 通过跨连续 sublayers 共享 full-state read / routing，并增量
 
 *图 4：Attention Residuals 论文 Figure 1 裁图，对比标准 residual、Full AttnRes 和 Block AttnRes。*
 
-### 6.1 Full AttnRes
+### 7.1 Full AttnRes
 
 Full AttnRes 可以先按“depth 维度上的普通 attention”来理解。标准 residual 会把历史信息固定累加起来；Full AttnRes 则显式维护一个 source list：
 
@@ -886,7 +961,7 @@ RMSNorm 用来减弱 source 尺度对 logits 的影响。没有它，较大范�
 
 Full AttnRes 提供了完整机制和细粒度参照。Block AttnRes 把 source 从逐层 output 压到 block summaries，以更粗的粒度换取可控的通信和缓存规模。
 
-### 6.2 Block AttnRes
+### 7.2 Block AttnRes
 
 Full AttnRes 的 source 数随深度增长。Block AttnRes 将相邻 branch outputs 求和成为 block source，同时在每个 sublayer 前，对 embedding、已完成 block sums 和当前非空 partial sum 执行 attention。当前 partial sum 只是本 block 的贡献，不包含之前 blocks 的累计 hidden。
 
@@ -901,7 +976,7 @@ $$L$$ 按 sublayer 计，$$N_{\mathrm{blk}}\approx L/G$$。每个 sublayer 都�
 
 Full / Block AttnRes 在输出端仍需对 source list 做 depth aggregation，生成 $$[C]$$ 表示，再送入 final norm / unembedding。最后一个 branch output 或 partial sum 只包含局部贡献；输出 query / norm 的配置由具体实现决定。
 
-### 6.3 Kimi AttnRes 的实验信号
+### 7.3 Kimi AttnRes 的实验信号
 
 [Kimi Attention Residuals 报告](https://arxiv.org/abs/2603.15031)中，Block AttnRes 被集成到 Kimi Linear 48B total / 3B active 架构，并预训练 1.4T tokens。
 
@@ -924,7 +999,7 @@ Full / Block AttnRes 在输出端仍需对 source list 做 depth aggregation，�
 
 在 Kimi 这套训练 recipe 下，depth-wise attention residual 已经有很强竞争力。
 
-### 6.4 AttnRes 的潜在问题
+### 7.4 AttnRes 的潜在问题
 
 在 Delta 论文的分析口径里，replacement-style AttnRes 的 source 是 cumulative hidden states 或 block-level cumulative sums。相邻累计 states 共享历史前缀，可能产生较高相关性：
 
@@ -936,7 +1011,7 @@ Delta 论文的实验中，累计 source 的相关性随深度增加，routing �
 
 Kimi Block AttnRes 同样压缩了 block 内部的细粒度贡献，但它保存的是各 block 的贡献之和；Full AttnRes 则直接保存 branch outputs。两者与累计 hidden-state sources 的内容不同。
 
-### 6.5 Low-Rank AttnRes：用低维 key 选择全宽 value
+### 7.5 Low-Rank AttnRes：用低维 key 选择全宽 value
 
 [Low-Rank Attention Residuals 的 9 月修订版](https://arxiv.org/abs/2607.09694v2)将路由打分与 value 传递分开：历史 source 仍是 $$C$$ 维，但 key 和 learned pseudo-query 只需 $$r$$ 维。主方法直接取 source 的最后 $$r$$ 个坐标，不增加 key projection：
 
@@ -959,7 +1034,7 @@ $$
 
 论文还给出了一个 checkpoint 转换结果。将全部 read sites 的静态 query 堆成矩阵 $$Q$$，并吸收 routing RMSNorm 的 affine gains 后，只要 $$r\geq\operatorname{rank}(Q)$$，且 backbone 支持一致的正交坐标重参数化，就能把 query 子空间旋转到保留坐标中，维持相同的路由与模型输出。**这项等价转换要求先按全宽 RMS 归一化，再保留坐标**，与上面从头训练时的 sliced-key normalization 不同。作者在六个 0.5B–4B checkpoints 上完成了无重训转换；对 Kimi K3 的应用仍是结构分析，尚未实际转换或测量推理加速。
 
-### 6.6 MSAR：为每个历史 source 提供多个上下文视图
+### 7.6 MSAR：为每个历史 source 提供多个上下文视图
 
 [Multi-Stream Attention Residuals（MSAR）](https://arxiv.org/abs/2610.13630)于 10 月提出，将 AttnRes 的一次 depth read 扩展成多路检索。它的 stream 是从历史 source 派生的全宽视图：原表示保留一份，再用 kernel size 为 4、8、12 的 causal depthwise convolution 构造三份局部上下文表示。对 source $$s_i$$，恢复 token 下标后：
 
@@ -1017,7 +1092,7 @@ h_out = F(norm(h_in))                        # [T, C], accumulated into source b
 
 28B 配置相对 Vanilla 增加约 0.27% activated parameters、0.48% 估算训练 FLOPs；后者不包含 activation recompute 与 optimizer update，也不是实测运行时间。论文未直接比较 xHC，且主实验附录的部分 token budget / batch 字段未列出，现有数据不足以建立跨论文的统一排名。
 
-## 7. Delta Attention Residuals：从 Cumulative States 改成 Deltas
+## 8. Delta Attention Residuals：从 Cumulative States 改成 Deltas
 
 [Delta Attention Residuals](https://arxiv.org/abs/2605.18855v1) 从 cumulative-source baseline 的冗余现象出发，做了两项改动：用 deltas 作为路由 source，并把 replacement routing 改为 additive routing。
 
@@ -1028,7 +1103,7 @@ h_out = F(norm(h_in))                        # [T, C], accumulated into source b
 
 *图 5：Delta Attention Residuals 论文 Figure 2 裁图，按该文的 cumulative-source baseline 对比标准 residual、AttnRes 与 Delta AttnRes。Delta 版本保留 residual stream，并把 depth routing 的 source 从 cumulative states 改成 per-sublayer deltas。*
 
-### 7.1 Routing Collapse
+### 8.1 Routing Collapse
 
 Delta 论文在 Qwen3-0.6B 等实验中观察到，深层 cumulative-source 路由的最大权重降至约 0.2，而 Delta Block 的路由通常更尖锐。0.2 本身并不能证明“接近均匀”：均匀分布的最大权重是 $$1/M$$，还要知道可见 source 数 $$M$$。判断 collapse 应同时检查归一化熵、top-1 与 top-2 间隔、source cosine 和层间变化。
 
@@ -1040,7 +1115,7 @@ $$
 
 不同 sublayer 的 delta 往往对应不同功能和子空间，因此更容易保持 routing sharpness。
 
-### 7.2 Additive Routing
+### 8.2 Additive Routing
 
 Delta Attention Residuals 不用 replacement routing，而用 additive routing：
 
@@ -1089,7 +1164,7 @@ $$
 
 另一种额外设计是用 mask / gate 让初始化时只选择零 source。转换前后的 logits 与 loss 可用于核对初始扰动；这两种设计均独立于论文的基本 additive-routing 公式。
 
-### 7.3 Delta Block
+### 8.3 Delta Block
 
 按本文约定，$$L$$ 是 sublayer 数，细粒度 Delta AttnRes 最多保存 $$L$$ 个 branch deltas。Block 版本将完成的 deltas 聚合为约 $$L/G$$ 个 sources，再计入可见的 partial delta。
 
@@ -1115,7 +1190,7 @@ $$
 
 这样 source 数从 sublayer 数降到 block 数，同时保持“看的是变化量，不是累计状态”。
 
-### 7.4 Delta AttnRes 的实验信号
+### 8.4 Delta AttnRes 的实验信号
 
 Delta 论文在 220M、533M、1044M 和 Qwen3-8B-like 7.57B 上报告了短训实验。以下 PPL、吞吐和显存均对应论文自身的实现与硬件；比较时应保留这些训练条件。
 
@@ -1139,7 +1214,7 @@ Delta 论文在 220M、533M、1044M 和 Qwen3-8B-like 7.57B 上报告了短训�
 
 Delta Block 在 Qwen3-0.6B scale 上还观察到 routing sharpness 明显更高：平均 max weight 约 0.62，而 AttnRes 约 0.35；深层 AttnRes 会降到约 0.2，Delta Block 可以保持约 0.6 到 1.0 的范围。
 
-### 7.5 Kimi 与 Delta 的结果如何对应
+### 8.5 Kimi 与 Delta 的结果如何对应
 
 Kimi 的报告包含 Kimi Linear 48B total / 3B active 的长训验证；Delta 则在 Qwen-like / custom 短训配置中，观察到其复现的 cumulative-source AttnRes 出现退化。两者的架构、训练预算与 source 定义不同。
 
@@ -1147,11 +1222,11 @@ Delta 作者将自己的实现称为 faithful reimplementation，其中用于分
 
 Delta 的结果支持进一步检验 source 冗余和 additive routing 的作用。要分离两项改动的贡献，需要在同一配置中分别比较 cumulative / delta sources 与 replacement / additive routing；这些结果本身不构成 Kimi 原始 Full / Block 方法普遍失效的证据。
 
-## 8. Depth Memory：把历史写进固定大小的矩阵
+## 9. Depth Memory：把历史写进固定大小的矩阵
 
 [Depth Memory](https://arxiv.org/abs/2610.18809)于 10 月提出一个统一的 read / write 框架：标准 residual 将输出加到单向量，HC 将输出写进多个槽位，AttnRes 将输出追加到显式 source 列表。它进一步给出 Linear Depth Memory（LDM），用矩阵关联记忆保存 key–value 关系，后续层通过 query 检索。
 
-### 8.1 从 source 列表到关联矩阵
+### 9.1 从 source 列表到关联矩阵
 
 省略分组与门控时，LDM 维护原 residual $$h_l\in\mathbb{R}^{C}$$ 和矩阵 $$\mathcal{M}_l\in\mathbb{R}^{C\times D_k}$$。读取与 sublayer 更新为：
 
@@ -1177,7 +1252,7 @@ $$
 
 $$u_l$$ 是当前 value 相对记忆预测的误差，$$P_l$$ 调整不同 key 方向上的更新强度。原始 outer-product 累加、delta-rule 近似和 RLS 因而对应不同的写入规则，不能仅凭“都是线性 attention”将它们视为同一种方法。完整版本还对 key / value 乘以 observation weight 的平方根，并使用读门控和可学习 gain。
 
-### 8.2 分组状态与动态寻址
+### 9.2 分组状态与动态寻址
 
 实际实现将 hidden 分成 $$N_g$$ 组，每组 value 宽度 $$C_v=C/N_g$$。每个 token 的状态为：
 
@@ -1214,7 +1289,7 @@ for g in range(N_g):
 
 固定深度状态不等于较低的实际峰值显存。$$D_k=8$$ 时，memory matrix 本身就有 $$8C$$ 个元素，此外还有 residual 和 $$N_gD_k^2$$ 个 inverse covariance 元素。论文通过反向时重建旧 state 的 *unwinding*、窗口化写入和 CuTe DSL kernel 减少中间状态保存与访存，但相应训练设置下的峰值显存仍高于 Block AttnRes：例如 1.7B 配置为 94.0 GiB 对 80.3 GiB。
 
-### 8.3 预训练结果与性能测试
+### 9.3 预训练结果与性能测试
 
 论文在 400M Llama-like / 50B tokens 和 1.5B Qwen-like / 100B tokens 上进行预训练，为各方法分别搜索 learning rate。下表取主配置 $$D_k=8$$：
 
@@ -1232,32 +1307,86 @@ for g in range(N_g):
 
 LDM 在两组主实验中取得最低验证 PPL，准确率收益则更小：400M 的平均准确率仍由 Block AttnRes 领先，1.5B 的 LDM 与 mHC 接近。论文还在 B200 上测量了 1.7B–14B 模型的吞吐，LDM 在所有测试设置下快于 Full AttnRes，并与 Block AttnRes 有竞争力；这些较大模型的性能测试不等于已经验证了 14B 规模的训练质量。
 
-## 9. 横向比较：槽位、显式 source 与矩阵记忆
+## 10. 循环深度中的历史检索：ARLoop 与 Loopback
 
-### 9.1 方法机制对比
+循环 Transformer 反复执行共享 blocks，以较少参数获得更大的执行深度。参数共享决定执行什么变换，residual 设计则决定前几次执行的结果如何进入下一次计算。这里的 source 索引对应展开后的执行历史，不能只按物理层编号理解。
+
+### 10.1 ARLoop：保留 embedding 与近期 block sources
+
+[ARLoop](https://arxiv.org/abs/2611.05234)将 Block AttnRes 用于循环 Transformer：Attention / MLP 参数跨循环共享，展开后的每个有效 sublayer 使用自己的 learned pseudo-query。它进一步限制 depth read 的范围。设 $$s_0$$ 是 embedding，当前有 $$M$$ 个可见 block sources（含非空 partial sum），窗口为 $$W_d$$，可见集合为：
+
+$$
+\mathcal{S}_{W_d}=\{s_0\}\cup\{s_j\mid\max(1,M-W_d+1)\leq j\leq M\}.
+$$
+
+主滑窗配置保留 embedding 与最近三个 blocks，使 source bank 的状态规模维持在 $$O((W_d+1)C)$$。这是深度窗口，不是 token attention 的上下文窗口。在论文的循环模型中，近期 sources 已包含多次共享计算后的信息，滑窗在若干较深循环配置上取得比完整历史更低的 PPL；下游平均准确率并非每组都同步提高。普通非共享 Transformer 的受控对照中，同样的限制反而会退化。
+
+在同为 0.6B 规模、训练 180B tokens 并循环三次的对照中：
+
+| 指标 | PreNormLoop | ARLoop | 差值，百分点 |
+|---|---:|---:|---:|
+| ARC-Challenge | 46.3 | 45.5 | -0.8 |
+| GSM8K | 35.7 | 40.9 | +5.2 |
+| MATH | 20.9 | 26.3 | +5.4 |
+| MBPP | 33.1 | 36.2 | +3.1 |
+| HumanEval | 17.6 | 20.1 | +2.5 |
+
+完整评测中 ARLoop 在八项任务的七项上更好；论文还训练了 1.2B、500B tokens、三次循环的模型。与其他开放模型的比较包含不同数据与训练预算，不能全部归因于 residual 改动。
+
+### 10.2 Loopback：分开控制输入、更新总量与历史分配
+
+[Loopback Transformer](https://arxiv.org/abs/2611.07226)沿用 depth-memory 视角，将共享 block 的一次执行增量写为 $$\delta_i=f_{i\bmod K_\ell}(h_i)-h_i$$，其中 $$K_\ell$$ 是每轮共享 blocks 的数量。原始循环输入 $$h_0$$ 单独保留，历史 bank 保存这些 block updates。
+
+每轮结束时，几何衰减给旧增量和该轮末尾的新增量乘以 $$0<\lambda\leq1$$。执行 $$s$$ 后，第 $$i$$ 个增量的先验系数与总权重为：
+
+$$
+a_{s,i}=\lambda^{\lfloor(s+1)/K_\ell\rfloor-\lfloor i/K_\ell\rfloor},\qquad
+\beta_s=\sum_{i=0}^{s}a_{s,i}.
+$$
+
+每次执行使用一个跨 token 共享的 learned query，对不带 affine 参数的 RMS 归一化增量打分：$$z_{s,i}=q_s^\top\operatorname{RMSNorm}(\delta_i)/\sqrt{C}$$。attention 调整增量之间的相对分配，同时保留几何衰减确定的总量：
+
+$$
+c_{s,i}=\beta_s\operatorname{softmax}_i(z_{s,i}+\log a_{s,i}),\qquad
+h_{s+1}=h_0+\sum_{i=0}^{s}c_{s,i}\delta_i.
+$$
+
+原始输入的系数固定为 1，$$\sum_i c_{s,i}=\beta_s$$。query 零初始化时恢复几何先验；再令 $$\lambda=1$$，恢复普通加法。这里保留 $$\beta_s$$ 很关键：仅对 updates 做 softmax 平均，还会改变更新总量。Loopback 重建的是相对 $$h_0$$ 的当前 update mixture，与 Delta AttnRes 在当前 residual 上叠加额外读取的过程不同。
+
+论文在匹配训练 tokens 和执行深度的 ClimbMix 实验中，覆盖 191M–3B 的标准模型参考尺度，Loopback 使用约 40%–75% 的 Transformer 参数取得更低验证 loss；这个比例不含 embedding 与输出头。HC、mHC 和 AttnRes 对照使用循环架构适配版本，不能直接外推为原始方法的统一质量排名。共享参数也不自动减少执行 FLOPs：完整历史检索仍需保存 $$O(K_\ell R_{\mathrm{loop}}C)$$ 个 source 元素，直接读取的总工作量随展开深度呈二次增长。
+
+## 11. 横向比较：槽位、显式 source 与矩阵记忆
+
+### 11.1 方法机制对比
 
 | 方法 | 改造对象 | Source / Memory | Weight 类型 | 直通项或聚合方式 | 大规模主要风险 |
 |---|---|---|---|---|---|
 | 标准 residual | 固定加法 | 单 hidden state | 固定 1 | identity 加新贡献 | 深度路由固定 |
 | HC | 多 stream | $$N$$ streams | dynamic dense | 无 identity 保证 | 自由 mixing 的稳定性风险 |
 | iHC | 多 stream | $$N$$ streams | dynamic read/write | identity transition | 没有直接 stream mixing |
+| SimpleHC | 多 stream | 组入口 streams + 组内 outputs | 独立 gates，共享条件输入 | identity + 标量修正 + 组末写回 | conditioning 与访存实现 |
 | mHC | 多 stream | $$N$$ streams | dynamic 双随机 mixing | 给定 mixer 非扩张 | I/O、Sinkhorn 和差异收缩 |
 | oHC | 多 stream | $$N$$ streams | dynamic 正交 mixing | 给定 mixer 整体等距 | 更大规模与不同 recipe 待验证 |
 | xHC | 多 stream | $$N$$ streams + active set | dynamic sparse constrained | active mixer 非扩张，inactive 原样保留 | router / kernel 复杂 |
+| HiRes | 分层 residual | 外层宽 state、内层窄 state | dense read/write projections | 块内 PreNorm、块间 PostNorm | 边界接口的参数与计算 |
 | Full AttnRes | depth attention | embedding + branch outputs | token-dependent softmax | 以聚合结果构造输入 | $$O(LC)$$ source 保存 / 通信 |
 | Block AttnRes | depth attention | block sums / partial sum | token-dependent softmax | 以聚合结果构造输入 | source 粒度与缓存成本 |
 | Delta Block | depth attention | block deltas / partial delta | token-dependent softmax | residual + 路由增量 | source 历史与初始化 |
 | LR-AttnRes | depth attention | 全宽 branch outputs / block sums | 低维 key 上的 softmax | 全宽 value 聚合 | value 缓存与访存仍在 |
 | MSAR | 多视图 depth attention | 单流 sources，按需展开 | 每个视图独立 depth softmax + sigmoid 融合 | 融合检索结果作为输入 | 卷积、多路检索与 kernel 实现 |
 | LDM | 矩阵关联记忆 | residual + memory + inverse covariance | 动态 query，无 source softmax | residual + memory read | 矩阵状态大小、RLS 与反向实现 |
+| ARLoop | 循环 depth attention | embedding + 近期 block sources | 有效 sublayer 的 pseudo-query | 在 source 窗口内聚合 | 结论依赖参数共享与循环深度 |
+| Loopback | 循环 depth attention | 原始输入 + block updates | 几何先验 + content softmax | 输入系数 1，总更新量由衰减确定 | 历史存储与二次读取成本 |
 
 表中 identity / non-expansive / isometry 描述的是直通项或给定 mixer 的性质，不是完整网络的梯度保证。
 
-### 9.2 状态与额外计算
+### 11.2 状态与额外计算
 
 | 方法 | Residual / source 状态，单 token | 主要额外计算 |
 |---|---|---|
 | iHC | $$N\times C$$ streams | 动态 read/write，无 residual mixer |
+| SimpleHC | $$N\times C$$ 组入口 state 与组内 outputs | 批量 gate / base read、标量修正和组末写回 |
+| HiRes | $$D$$ 维外层与 $$C$$ 维 inner state | 每个 block 的 dense read/write 与外层 RMSNorm |
 | mHC | $$N\times C$$ streams | read/write、$$N^2$$ 个 mixing logits、Sinkhorn 与 mixing |
 | oHC | $$N\times C$$ streams | read/write、正交矩阵构造与 mixing；$$N=4$$ 时使用一对单位四元数 |
 | xHC | $$N\times C$$ streams | dense read、router、active mixing；MLP / MoE 侧增加 causal conv 与可选 GS |
@@ -1266,19 +1395,27 @@ LDM 在两组主实验中取得最低验证 PPL，准确率收益则更小：400
 | LR-AttnRes | 全宽 source bank，key 可取其低维 view | 低维打分与全宽 value 聚合 |
 | Block MSAR | 单流 block sources；多视图读取结果为临时状态 | causal depthwise conv、各视图 depth attention、动态融合 |
 | LDM | $$C+CD_k+N_gD_k^2$$ 个状态元素，与深度无关 | 动态 query / key、矩阵读取、RLS 写入；反向可 unwinding |
+| ARLoop | 约 $$O((W_d+1)C)$$ 的可见 source bank | 每个有效 sublayer 在滑窗内执行 depth attention |
+| Loopback | $$h_0$$ 与 $$O(K_\ell R_{\mathrm{loop}}C)$$ 的 updates | 几何先验、全历史 softmax 与加权重建 |
 
-### 9.3 实验结果的比较范围
+### 11.3 实验结果的比较范围
 
 现有结果还不足以给这些方法排一个统一的质量顺序。xHC 的主要证据来自 18B / 28B MoE，Kimi 的主要验证包含 48B total / 3B active 长训，oHC 是 3.9B total / 0.4B active 的受控比较，Delta 则包含 Qwen-like 短训与 checkpoint fine-tuning。数据、训练预算、优化器和 kernel 都不同。
 
 MSAR 的 18B / 28B MoE 比较支持其在该文配置下优于 AttnRes 与 mHC；LDM 的主质量结果到 1.5B；LR-AttnRes 的主要补充是低维路由与有条件的等价转换。估算 FLOPs、实测吞吐与拟合的等 loss 计算收益也应分别比较。
 
+SimpleHC 的八层 Transformer 效率测试与 15B / 30B 质量实验采用不同配置；HiRes 的 500B-token 长训以 vanilla 为对照。ARLoop 的匹配预算比较支持循环模型中的改进，Loopback 的参数效率比较则固定执行深度，并将 embedding / 输出头排除在参数比例之外。循环适配器与原始非共享架构的结果也不能直接混排。
 
-## 10. 结论
+
+## 12. 结论
 
 HC family 增加 residual 槽位，再通过 read、write 与 mixing 组织信息。iHC 保留 identity transition；mHC 用双随机约束限制线性直通项的扩张；oHC 保留整体范数，并允许均值与差异子空间交换；xHC 则丰富写回信息、稀疏更新 streams，使较大的 $$N$$ 在论文配置下继续带来收益。
 
+SimpleHC 保留 iHC 的 additive 结构，通过组入口 conditioning 与标量修正共享访存。HiRes 则在 block 边界连接宽 residual 与窄计算，降低宽 state 的操作频率。
+
 Full / Block AttnRes 显式访问历史 branch outputs 或 block sums。Delta 同时改变 source 与 routing，采用 delta sources 和 additive 聚合；LR-AttnRes 保留全宽 value、缩小打分空间；MSAR 为同一组 sources 增加上下文视图和独立的深度检索。LDM 则将历史关联写入固定大小的矩阵，用动态 query 读取。
+
+在循环深度中，ARLoop 将检索限制在 embedding 与近期 sources；Loopback 保留原始输入，用几何衰减控制更新总量，再由 attention 分配给不同 block updates。参数共享使这些模型的执行历史与物理层数分离，也使历史范围成为单独的设计选择。
 
 这些方法改变了 residual 信息的存储、选择或写入方式，成本取决于具体状态与访问过程。固定大小的状态仍可能占用更多显存，较少的打分 FLOPs 也只带来有限的端到端加速；checkpoint 转换还需满足初始化或坐标重参数化的条件。
 
@@ -1299,3 +1436,8 @@ Full / Block AttnRes 显式访问历史 branch outputs 或 block sums。Delta �
 - [Low-Rank Attention Residuals（v2，2026-09-22）](https://arxiv.org/abs/2607.09694v2)
 - [Multi-Stream Attention Residuals](https://arxiv.org/abs/2610.13630)
 - [Depth Memory](https://arxiv.org/abs/2610.18809)
+
+- [On the Design of Hyper-Connections: Simplification, Stability, and Scalability（SimpleHC）](https://arxiv.org/abs/2611.05984)
+- [Hierarchical Residuals: A Minimalist Decoupling of Residual Width from Compute Width](https://arxiv.org/abs/2610.41711)
+- [ARLoop: Fully-Open Pre-trained Looped Transformers with Attention Residuals](https://arxiv.org/abs/2611.05234)
+- [Loopback Transformer: Towards a Unified View of Residual Looped Transformers](https://arxiv.org/abs/2611.07226)
