@@ -2177,11 +2177,35 @@
     "description": "Multi-Token Prediction (MTP) is now a common ingredient in language-model pre-training, as it improves downstream performance and enables faster inference through speculative decoding. We identify a flaw in standard MTP training, in which a residual component of the MTP gradient interferes with both next-token and multi-token learning, increasingly so with scale. Specifically, the MTP cross-entropy gradient can be decomposed exactly into a KL self-distillation term that pulls each MTP head toward the model's own next-token prediction (NTP) distribution and improves speculative decoding, and a…",
     "fetched_at": 1793961809
   },
+  "https://arxiv.org/abs/2610.41711": {
+    "checked_at": 1795167586,
+    "title": "Hierarchical Residuals: A Minimalist Decoupling of Residual Width from Compute Width",
+    "description": "Residual connections underpin Transformers, but they implicitly tie the residual width carried through depth to the compute width used inside each layer. We introduce Hierarchical Residuals (HiRes), a minimalist architectural change that decouples these dimensions, widening the residual state while keeping per-layer compute width fixed. HiRes groups layers into blocks: standard d-dimensional PreNorm layers operate inside each block, while a wider D-dimensional PostNorm outer residual connects blocks. Learned read/write projections bridge the two spaces at block boundaries, leaving individual…",
+    "fetched_at": 1795167586
+  },
   "https://arxiv.org/abs/2610.42018": {
     "checked_at": 1795070151,
     "title": "Asynchronous Flow Map Language Models",
     "description": "The order in which tokens are predicted in language modeling has a profound impact on the quality of generated sequences. Autoregressive and masked diffusion models iteratively fill in tokens and can exploit such orderings across generation steps, but how to leverage an ordering for one-step parallel language modeling is unclear. We introduce asynchronous flow map language models (aFMLMs), which incorporate prediction order into one-step modeling by learning the flow maps of asynchronous flows. These flows specify an ordering through a tokenwise time schedule that controls the relative denois…",
     "fetched_at": 1795070151
+  },
+  "https://arxiv.org/abs/2611.05234": {
+    "checked_at": 1795167586,
+    "title": "ARLoop: Fully-Open Pre-trained Looped Transformers with Attention Residuals",
+    "description": "Looped transformers increase effective depth by repeatedly applying a shared set of transformer layers, offering a parameter-efficient way to scale computation. However, standard residual connections aggregate information across recurrent depth into a single stream, providing limited control over which intermediate representations from preceding layers should be reused. In this paper, we introduce ARLoop, a looped transformer architecture based on attention residuals, where the input of each layer is selectively aggregated through attention over model depth. Distinct from standard transformer…",
+    "fetched_at": 1795167586
+  },
+  "https://arxiv.org/abs/2611.05984": {
+    "checked_at": 1795167586,
+    "title": "On the Design of Hyper-Connections: Simplification, Stability, and Scalability",
+    "description": "Hyper-Connections (HC) architectures are increasingly adopted in frontier language models, yet their components remain insufficiently understood and introduce non-negligible training overhead. In this work, we systematically study the HC architecture to understand its components and identify simpler, more efficient designs. We find that learned read/write gating without mixing and unconstrained mixing with fixed gates form two effective interaction groups: either alone achieves performance comparable to mHC. We also identify repeated access to the expanded residual state as a major source of…",
+    "fetched_at": 1795167586
+  },
+  "https://arxiv.org/abs/2611.07226": {
+    "checked_at": 1795167586,
+    "title": "Loopback Transformer: Towards a Unified View of Residual Looped Transformers",
+    "description": "Looped Transformers reduce parameter count by repeatedly applying shared blocks, but parameter sharing alone does not determine how the results of repeated computation are reused. We take the depth-memory view of residual connections and analyze which representation is stored after each block application and how later reads weight it. A full block output contains both its input and its new update, so weighting that output also reweights the history already carried by the input. Reading individual updates instead, with the shared stack's input kept on a separate path, gives separate controls o…",
+    "fetched_at": 1795167586
   },
   "https://arxiv.org/html/2211.15089v3": {
     "checked_at": 1795065614,
@@ -2910,7 +2934,7 @@
     "fetched_at": 1793212629
   },
   "https://cdrdv2-public.intel.com/817486/gaudi-3-ai-accelerator-white-paper.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://cloud.google.com/tpu/docs/v5e": {
     "checked_at": 1793212629,
@@ -2925,7 +2949,7 @@
     "fetched_at": 1795065614
   },
   "https://crd.lbl.gov/assets/pubs_presos/parlab08-roofline-talk.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://cursor.com/blog/mixture-of-kittens": {
     "checked_at": 1793212629,
@@ -3000,10 +3024,10 @@
     "fetched_at": 1793212629
   },
   "https://dl.acm.org/doi/10.1145/3789240.3829201": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://dl.acm.org/doi/pdf/10.1145/3567955.3567959": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://docs.habana.ai/en/latest/PyTorch/PyTorch_FP8_Training/index.html": {
     "checked_at": 1793212629,
@@ -3036,16 +3060,16 @@
     "fetched_at": 1793212629
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/fp8_primer.html": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/features/low_precision_training/nvfp4/nvfp4.html": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/index.html": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://docs.nvidia.com/dgx-superpod-reference-architecture-dgx-h100.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://docs.nvidia.com/megatron-core/developer-guide/0.16.1/apidocs/core/core.transformer.moe.experts.html": {
     "checked_at": 1793212629,
@@ -3156,7 +3180,7 @@
     "fetched_at": 1794672892
   },
   "https://github.com/Introspective-Diffusion/I-DLM/tree/main/sglang": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://github.com/MINT-SJTU/Evo-1": {
     "checked_at": 1793212629,
@@ -3465,7 +3489,7 @@
     "fetched_at": 1793212629
   },
   "https://github.com/deepseek-ai/DeepEP/blob/main/docs/legacy.md": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://github.com/deepseek-ai/DeepSeek-OCR": {
     "checked_at": 1793212629,
@@ -3516,7 +3540,7 @@
     "fetched_at": 1793252215
   },
   "https://github.com/inclusionAI/LLaDA2.X/blob/main/LLaDA2_2_tech_report.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://github.com/inclusionAI/Ling-V2": {
     "checked_at": 1793212629,
@@ -3531,10 +3555,10 @@
     "fetched_at": 1793252215
   },
   "https://github.com/lil-lab/sps/blob/main/figures/attention_masks.png": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://github.com/lil-lab/sps/blob/main/figures/gradient_params_fp.png": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://github.com/meituan-longcat": {
     "checked_at": 1793212629,
@@ -3633,7 +3657,7 @@
     "fetched_at": 1793212629
   },
   "https://hc34.hotchips.org/assets/program/conference/day2/Network%20and%20Switches/NVSwitch%20HotChips%202022%20r5.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://horace.io/brrr_intro.html": {
     "checked_at": 1793212629,
@@ -3750,7 +3774,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/resolve/main/DeepSeek_V4.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://huggingface.co/docs/accelerate/usage_guides/gaudi": {
     "checked_at": 1793212629,
@@ -3825,7 +3849,7 @@
     "fetched_at": 1793212629
   },
   "https://huggingface.co/moonshotai/Kimi-K3/raw/main/config.json": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://huggingface.co/nvidia": {
     "checked_at": 1793212629,
@@ -3966,10 +3990,10 @@
     "fetched_at": 1793212629
   },
   "https://microsoft.ai/pdf/mai-thinking-1.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://mimo.xiaomi.com/blog/mimo-tilert-1000tps": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://mimo.xiaomi.com/mimo-v2-5": {
     "checked_at": 1793212629,
@@ -3984,10 +4008,10 @@
     "fetched_at": 1793212629
   },
   "https://moonshotai.github.io/Kimi-K2.5/": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://moonshotai.github.io/Kimi-K2.6/": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-gemma-4": {
     "checked_at": 1793212629,
@@ -4026,7 +4050,7 @@
     "fetched_at": 1793212629
   },
   "https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyworook.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://platform.kimi.ai/docs/guide/kimi-k3-quickstart": {
     "checked_at": 1793212629,
@@ -4095,31 +4119,31 @@
     "fetched_at": 1793212629
   },
   "https://qwenlm.github.io/blog/qwen3-vl/": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://raw.githubusercontent.com/QwenLM/Qwen3.8-Flash-Next/main/tech_report.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://raw.githubusercontent.com/XiaomiMiMo/MiMo/main/MiMo-7B-Technical-Report.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://raw.githubusercontent.com/jianc99/jianc99.github.io/master/images/dflash_system.png": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Flash-Prover/main/LongCat_Flash_Prover_Technical_Report.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://raw.githubusercontent.com/meituan-longcat/LongCat-Next/main/tech_report.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-3.5-Flash/main/step_3p5_flash_tech_report.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step-Audio-R1/main/Step-Audio-R1.5.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://raw.githubusercontent.com/stepfun-ai/Step3/main/Step3-Sys-Tech-Report.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://research.nvidia.com/labs/cosmos-lab/infotok/": {
     "checked_at": 1793212629,
@@ -4134,7 +4158,7 @@
     "fetched_at": 1793212629
   },
   "https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://resources.nvidia.com/en-us-tensor-core": {
     "checked_at": 1793212629,
@@ -4161,7 +4185,7 @@
     "fetched_at": 1793212629
   },
   "https://sglang.readthedocs.io/": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://siboehm.com/articles/22/CUDA-MMM": {
     "checked_at": 1793212629,
@@ -4170,22 +4194,22 @@
     "fetched_at": 1793212629
   },
   "https://spaces.ac.cn/archives/10592": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://spaces.ac.cn/archives/10739": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://spaces.ac.cn/archives/11033": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://spaces.ac.cn/archives/11416": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://spaces.ac.cn/archives/7546": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://spaces.ac.cn/tag/attention/": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://sylvan820.github.io/D-MTP/": {
     "checked_at": 1793961809,
@@ -4326,12 +4350,12 @@
     "fetched_at": 1793252215
   },
   "https://z.ai/blog/glm-5.2": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://zhuanlan.zhihu.com/p/2013649391051896797": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   },
   "https://zhuanlan.zhihu.com/p/2067703296500954047": {
-    "checked_at": 1795020790
+    "checked_at": 1795167586
   }
 }
