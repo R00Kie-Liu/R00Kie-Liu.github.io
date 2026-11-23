@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（二）：Linear Attention，从 KV cache 到递推状态"
 date: 2026-07-29
-last_modified_at: 2026-11-06
+last_modified_at: 2026-11-23
 tags: [LLM, Attention, Long Context, Pretraining]
 description: "从 Softmax Attention 的 KV cache 表示出发，解释 linear attention 如何把历史压成递推状态，以及它和 RWKV、RetNet、Mamba、Gated DeltaNet、Kimi Linear/KDA 的关系。"
 ---
@@ -27,7 +27,7 @@ GQA/MQA 减少 K/V heads，MLA 把每个 token 的 K/V 压成 latent，SWA、DSA
 state_t
 ```
 
-每一步只更新一个状态，再用当前 query 读这个状态。这个变化看上去只是把公式换了个括号，但对长上下文推理来说，它等于把“不断增长的 KV cache”换成了“固定形状的递推记忆”。
+每一步只更新一个状态，再用当前 query 读这个状态。这里改变的是历史的保存与读取方式：逐 token 增长的 KV cache 被汇总为固定形状的递推状态。
 
 从 softmax attention 的历史表示出发，矩阵乘法换序可以引出 recurrent state；有限状态中的写入干扰又引出 gating 和 delta rule。近期开源模型进一步将状态层与全局 attention 层组合成 hybrid 架构。
 
@@ -96,7 +96,7 @@ $$
 o_t = \frac{\phi(q_t)^\top S_t}{\phi(q_t)^\top z_t}.
 $$
 
-这个式子是理解 linear attention 的抓手。它把历史上所有 token 的 K/V 合进了 $$S_t$$ 和 $$z_t$$。decode 时，新 token 只需要更新状态，不需要回读完整 KV list。
+这个式子把历史上所有 token 的 K/V 合进了 $$S_t$$ 和 $$z_t$$。decode 时，新 token 只需要更新状态，不需要回读完整 KV list。
 
 ```text
 Full attention:
@@ -444,7 +444,7 @@ Kimi Linear 与 K3 的 decay 参数化、FlashKDA tile 路径见 §6.2。
 
 KDA 与 Qwen 使用的 Gated DeltaNet 同属 gated/delta family。Kimi 的 hybrid 配置、两类缓存与 speculative decoding replay 见 §9.2。
 
-到这里，linear attention 的主语已经从“近似 softmax”转成了 **finite-state memory layer**：输入 token 生成读写信号，更新 recurrent state，再读回 token representation。RWKV、RetNet、Mamba 和 gated/delta 系列公式各不相同，但都在围绕这条状态路线做取舍。
+这些方法采用 **finite-state memory layer**：输入 token 生成读写信号，更新 recurrent state，再读回 token representation。RWKV、RetNet、Mamba 和 gated/delta 系列的状态形式与更新规则各不相同，需要分别比较。
 
 ### 5.5 Kalman Delta Networks：写入强度也可以依赖记忆的不确定性
 
@@ -621,9 +621,9 @@ Lightning Attention 主要解决 causal linear attention 如何跑快；Gated De
 
 ## 7. 固定状态的容量与时间尺度
 
-linear attention 最大的问题也很清楚：固定状态一定有容量瓶颈。
+固定形状的状态存在容量约束。
 
-full attention 像一张历史 token 表。只要 KV 还在，当前 query 理论上可以重新访问任意位置。linear attention 更像一份不断更新的摘要。摘要可以很强，但摘要终究不是原文。
+full attention 保存逐 token 的历史条目；只要 KV 仍在且 mask 允许，当前 query 就可以重新读取相应位置。linear attention 将历史汇总到递推状态，当前 query 无法再逐项访问已被汇总的 KV。
 
 这会影响几类能力：
 
@@ -643,7 +643,7 @@ full attention 像一张历史 token 表。只要 KV 还在，当前 query 理�
 可选局部层或分支：SWA，保留近期位置的精细交互
 ```
 
-Kimi Linear 选择 KDA + MLA，Gated DeltaNet 论文也讨论和 SWA/Mamba2 的 hybrid。这个方向比“全盘替换”更可信。
+Kimi Linear 选择 KDA + MLA，Gated DeltaNet 论文也讨论和 SWA/Mamba2 的 hybrid。混合结构可以让状态层承担多数历史更新，并保留 attention 层读取逐 token 历史；质量与成本仍需在相同预算下比较。
 
 <a id="81-spectralshift训练窗口变长状态能记住多远"></a>
 

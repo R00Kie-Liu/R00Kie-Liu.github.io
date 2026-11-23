@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（六）：KV 跨层复用，从 CLA、YOCO 到 KITE 与 VFold"
 date: 2026-10-13
-last_modified_at: 2026-11-06
+last_modified_at: 2026-11-23
 tags: [LLM, Attention, KV Cache, Long Context, Pretraining, Inference]
 description: "从 agentic 场景的 prefill 开销解释 YOCO-style 架构为何重新受到关注，再区分缓存、生成来源、索引与聚合状态共享，梳理 CLA、KITE/SST、CSA2/CED、HySparse2、GSM、LatentIndex 和 VFold。"
 ---
@@ -649,7 +649,7 @@ $$A_\ell$$ 和 $$A_{\ell+1}$$ 由各层自己的 query、key 计算，可以关�
 
 CLA 减少 KV 的生成与保存份数；YOCO、KITE 将历史构建与上层读取分开；CSA2/CED 和 HySparse2 对层私有局部状态做出不同取舍。GSM 进一步将远程历史聚合到近期共享状态，限制 decoder 的直接读取范围，encoder 仍保留全局检索。LatentIndex 共享索引表示而保留逐层选择，VFold 则只合并对齐后的历史 value。它们减少的开销和保留的表达自由度各不相同。
 
-读新论文时，最有用的检查顺序是：标出物理保存的 bank，再标出每个 bank 的生成来源、读取层和选择集合。最后核对省掉的是容量、投影、索引还是整段前向依赖。这样才能判断它是否适合自己的模型，而不是只比较一个总压缩倍率。
+读新论文时，可以先标出物理保存的 bank，再标出每个 bank 的生成来源、读取层和选择集合。最后核对省掉的是容量、投影、索引还是整段前向依赖。这样才能判断它是否适合自己的模型，而不是只比较一个总压缩倍率。
 
 ## 延伸阅读
 

@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（四）：超长上下文训练的并行、显存与调度"
 date: 2026-08-18
-last_modified_at: 2026-11-06
+last_modified_at: 2026-11-23
 tags: [LLM, Long Context, Pretraining, Distributed Training]
 description: "讨论 128K、256K 到 1M token 上下文训练中的系统瓶颈：attention 计算、activation 显存、SP/CP、Ring Attention、Ulysses、linear attention CP、varlen packing、MoE/EP 负载、pipeline、attention disaggregation 与 compiler 调度。"
 ---
@@ -62,7 +62,7 @@ $$
 
 CP、调度和 offload 都建立在单个 kernel 的执行代价之上。先区分 HBM 中间矩阵、片上数据搬运与计算流水线，后面才能判断通信是否有足够计算可以重叠。
 
-[FlashAttention](https://arxiv.org/abs/2205.14135) 的位置要放准。它是 exact attention kernel，通过 tiling 减少 HBM 和 SRAM 之间的数据搬运，并避免显式保存完整 attention matrix。它能显著降低 attention 的 IO 和 memory footprint，也能提高实际吞吐；但它没有把 full attention 的数学计算从 $$O(L^2)$$ 变成 $$O(L)$$。[FlashAttention-3](https://arxiv.org/abs/2407.08608)继续利用 Hopper 上 Tensor Cores 和 TMA 的异步能力，以及 FP8 低精度路径；这说明 kernel 层还在快速演进，但 full attention 的二次交互语义没有被它改掉。所以在 128K、256K 训练里，FlashAttention 往往是入场券，不是终点。
+[FlashAttention](https://arxiv.org/abs/2205.14135) 是 exact attention kernel，通过 tiling 减少 HBM 和 SRAM 之间的数据搬运，并避免显式保存完整 attention matrix。它能显著降低 attention 的 IO 和 memory footprint，也能提高实际吞吐；但它没有把 full attention 的数学计算从 $$O(L^2)$$ 变成 $$O(L)$$。[FlashAttention-3](https://arxiv.org/abs/2407.08608)继续利用 Hopper 上 Tensor Cores 和 TMA 的异步能力，以及 FP8 低精度路径；这说明 kernel 层还在快速演进，但 full attention 的二次交互语义没有被它改掉。在 128K、256K 训练里，采用 FlashAttention 后仍需处理通信、activation 与负载分配。
 
 可以把 FlashAttention 理解成这样：普通实现像是先把整张 $$L \times L$$ 注意力表摊在桌上，再做 softmax 和乘 $$V$$；FlashAttention 不摊这张大表，而是每次拿一小块 $$Q$$ 和一小块 $$K,V$$ 到片上 SRAM 里算，边扫边维护 online softmax 的最大值和归一化项，最后只把输出 $$O$$ 写回 HBM。省下来的主要是 HBM 往返和 $$L^2$$ 中间矩阵的保存，不是少算了所有 token 对。
 
@@ -141,7 +141,7 @@ Ulysses 的限制也来自这里：如果按 head 维重排，CP size 通常要�
 
 [DISTFLASHATTN](https://arxiv.org/abs/2310.03294)则沿着 FlashAttention 的思路做分布式 exact attention：token-level workload balancing、KV communication overlap、以及 rematerialization-aware gradient checkpointing 是它的三个核心点。它的评估覆盖 Llama-7B 及其变体、32K 到 512K sequence，并把 Ring、Ulysses、Megatron-LM + FlashAttention 都作为对照。它同时优化 attention 算子、workload balance、通信隐藏和 checkpoint 策略。
 
-[USP](https://arxiv.org/abs/2405.07719)和 [LoongTrain](https://arxiv.org/abs/2406.18485)可以放在一起看。USP 把 Ulysses 和 Ring 组合成统一的 sequence parallelism，并讨论和 DP/TP/PP/ZeRO 组成 4D parallelism 的实践；LoongTrain 进一步提出 2D-Attention，把 head parallel 和 context parallel 组合起来，用 Double-Ring-Attention、hybrid ZeRO 和 Selective Checkpoint++ 改善扩展性。它们共同说明一件事：当上下文继续拉长，单一维度的 CP 很快会碰到 head 数、网络拓扑或通信重叠的限制，系统需要在 head、context、optimizer state 和 checkpoint 之间一起分账。
+[USP](https://arxiv.org/abs/2405.07719)和 [LoongTrain](https://arxiv.org/abs/2406.18485)可以放在一起看。USP 把 Ulysses 和 Ring 组合成统一的 sequence parallelism，并讨论和 DP/TP/PP/ZeRO 组成 4D parallelism 的实践；LoongTrain 进一步提出 2D-Attention，把 head parallel 和 context parallel 组合起来，用 Double-Ring-Attention、hybrid ZeRO 和 Selective Checkpoint++ 改善扩展性。它们共同说明一件事：当上下文继续拉长，单一维度的 CP 很快会碰到 head 数、网络拓扑或通信重叠的限制，系统需要联合选择 head/context 并行度、优化器状态分片和 checkpoint 策略。
 
 <a id="4-linear-attention-不能照搬-softmax-cp"></a>
 
@@ -297,7 +297,7 @@ DCP 把输入和输出切成 data blocks，把一个 query block 对某个 KV bl
 
 CAD 的关键观察有两个。第一，core attention 没有参数，临时数据也少，天然适合从原来的 layer 里拆出来单独调度。第二，现代 attention kernel 可以吃 arbitrary-length 的 fused token shards；只要 batch 足够大，切成 CA-tasks 再 rebatch，不一定会把 kernel efficiency 打碎。DistCA 就把这些 CA-tasks 发给 attention servers，由 scheduler 按 FLOPs 重新分配任务，尽量让所有 attention servers 同时结束。
 
-实现上还有两个小心思。一个是 in-place attention server：不是真的另划一批 GPU 只做 attention，否则 core attention compute-heavy 但 memory-light，会浪费显存；它让 GPU 在普通模型计算和 attention server 角色之间 time-share。另一个是 ping-pong overlap：一边计算当前 batch 的 core attention，一边传下一批 CA-task 的输入/输出，尽量把 disaggregation 带来的通信藏起来。论文在最多 512 张 H200、512K context 的设置下报告最高 1.35x end-to-end throughput 提升。这个方案不适合作为第一步优化，因为调度器、跨池通信和容错都会复杂；但当 CP 已经不能很好处理 DP/PP straggler 时，它提供了一条很清楚的系统路线：把二次增长的 core attention 从其余模块里拆出来，单独负载均衡。
+实现采用两项设计。一个是 in-place attention server：不是真的另划一批 GPU 只做 attention，否则 core attention compute-heavy 但 memory-light，会浪费显存；它让 GPU 在普通模型计算和 attention server 角色之间 time-share。另一个是 ping-pong overlap：一边计算当前 batch 的 core attention，一边传下一批 CA-task 的输入/输出，尽量把 disaggregation 带来的通信藏起来。论文在最多 512 张 H200、512K context 的设置下报告最高 1.35x end-to-end throughput 提升。这个方案不适合作为第一步优化，因为调度器、跨池通信和容错都会复杂；但当 CP 已经不能很好处理 DP/PP straggler 时，可以把二次增长的 core attention 从其余模块里拆出来，单独调度和负载均衡。
 
 ![CAD/DistCA 将 core attention 拆成 CA-tasks，由 attention servers 动态 rebatch 并用 ping-pong overlap 隐藏通信](/assets/img/blog/long-context-training/cad_distca_disaggregation_gpt_image2.png)
 

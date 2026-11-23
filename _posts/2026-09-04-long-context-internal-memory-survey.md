@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（五）：从参数知识到内部记忆"
 date: 2026-09-04
-last_modified_at: 2026-11-06
+last_modified_at: 2026-11-23
 tags: [LLM, Long Context, Memory, Attention, Agent]
 description: "从 FFN 参数知识出发，比较 latent pool、在线 fast weights 与跨交互状态；结合 ProTTT、Metis/MemT-1.0、REMORY，讨论记忆怎样写入、稳定保留并服务后续任务。"
 ---
@@ -337,7 +337,7 @@ $$P_u$$ 是训练期的 profile 目标，损失按其 token 数归一化，$$\th
 
 主实验为 Qwen3-0.6B，另有 Llama-3.2-1B-Instruct。它优于 full-history ICL 和所比较的参数方法，但 PersonaMem Type 6 上 BM25 检索更好。CMV 的约 10× 单查询延迟改善发生在记忆构建后，另有一次用户历史处理成本；这些结果主要支持小模型个性化，尚未验证一般长期事实管理。
 
-一个相邻训练思路是 [Delayed Supervision](https://arxiv.org/abs/2609.32312v1)：在事实之后插入无关事件，再问仍有效或已修订的问题。LaCT/DeltaNet 构造至少间隔 4,096 tokens 和 16 次状态变更；问答在独立分支上计分后丢弃，答案不进入继续运行的事件流。它将“经过干扰后仍可使用”变成监督条件。现有对照未隔离 delay 本身相对普通 QA、答案格式训练及额外计算的贡献，适合支持训练目标的讨论，而非证明延迟监督普遍更优。
+一个相邻训练思路是 [Delayed Supervision](https://arxiv.org/abs/2609.32312v1)：在事实之后插入无关事件，再问仍有效或已修订的问题。LaCT/DeltaNet 构造至少间隔 4,096 tokens 和 16 次状态变更；问答在独立分支上计分后丢弃，答案不进入继续运行的事件流。它将“经过干扰后仍可使用”变成监督条件。现有对照未隔离 delay 本身相对普通 QA、答案格式训练及额外计算的贡献，因此不能将收益单独归因于延迟监督，也不能推出其普遍更优。
 
 <a id="7-metis把记忆写成模型原生过程"></a>
 
@@ -585,7 +585,7 @@ RAG-Tuned-LLM 与 RING 将检索式行为或外部知识内化到参数路径中
 
 文本式外部记忆便于检查原文、删除记录和追溯来源。内部表示可以减少重复拼接或限制读取预算，但写入、读取和恢复的延迟取决于具体接口；其内容也更难直接检查。
 
-MemDefrag 用中间层 attention density 找 target fragment，是一个有趣方向；Metis 用 memory operation 数据约束行为，也是一个方向。但如果 memory 要承担个性化、合规和长期 agent 状态，光有行为评估还不够。
+MemDefrag 用中间层 attention density 找 target fragment；Metis 用 memory operation 数据约束行为。若 memory 用于个性化、合规和长期 agent 状态，还需验证状态内容、可靠删除与来源追溯。
 
 ### 10.4 训练：模型会不会绕过 memory
 

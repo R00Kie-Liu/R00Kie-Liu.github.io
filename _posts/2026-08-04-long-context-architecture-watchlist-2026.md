@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（三）：Attention 设计趋势，选择、压缩与访问调度"
 date: 2026-08-04
-last_modified_at: 2026-11-06
+last_modified_at: 2026-11-23
 tags: [LLM, Attention, Long Context, Pretraining, Inference]
 description: "梳理 2026 年前后长上下文 attention 机制的研究趋势：selector/indexer 降本、选择粒度重排、linear state 与 sparse retrieval 合流、表示感知的压缩与执行，以及 runtime 访问调度。"
 ---
@@ -130,7 +130,7 @@ $$
 
 [实现](https://arxiv.org/html/2502.12216#S4)没有先计算全部 $$a_i$$：prefill 对 keys 做聚类；decode 用 query 与聚类中心的点积给簇排序，再采样部分 token，拟合排序后的指数分数分布，以估计达到质量阈值 $$\tau$$ 所需的读取量；头部异常高分项单独计算。最后对选中 tokens 运行实际 attention。分布尖时少读、平时多读，但估计误差会影响保留质量，这不是 DoSA 式的精确排除保证。
 
-这组工作给第三篇带来的趋势判断很明确：长上下文 attention 的研究重心，正在从 main attention kernel 旁移到 selector。谁来选、多久选一次、跨几层复用、选出来的地址是否连续，都会影响最终吞吐。
+这些工作集中降低 selector 的计算、选择与访存开销。谁来选、多久选一次、跨几层复用、选出来的地址是否连续，都会影响最终吞吐。
 
 ## 3. 趋势二：选什么单位，正在变成架构问题
 
@@ -160,7 +160,7 @@ $$
 
 这一节的问题是：将 recurrent state 与 sparse retrieval 放在同一个模型中，是否真的形成了不同的信息通道？Qwen 的组合设计提供了实例，状态干预实验则提供另一类证据。
 
-Qwen3.8-Flash-Next 是这里最合适的主例。它的 token mixing 是 **3 个 Gated DeltaNet 层 + 1 个 QSA 层**：GDN 把多数层的历史压进 fixed-size recurrent state，避免每层都维护和扫描长 KV；QSA 则接管周期性全局层，用 micro-block indexer 先筛远程上下文，再做 sparse core attention。
+Qwen3.8-Flash-Next 的 token mixing 是 **3 个 Gated DeltaNet 层 + 1 个 QSA 层**：GDN 把多数层的历史压进 fixed-size recurrent state，避免每层都维护和扫描长 KV；QSA 则接管周期性全局层，用 micro-block indexer 先筛远程上下文，再做 sparse core attention。
 
 这个组合比普通 recurrent/full hybrid 更进一步：全局层本身也不再是 dense attention。换句话说，Qwen3.8-Flash-Next 把两个问题拆给两个模块：GDN 负责“多数层不要随 $$L$$ 增长”，QSA 负责“少数层仍能按内容找远程证据，但主 attention 只读取选中上下文”。QSA indices 跨 draft steps 的复用，则把这一分工进一步延伸到 runtime，见 §6.1。
 
@@ -310,7 +310,7 @@ Layer l+1:
 
 *图源：SPIN, Figure 5。沿 Retrieve 路径阅读：逻辑 partition ids → 查询驻留状态与 page 映射 → 为缺失项安排 GPU 空间并搬运 → 返回 attention 所需的 GPU pages。*
 
-相关工作各补一个环节：AsyncTLS 结合 block 粗筛与 token 精选，利用相邻步骤的重叠访问减少新增块传输；Vortex 的 vFlow/vTensor 提供 Python 前端与 page-centric tensor 抽象，方便把新 pattern 接入 serving backend。具体机制留在延伸阅读；这里的主线是“提前选地址 → 查缓存 → 只搬缺失项 → 按就绪地址计算”。
+相关工作各补一个环节：AsyncTLS 结合 block 粗筛与 token 精选，利用相邻步骤的重叠访问减少新增块传输；Vortex 的 vFlow/vTensor 提供 Python 前端与 page-centric tensor 抽象，方便把新 pattern 接入 serving backend。这些系统分别处理“提前选地址 → 查缓存 → 只搬缺失项 → 按就绪地址计算”中的不同环节。
 
 <a id="61-on-demand-attention先决定这一步是否值得全局读取"></a>
 
@@ -349,7 +349,9 @@ $$
 
 <a id="8-小结长上下文-attention-正在从算子变成协议"></a>
 
-## 7. 小结：长上下文 attention 正在从算子变成协议
+<a id="7-小结长上下文-attention-正在从算子变成协议"></a>
+
+## 7. 小结：选择、缓存与调度的协同设计
 
 把前面的线索放在一起，长上下文 attention 的研究重心已经不只是替换 softmax：
 
@@ -365,7 +367,7 @@ $$
 
 ## 延伸阅读
 
-- **基础结构**：先读第一篇里的 GQA、MLA、SWA、DSA/QSA/MSA、CSA/HCA，再读第二篇里的 Gated DeltaNet、KDA、Lightning Attention。第三篇默认这些概念已经在读者脑子里。
+- **基础结构**：先读第一篇里的 GQA、MLA、SWA、DSA/QSA/MSA、CSA/HCA，再读第二篇里的 Gated DeltaNet、KDA、Lightning Attention。
 - **selector/indexer 降本**：HISA、LongCat/LSA、MISA、DoSA 和 Tactic 可以放在一起读。DoSA §2 与 Appendix C 尤其适合对照“近似筛掉候选”和“证明候选选不上”，并检查数值误差、候选容量与恢复路径。
 - **选择粒度**：NSA、MiniMax MSA、Qwen QSA、MoBA/Optimizing MoBA 都值得对照。重点不在 sparse ratio 本身，而在 token、block、micro-block 对精度、kernel 和访存的不同约束。
 - **缓存表示、压缩与执行**：DSA/HISA 改 Sparse MLA 的 token 选择路径；CSA/HCA 读取 shared-KV MQA 的序列压缩条目；LCA 直接压 MLA latent；GQLA §3–§5 对照同一权重的双路径与 TP 分片，注意路径等价不等于 checkpoint 转换无损。BLASST 属于 §6.4 的 kernel 内按需计算。

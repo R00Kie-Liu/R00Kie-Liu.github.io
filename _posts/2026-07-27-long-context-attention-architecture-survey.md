@@ -2,7 +2,7 @@
 layout: post
 title: "长话长说（一）：长上下文 Attention 架构总览"
 date: 2026-07-27
-last_modified_at: 2026-11-06
+last_modified_at: 2026-11-23
 tags: [LLM, Attention, Long Context, Pretraining]
 description: "梳理长上下文 LLM 中 attention 与 KV cache 架构的演进，包括 GQA、MLA、Kimi Linear/KDA、SWA、DSA/QSA、MiniMax MSA 与 CSA/HCA。"
 ---
@@ -170,7 +170,7 @@ $$
 
 ### 3.1 用伪代码比较实现路径
 
-上面的表容易记成一串名词。换成伪代码会更直观：这些方法大多不是在同一个位置做优化，有的改 KV cache 的 shape，有的改 mask，有的改“历史”本身。
+下面用伪代码比较这些方法对 KV cache 布局、可见位置与历史表示的改动。
 
 ![长上下文 Attention 架构实现路径对比](/assets/img/blog/long-context-attention/attention_architecture_pseudocode_map_gpt_image2.png)
 
@@ -575,7 +575,7 @@ CSA 仍按 query 检索 compressed entries；HCA 采用更高压缩率的条目�
 
 CSA/HCA 的吸引力在于同时压 compute 和 cache，尤其适合 1M context 这类极端长度。它的风险也很直接：压缩会丢信息，selector 可能选错，cache layout 比 GQA/MLA 复杂得多，训练与推理都要配套实现。它不像 GQA 那样能作为轻量结构替换接到旧模型上，更接近一次 architecture、kernel、cache manager 和 serving framework 的共同改造。
 
-2026 年 9 月的 [DeepSeek-V4.1-Flash](https://arxiv.org/abs/2609.19969) 又增加了跨层共享这一维度：CSA2 分别控制是否复用全局 KV、是否重新计算 top-k 索引；Causal Encoder-Decoder（CED）则让上半部 decoder 的全局 KV 从 encoder 输出投影得到，减少长 prompt 的 prefill 工作。报告中的 890 bytes/token 指常驻 HBM 的全局 KV footprint，不能当作包含 SWA、临时 buffer 的总显存；主 KV 使用 FP4，SWA KV 仍使用 FP8。共享模式和近似 SWA replay 的细节放在[第六篇 §4]({% post_url 2026-10-13-cross-layer-kv-reuse %}#csa2-ced)，这里把它记作“序列压缩之后，再减少跨层重复存储与计算”。
+2026 年 9 月的 [DeepSeek-V4.1-Flash](https://arxiv.org/abs/2609.19969) 又增加了跨层共享这一维度：CSA2 分别控制是否复用全局 KV、是否重新计算 top-k 索引；Causal Encoder-Decoder（CED）则让上半部 decoder 的全局 KV 从 encoder 输出投影得到，减少长 prompt 的 prefill 工作。报告中的 890 bytes/token 指常驻 HBM 的全局 KV footprint，不能当作包含 SWA、临时 buffer 的总显存；主 KV 使用 FP4，SWA KV 仍使用 FP8。CSA2/CED 在序列压缩之外进一步复用跨层缓存及其构建过程；共享模式和近似 SWA replay 见[第六篇 §4]({% post_url 2026-10-13-cross-layer-kv-reuse %}#csa2-ced)。
 
 ## 10. MiniMax Sparse Attention：GQA 上的 block-level content selection
 
@@ -614,13 +614,15 @@ KL alignment 的 teacher 来自 Main Branch，而不是给 top-k 索引直接反
 
 MSA 技术报告称，在 1M context 下，相比 GQA baseline，MSA 在相同 head 配置下降低 per-token attention compute 28.4x，并在 H800 上取得 14.2x prefill、7.6x decoding wall-clock speedup。
 
-这里别读过头：这份 PDF 更准确地说是 MSA attention/infra 技术报告，不是完整 MiniMax-M3 训练报告。它能支撑 MSA 架构、indexer 训练和 kernel 效率分析，但不应过度推断生产 M3 的完整数据配比或 RL pipeline。
+这份 MSA attention/infra 技术报告支持 MSA 架构、indexer 训练和 kernel 效率分析，但不足以据此推断生产 MiniMax-M3 的完整数据配比或 RL pipeline。
 
 ### 10.5 block 规整性与选择精度
 
 GQA 减少 KV head 冗余，MSA 再减少读取块数。整块 gather 更规整，但块内仍需精确计算；漏选关键 block 会丢证据，因此需要与 indexer 训练、局部保底和专用 kernel 一起评估。
 
-## 11. 收束：分清改的是哪一层
+<a id="11-收束分清改的是哪一层"></a>
+
+## 11. 训练与推理接口
 
 实现选择先从实际瓶颈开始：训练/prefill 的 $$L^2$$ 计算、decode 的 KV 读取、cache 容量，或 selector 与 runtime 的控制开销。前面的比较表说明各路线改了什么，接下来还要核对训练与推理接口。
 
@@ -635,7 +637,7 @@ GQA 减少 KV head 冗余，MSA 再减少读取块数。整块 gather 更规整�
 - 如果先关心 KV cache，读 GQA/MQA 和 MLA。GQA/MQA 说明 KV head 为什么可以共享；MLA 再往前一步，把每个 token 的 KV 表示压成 latent。读 DeepSeek-V2/V3 时，重点可以放在 latent cache、up-projection 和 RoPE 解耦上，不要停在“省 KV”这个结论。
 - 如果关心 linear attention，先接着读[第二篇]({% post_url 2026-07-29-linear-attention-from-kv-cache-to-recurrent-state %})。读 Kimi Linear/KDA 时，关键放在多数层如何把历史写进 recurrent state，以及少数全局层为什么仍要保留。
 - 如果关心 sparse attention，把 DSA/QSA/MSA 和 LongCat/LSA 分开看。DSA/QSA/MSA 回答“远处 token、micro-block 或 block 怎么选”；LongCat/LSA 更关心 selector 自身的代价、跨层复用和 streaming 场景下的稳定性。
-- 如果关心 1M context 之后的 memory 形态，CSA/HCA、LCA 这类 compressed memory 工作更值得连起来读。它们先承认完整 token memory 太贵，再问压缩后的远程记忆还能不能被精读。
+- 如果关心 1M context 之后的 memory 形态，可以对照 CSA/HCA、LCA 等 compressed memory 工作，比较减少远程记忆条目后，读取精度与成本怎样变化。
 - 如果要落到训练系统，继续读[第四篇]({% post_url 2026-08-18-long-context-large-scale-llm-training-optimization %})。架构上说“少存、少读、少算”之后，还要经过 kernel、CP/SP、packing 和 cache layout，才知道省下来的成本有没有被别处吃回去。
 
 ## 参考资料
