@@ -2,7 +2,7 @@
 layout: post
 title: "连续 dLLM 导读：从离散扩散到连续扩散与流"
 date: 2026-11-19
-last_modified_at: 2026-11-19
+last_modified_at: 2026-11-24
 visibility: unlisted
 sitemap: false
 series: continuous-dllm
@@ -23,7 +23,7 @@ permalink: /2026/11/19/continuous-dllm-index.html
 
 ### 主线 8 篇
 
-- [第 1 篇 从离散状态走向连续状态]({% post_url 2026-11-19-continuous-dllm-01-continuous-state %})：从 AA／BB 扩到长度 L，算清独立提交丢失的依赖；区分概率路径、训练配对和生成轨迹，以及两种不同的 coupling。
+- [第 1 篇 从离散状态走向连续状态]({% post_url 2026-11-19-continuous-dllm-01-continuous-state %})：沿着 AA／BB 的四次连续更新，理解模型保存什么、怎样用 token 概率移动状态，以及何时读出离散结果。
 
 - [第 2 篇 从高斯去噪理解 score]({% post_url 2026-11-19-continuous-dllm-02-gaussian-score %})：推导条件均值与 score，走完 DDPM 的训练和采样；解释 Brownian 增量、Fokker–Planck、reverse SDE 与 probability-flow ODE，明确反向时间的符号。
 
