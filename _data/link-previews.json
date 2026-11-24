@@ -2393,12 +2393,6 @@
     "description": "Speculative decoding accelerates Large Language Model (LLM) inference by verifying multiple drafted tokens in parallel. However, for Mixture-of-Experts (MoE) models, this parallelism introduces a severe bottleneck: large draft trees activate many unique experts, significantly increasing memory pressure and diminishing speedups from speculative decoding relative to autoregressive decoding. Prior methods reduce speculation depth when MoE verification becomes expensive. We propose MoE-Spec, a training-free verification-time expert budgeting method that decouples speculation depth from memory cos…",
     "fetched_at": 1794222436
   },
-  "https://arxiv.org/html/2602.16813v3": {
-    "checked_at": 1795070151,
-    "title": "Flow Map Language Models: One-step Language Modeling via Continuous Denoising",
-    "description": "Language models based on discrete diffusion have attracted widespread interest for their potential to provide faster generation than autoregressive models. Despite their promise, these models typically produce samples whose quality sharply degrades in the few-step regime, preventing a dramatic speedup in practice. Here, we show that language models based on continuous flows over one-hot token embeddings can outperform discrete diffusion in both quality and speed. Importantly, our continuous formulation defines a unique flow map that can be learned directly for efficient few-step inference, a…",
-    "fetched_at": 1795070151
-  },
   "https://arxiv.org/html/2603.03276v1": {
     "checked_at": 1794672892,
     "title": "Beyond Language Modeling: An Exploration of Multimodal Pretraining",
